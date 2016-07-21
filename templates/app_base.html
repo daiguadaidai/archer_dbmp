@@ -1,0 +1,52 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html>
+
+<!-- Mirrored from www.zi-han.net/theme/hplus/ by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 20 Jan 2016 14:16:41 GMT -->
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <meta name="keywords" content="自动化,MySQL自动化">
+    <meta name="description" content="一个MySQL自动化管理工具">
+
+    <!--[if lt IE 9]>
+    <meta http-equiv="refresh" content="0;ie.html" />
+    <![endif]-->
+
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+
+    <!-- add css(公共css) -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min14ed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/font-awesome.min93e3.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.min862f.css' %}">
+
+    <!-- module css (各模块自己需要的 css)-->
+    {% block css %}{% endblock %}
+
+
+    <title>{% block title %}默认标题{% endblock %}</title>
+</head>
+
+<body class="gray-bg">
+
+    <div class="wrapper wrapper-content animated fadeInRight">
+    {% block content %}
+        <div>这里是默认内容，所有继承自这个模板的，如果不覆盖就显示这里的默认内容。</div>
+    {% endblock %}
+    </div>
+
+    <!-- add js(公共js) -->
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+    <!-- module js (各模块自己需要的 js)-->
+    {% block js %}{% endblock %}
+</body>
+
+
+<!-- Mirrored from www.zi-han.net/theme/hplus/ by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 20 Jan 2016 14:17:11 GMT -->
+</html>
