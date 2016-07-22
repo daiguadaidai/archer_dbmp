@@ -1,5 +1,4 @@
 """hh URL Configuration
-
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/1.8/topics/http/urls/
 Examples:
@@ -17,8 +16,8 @@ from django.conf.urls import include, url
 from dbmp.views import v_dbmp_mysql_instance as dbmp_mysql_instance
 
 urlpatterns = [
-    url(r'^$', dbmp_mysql_instance.index, name='dbmp_mysql_instance_index'),
+    url(r'^$', dbmp_mysql_instance.home, name='dbmp_mysql_instance_home'),
+    url(r'^dbmp_mysql_instance/home/$', dbmp_mysql_instance.home, name='dbmp_mysql_instance_home'),
     url(r'^dbmp_mysql_instance/index/$', dbmp_mysql_instance.index, name='dbmp_mysql_instance_index'),
-    url(r'^dbmp_mysql_instance/list/$', dbmp_mysql_instance.list, name='dbmp_mysql_instance_list'),
-    url(r'^dbmp_mysql_instance/test/$', dbmp_mysql_instance.test, name='dbmp_mysql_instance_test'),
+    url(r'^dbmp_mysql_instance/index/$', dbmp_mysql_instance.index, name='dbmp_mysql_instance_index'),
 ]

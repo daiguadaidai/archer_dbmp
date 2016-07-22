@@ -1,11 +1,14 @@
+#-*- coding: utf-8 -*-
+
 from django.shortcuts import render
+from dbmp.models.cmdb_os import CmdbOs
 
 # Create your views here.
 
-def index(request):
-    return render(request, 'index.html')
+def home(request):
+    return render(request, 'home.html')
 
-def list(request):
+def index(request):
     user = {'name': 'HH',
             'age': 25,
             'gender': 'gen',
@@ -15,10 +18,16 @@ def list(request):
             },
             'books': ['Python', 'Java']
     }
+    
+    cmdbos = CmdbOs.objects.all()
 
-    return render(request, 'dbmp_mysql_instance/list.html', {'title': 'title', 'user': user})
+    return render(request, 'dbmp_mysql_instance/index.html', {'title': 'title', 'user': user, 'cmdbos': cmdbos})
+
+def add(request):
+    pass
 
 def view(request):
+    pass
 
 def edit(request):
     pass

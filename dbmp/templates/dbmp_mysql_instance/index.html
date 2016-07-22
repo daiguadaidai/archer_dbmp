@@ -1,0 +1,96 @@
+{%extends 'app_base.html' %}
+
+{% load staticfiles %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+
+    <script>
+       // 显示密码
+       $(function () { $("[data-toggle='password']").tooltip(); });
+    </script>
+{% endblock %}
+
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+
+
+<div class="ibox float-e-margins">
+    <div class="ibox-title">
+        <h5>MySQL实例列表</h5>
+        <div class="ibox-tools">
+            <a class="collapse-link">
+                <i class="fa fa-chevron-up"></i>
+            </a>
+            <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
+                <i class="fa fa-wrench"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-user">
+                <li><a href="table_basic.html#">选项1</a>
+                </li>
+                <li><a href="table_basic.html#">选项2</a>
+                </li>
+            </ul>
+            <a class="close-link">
+                <i class="fa fa-times"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="ibox-content">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th class="text-center">#</th>
+                    <th class="text-center">主机名</th>
+                    <th class="text-center">别名</th>
+                    <th class="text-center">IP</th>
+                    <th class="text-center">用户名</th>
+                    <th class="text-center col-xs-1">密码</th>
+                    <th class="text-center col-xs-3">操作</th>
+                </tr>
+            </thead>
+        
+            <tbody>
+                {% for cmdbo in cmdbos %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td class="text-center">{{ cmdbo.hostname }}</td>
+                    <td class="text-center">{{ cmdbo.alias }}</td>
+                    <td class="text-center">{{ cmdbo.ip }}</td>
+                    <td class="text-center">{{ cmdbo.username }}</td>
+                    <td class="text-center">
+                        <a title="{{ cmdbo.password }}" class="warning"
+                               data-toggle="password" data-placement="top">
+                            <i class="fa fa-map-pin"></i>
+                            悬停显示
+                        </a>
+                    </td>
+                    <td class="text-center">
+                        <a href="#" type="button" class="btn btn-danger">
+                            <i class="fa fa-times"></i>
+                            删除
+                        </a>
+                        <a href="#" type="button" class="btn btn-primary">
+                            <i class="fa fa-paste"></i>
+                            编辑
+                        </a>
+                        <a href="#" type="button" class="btn btn-info">
+                            <i class="fa fa-eye"></i>
+                            查看
+                        </a>
+                    </td>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
