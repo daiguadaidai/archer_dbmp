@@ -4,15 +4,19 @@
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
 {% endblock %}
 
 <!-- 添加该页面自己需要的 js 模板 -->
 {% block js %}
     <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
 
     <script>
        // 显示密码
        $(function () { $("[data-toggle='password']").tooltip(); });
+
+       $(document).ready(function(){$(".footable").footable();});
     </script>
 {% endblock %}
 
@@ -44,7 +48,7 @@
     </div>
 
     <div class="ibox-content">
-        <table class="table table-bordered table-hover">
+        <table class="footable table table-stripped toggle-arrow-tiny table-hover">
             <thead>
                 <tr>
                     <th class="text-center">#</th>
@@ -54,6 +58,7 @@
                     <th class="text-center">用户名</th>
                     <th class="text-center col-xs-1">密码</th>
                     <th class="text-center col-xs-3">操作</th>
+                    <th data-hide="all">更多操作</th>
                 </tr>
             </thead>
         
@@ -66,7 +71,7 @@
                     <td class="text-center">{{ cmdbo.ip }}</td>
                     <td class="text-center">{{ cmdbo.username }}</td>
                     <td class="text-center">
-                        <a title="{{ cmdbo.password }}" class="warning"
+                        <a title="{{ cmdbo.password }}"
                                data-toggle="password" data-placement="top">
                             <i class="fa fa-map-pin"></i>
                             悬停显示
@@ -86,6 +91,23 @@
                             查看
                         </a>
                     </td>
+                    <td class="text-center">
+                        <a type="button" class="btn btn-outline btn-success btn-xs">
+                            <i class="fa fa-power-off"></i>
+                            关闭实例
+                        </a>
+                        <a type="button" class="btn btn-outline btn-success btn-xs">
+                            <i class="fa fa-caret-square-o-right"></i>
+                            启动实例
+                        </a>
+                        <a type="button" class="btn btn-outline btn-success btn-xs">
+                            <i class="fa fa-refresh"></i>
+                            重启实例
+                        </a>
+                        <a type="button" class="btn btn-outline btn-success btn-xs">
+                            <i class="fa fa-cubes"></i>
+                            定时备份
+                        </a>
                     </td>
                 </tr>
                 {% endfor %}
