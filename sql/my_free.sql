@@ -312,6 +312,7 @@ CREATE TABLE `dbmp_mysql_instance` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_instance_id`),
+  UNIQUE KEY `idx$os_id_port` (`os_id`,`port`),
   KEY `idx$os_id` (`os_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -415,4 +416,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-07-21 17:15:22
+-- Dump completed on 2016-07-23 20:17:59

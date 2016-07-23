@@ -1,6 +1,7 @@
 {%extends 'app_base.html' %}
 
 {% load staticfiles %}
+{% load ip_filters %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
@@ -48,6 +49,16 @@
     </div>
 
     <div class="ibox-content">
+        <!-- 添加MySQL实例按钮 -->
+        <div class="row fontawesome-icon-list">
+            <div class="fa-hover col-md-2 col-sm-3">
+                <a href="#">
+                    <i class="fa fa-plus-square"></i>
+                    添加实例
+                </a>
+            </div>
+        </div>
+
         <table class="footable table table-stripped toggle-arrow-tiny table-hover">
             <thead>
                 <tr>
@@ -66,7 +77,7 @@
                 {% for dbmp_mysql_instance in pagination.objs %}
                 <tr>
                     <td class="text-center">{{ forloop.counter }}</td>
-                    <td class="text-center">{{ dbmp_mysql_instance.host }}</td>
+                    <td class="text-center">{{ dbmp_mysql_instance.host | f_num2ip }}</td>
                     <td class="text-center">{{ dbmp_mysql_instance.port }}</td>
                     <td class="text-center">{{ dbmp_mysql_instance.username }}</td>
                     <td class="text-center">
@@ -122,32 +133,50 @@
             </tbody>
         </table>
         <!-- 这里是分页页码 -->
+        <div class="btn-group">
             <!-- 第一页, 上一页 -->
             {% if pagination.cur_page != 1 %}
-                <a href="?cur_page=1">&lt;&lt;</a>
-                <a href="?cur_page={{ pagination.pre_page }}">&lt;</a>
+                <a type="button" class="btn btn-primary btn-outline" href="?cur_page=1">
+                    <i class="fa fa-angle-double-left"></i>
+                </a>
+                <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.pre_page }}">
+                    <i class="fa fa-angle-left"></i>
+                </a>
             {% endif %}
             
             <!-- 省略号 -->
-            {{ pagination.start_page_omit_symbol }}
+            {% if pagination.start_page_omit_symbol %}
+                <a type="button" class="btn btn-write btn-outline">
+                    <i class="fa fa-ellipsis-h"></i>
+                </a>
+            {% endif %}
             
             <!-- 能点击的页码 -->
             {% for page_item in pagination.page_items %}
                 {% if page_item == pagination.cur_page %}
-                    {{ page_item }}
+                    <a type="button" class="btn btn-primary">{{ page_item }}</a>
                 {% else %}
-                    <a href="?cur_page={{ page_item }}">{{ page_item }}</a>
+                    <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ page_item }}">{{ page_item }}</a>
                 {% endif %}
             {% endfor%}
             
             <!-- 省略号 -->
-            {{ pagination.end_page_omit_symbol }}
+            {% if pagination.end_page_omit_symbol %}
+                <a type="button" class="btn btn-write btn-outline">
+                    <i class="fa fa-ellipsis-h"></i>
+                </a>
+            {% endif %}
             
             <!-- 下一页, 最后一页 -->
             {% if pagination.cur_page != pagination.all_page %}
-                <a href="?cur_page={{ pagination.next_page }}">&gt;</a>
-                <a href="?cur_page={{ pagination.all_page }}">&gt;&gt;</a>
+                <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.next_page }}">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.all_page }}">
+                    <i class="fa fa-angle-double-right"></i>
+                </a>
             {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
