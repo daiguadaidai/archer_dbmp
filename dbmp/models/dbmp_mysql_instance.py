@@ -35,3 +35,4 @@ class DbmpMysqlInstance(models.Model):
     class Meta:
         managed = False
         db_table = 'dbmp_mysql_instance'
+        unique_together = (('os_id', 'port'),)

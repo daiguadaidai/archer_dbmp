@@ -52,31 +52,31 @@
             <thead>
                 <tr>
                     <th class="text-center">#</th>
-                    <th class="text-center">主机名</th>
-                    <th class="text-center">别名</th>
-                    <th class="text-center">IP</th>
+                    <th class="text-center">Host</th>
+                    <th class="text-center">Port</th>
                     <th class="text-center">用户名</th>
                     <th class="text-center col-xs-1">密码</th>
+                    <th class="text-center col-xs-1">运行状态</th>
                     <th class="text-center col-xs-3">操作</th>
                     <th data-hide="all">更多操作</th>
                 </tr>
             </thead>
         
             <tbody>
-                {% for cmdbo in cmdbos %}
+                {% for dbmp_mysql_instance in pagination.objs %}
                 <tr>
                     <td class="text-center">{{ forloop.counter }}</td>
-                    <td class="text-center">{{ cmdbo.hostname }}</td>
-                    <td class="text-center">{{ cmdbo.alias }}</td>
-                    <td class="text-center">{{ cmdbo.ip }}</td>
-                    <td class="text-center">{{ cmdbo.username }}</td>
+                    <td class="text-center">{{ dbmp_mysql_instance.host }}</td>
+                    <td class="text-center">{{ dbmp_mysql_instance.port }}</td>
+                    <td class="text-center">{{ dbmp_mysql_instance.username }}</td>
                     <td class="text-center">
-                        <a title="{{ cmdbo.password }}"
+                        <a title="{{ dbmp_mysql_instance.password }}"
                                data-toggle="password" data-placement="top">
                             <i class="fa fa-map-pin"></i>
                             悬停显示
                         </a>
                     </td>
+                    <td class="text-center">{{ dbmp_mysql_instance.run_status }}</td>
                     <td class="text-center">
                         <a href="#" type="button" class="btn btn-danger">
                             <i class="fa fa-times"></i>
@@ -92,27 +92,62 @@
                         </a>
                     </td>
                     <td class="text-center">
-                        <a type="button" class="btn btn-outline btn-success btn-xs">
-                            <i class="fa fa-power-off"></i>
-                            关闭实例
-                        </a>
-                        <a type="button" class="btn btn-outline btn-success btn-xs">
-                            <i class="fa fa-caret-square-o-right"></i>
-                            启动实例
-                        </a>
-                        <a type="button" class="btn btn-outline btn-success btn-xs">
-                            <i class="fa fa-refresh"></i>
-                            重启实例
+                        <a type="button" class="btn btn-outline btn-info btn-xs">
+                            <i class="fa fa-terminal"></i>
+                            命令窗口
                         </a>
                         <a type="button" class="btn btn-outline btn-success btn-xs">
                             <i class="fa fa-cubes"></i>
-                            定时备份
+                            开启备份
+                        </a>
+                        <a type="button" class="btn btn-outline btn-success btn-xs">
+                            <i class="fa fa-cogs"></i>
+                            巡检报告
+                        </a>
+                        <a type="button" class="btn btn-outline btn-danger btn-xs">
+                            <i class="fa fa-power-off"></i>
+                            关闭实例
+                        </a>
+                        <a type="button" class="btn btn-outline btn-danger btn-xs">
+                            <i class="fa fa-caret-square-o-right"></i>
+                            启动实例
+                        </a>
+                        <a type="button" class="btn btn-outline btn-danger btn-xs">
+                            <i class="fa fa-refresh"></i>
+                            重启实例
                         </a>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        <!-- 这里是分页页码 -->
+            <!-- 第一页, 上一页 -->
+            {% if pagination.cur_page != 1 %}
+                <a href="?cur_page=1">&lt;&lt;</a>
+                <a href="?cur_page={{ pagination.pre_page }}">&lt;</a>
+            {% endif %}
+            
+            <!-- 省略号 -->
+            {{ pagination.start_page_omit_symbol }}
+            
+            <!-- 能点击的页码 -->
+            {% for page_item in pagination.page_items %}
+                {% if page_item == pagination.cur_page %}
+                    {{ page_item }}
+                {% else %}
+                    <a href="?cur_page={{ page_item }}">{{ page_item }}</a>
+                {% endif %}
+            {% endfor%}
+            
+            <!-- 省略号 -->
+            {{ pagination.end_page_omit_symbol }}
+            
+            <!-- 下一页, 最后一页 -->
+            {% if pagination.cur_page != pagination.all_page %}
+                <a href="?cur_page={{ pagination.next_page }}">&gt;</a>
+                <a href="?cur_page={{ pagination.all_page }}">&gt;&gt;</a>
+            {% endif %}
     </div>
 </div>
 {% endblock %}
