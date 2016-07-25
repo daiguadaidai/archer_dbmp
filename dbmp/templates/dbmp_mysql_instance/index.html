@@ -6,21 +6,8 @@
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
     <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
 {% endblock %}
-
-<!-- 添加该页面自己需要的 js 模板 -->
-{% block js %}
-    <script src="{% static 'js/content.min.js' %}"></script>
-    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
-
-    <script>
-       // 显示密码
-       $(function () { $("[data-toggle='password']").tooltip(); });
-
-       $(document).ready(function(){$(".footable").footable();});
-    </script>
-{% endblock %}
-
 
 <!-- 显示该页面主要展示的内容 -->
 {% block content %}
@@ -89,7 +76,8 @@
                     </td>
                     <td class="text-center">{{ dbmp_mysql_instance.run_status }}</td>
                     <td class="text-center">
-                        <a href="#" type="button" class="btn btn-danger">
+                        <a onclick="dbmp_mysql_instance_delete({{dbmp_mysql_instance.mysql_instance_id}}, {{pagination.cur_page}})"
+                           type="button" class="btn btn-danger">
                             <i class="fa fa-times"></i>
                             删除
                         </a>
@@ -179,4 +167,45 @@
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+
+    <script>
+        $(document).ready(function(){
+            // 隐藏更多信息的插件
+            $(".footable").footable();
+
+            // 显示密码
+            $("[data-toggle='password']").tooltip();
+        });
+
+        //删除 dbmp_mysql_instance
+        function dbmp_mysql_instance_delete(dbmp_mysql_instance_id, cur_page) {
+            swal({
+                title: "您确定要删除这条信息吗",
+                text: "删除后将无法恢复，请谨慎操作！",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "删除",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_instance_ajax_delete' %}",
+                    type: "DELETE" 
+                }).done(function(data) { 
+                    swal("删除成功!", "已成功删除数据！", "success");
+                }).error(function(data) { 
+                    swal("对不起!", "删除操作失败了!", "error");
+                });
+            });
+        }
+        
+    </script>
 {% endblock %}

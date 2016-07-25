@@ -1,7 +1,9 @@
 #-*- coding: utf-8 -*-
 
 from django.shortcuts import render
+from django.http import HttpResponseRedirect
 from common.util.pagination import Pagination
+from common.util.view_url_path import ViewUrlPath
 # from dbmp.models.cmdb_os import CmdbOs
 # from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
 
@@ -42,7 +44,24 @@ def edit(request):
     pass
 
 def delete(request):
-    pass
+    try:  
+        cur_page = int(request.GET.get('cur_page', '1'))  
+        mysql_instance_id = int(request.GET.get('mysql_instance_id', '0'))  
+    except ValueError:  
+        cur_page = 1  
+
+    
+
+    redirect_url = '{path}/index?cur_page={cur_page}'.format(
+                   path = ViewUrlPath.path_dbmp_mysql_instance(),
+                   cur_page = cur_page)
+    return HttpResponseRedirect(redirect_url)
+
+def ajax_delete(request):
+    """ajax 的方式删除MySQL实例"""
+    if request.method == 'POST':
+        return true
+    
 
 def test(request):
     return render(request, 'test.html')
