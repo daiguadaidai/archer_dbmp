@@ -185,8 +185,9 @@
             $("[data-toggle='password']").tooltip();
         });
 
+
         //删除 dbmp_mysql_instance
-        function dbmp_mysql_instance_delete(dbmp_mysql_instance_id, cur_page) {
+        function dbmp_mysql_instance_delete(mysql_instance_id, cur_page) {
             swal({
                 title: "您确定要删除这条信息吗",
                 text: "删除后将无法恢复，请谨慎操作！",
@@ -196,12 +197,19 @@
                 confirmButtonText: "删除",
                 closeOnConfirm: false
             }, function () {
+                console.log(mysql_instance_id);
                 $.ajax({
                     url: "{% url 'dbmp_mysql_instance_ajax_delete' %}",
-                    type: "DELETE" 
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_instance_id: mysql_instance_id
+                    }
                 }).done(function(data) { 
+                    console.log(data);
                     swal("删除成功!", "已成功删除数据！", "success");
                 }).error(function(data) { 
+                    console.log(data);
                     swal("对不起!", "删除操作失败了!", "error");
                 });
             });

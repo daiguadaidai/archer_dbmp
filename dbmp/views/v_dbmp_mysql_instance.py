@@ -2,8 +2,10 @@
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from common.util.pagination import Pagination
 from common.util.view_url_path import ViewUrlPath
+import simplejson as json
 # from dbmp.models.cmdb_os import CmdbOs
 # from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
 
@@ -59,9 +61,12 @@ def delete(request):
 
 def ajax_delete(request):
     """ajax 的方式删除MySQL实例"""
+
+    is_delete = False
     if request.method == 'POST':
-        return true
-    
+        is_delete = True
+
+    return HttpResponse(json.dumps({'a':'aaa'}))
 
 def test(request):
     return render(request, 'test.html')
