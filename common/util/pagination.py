@@ -51,17 +51,6 @@ class Pagination(object):
         # 导入模块
         exec import_str
 
-        start_pos = (cur_page - 1) * one_page_data_size  
-        end_pos = start_pos + one_page_data_size  
-
-        # 查找需要的model数据
-        find_objs_str = ('{model_name}.objects.all()'
-                         '[{start_pos}:{end_pos}]'.format(
-                                               model_name = model_name,
-                                               start_pos = start_pos,
-                                               end_pos = end_pos))
-        objs = eval(find_objs_str)  
-  
         # 计算总共的页数
         find_objs_count_str = '{model_name}.objects.count()'.format(
                                                model_name = model_name)
@@ -75,6 +64,18 @@ class Pagination(object):
         cur_page = 1 if cur_page < 1 else cur_page
         cur_page = all_page if cur_page > all_page else cur_page
 
+        # 计算分页开始和结束
+        start_pos = (cur_page - 1) * one_page_data_size  
+        end_pos = start_pos + one_page_data_size  
+
+        # 查找需要的model数据
+        find_objs_str = ('{model_name}.objects.all()'
+                         '[{start_pos}:{end_pos}]'.format(
+                                               model_name = model_name,
+                                               start_pos = start_pos,
+                                               end_pos = end_pos))
+        objs = eval(find_objs_str)  
+  
         # 获得显示页数的最小页
         start_page = cur_page - show_page_item_len / 2
         if start_page > all_page - show_page_item_len:

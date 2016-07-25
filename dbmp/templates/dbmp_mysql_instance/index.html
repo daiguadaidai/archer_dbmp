@@ -177,6 +177,9 @@
     <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
 
     <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
         $(document).ready(function(){
             // 隐藏更多信息的插件
             $(".footable").footable();
@@ -188,8 +191,9 @@
 
         //删除 dbmp_mysql_instance
         function dbmp_mysql_instance_delete(mysql_instance_id, cur_page) {
+            $(".confirm").unbind("click");
             swal({
-                title: "您确定要删除这条信息吗",
+                title: "您确定要删除这条信息吗?",
                 text: "删除后将无法恢复，请谨慎操作！",
                 type: "warning",
                 showCancelButton: true,
@@ -197,7 +201,6 @@
                 confirmButtonText: "删除",
                 closeOnConfirm: false
             }, function () {
-                console.log(mysql_instance_id);
                 $.ajax({
                     url: "{% url 'dbmp_mysql_instance_ajax_delete' %}",
                     type: "POST",
@@ -206,11 +209,16 @@
                         mysql_instance_id: mysql_instance_id
                     }
                 }).done(function(data) { 
-                    console.log(data);
-                    swal("删除成功!", "已成功删除数据！", "success");
+                    if(data == true) {
+                        swal("删除成功!", "已成功删除数据！", "success");
+                        $(".confirm").click(function(){
+                            setTimeout("location.reload()", 500);
+                        });
+                    } else {
+                        swal("对不起!", "删除数据失败了!", "error");
+                    }
                 }).error(function(data) { 
-                    console.log(data);
-                    swal("对不起!", "删除操作失败了!", "error");
+                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
                 });
             });
         }

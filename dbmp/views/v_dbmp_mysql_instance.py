@@ -7,7 +7,7 @@ from common.util.pagination import Pagination
 from common.util.view_url_path import ViewUrlPath
 import simplejson as json
 # from dbmp.models.cmdb_os import CmdbOs
-# from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
+from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
 
 # Create your views here.
 
@@ -52,8 +52,6 @@ def delete(request):
     except ValueError:  
         cur_page = 1  
 
-    
-
     redirect_url = '{path}/index?cur_page={cur_page}'.format(
                    path = ViewUrlPath.path_dbmp_mysql_instance(),
                    cur_page = cur_page)
@@ -64,9 +62,14 @@ def ajax_delete(request):
 
     is_delete = False
     if request.method == 'POST':
-        is_delete = True
+        mysql_instance_id = int(request.POST.get('mysql_instance_id', '0'))  
+        if mysql_instance_id:
+            DbmpMysqlInstance.objects.filter(
+                            mysql_instance_id = mysql_instance_id).delete()
+            is_delete = True
 
-    return HttpResponse(json.dumps({'a':'aaa'}))
+    respons_data = json.dumps(is_delete)
+    return HttpResponse(respons_data, content_type='application/json')
 
 def test(request):
     return render(request, 'test.html')
