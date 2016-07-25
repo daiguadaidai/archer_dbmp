@@ -201,6 +201,7 @@ class DbmpMysqlInstance(models.Model):
     port = models.IntegerField()
     username = models.CharField(max_length=30)
     password = models.CharField(max_length=200)
+    run_status = models.IntegerField()
     remark = models.CharField(max_length=50)
     create_time = models.DateTimeField()
     update_time = models.DateTimeField()

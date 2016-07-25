@@ -12,6 +12,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from common.model_choices_field_value.field_dbmp_mysql_instance import FieldDbmpMysqlInstance
 
 class DbmpMysqlInstance(models.Model):
     mysql_instance_id = models.AutoField(primary_key=True)
@@ -20,9 +21,10 @@ class DbmpMysqlInstance(models.Model):
     port = models.IntegerField()
     username = models.CharField(max_length=30)
     password = models.CharField(max_length=200)
+    run_status = models.IntegerField(choices=FieldDbmpMysqlInstance.run_status())
     remark = models.CharField(max_length=50)
-    create_time = models.DateTimeField(auto_now_add=True)
-    update_time = models.DateTimeField(auto_now=True)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
 
     def __unicode__(self):
         """Java toString 方法"""

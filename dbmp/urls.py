@@ -19,5 +19,5 @@ urlpatterns = [
     url(r'^$', dbmp_mysql_instance.home, name='dbmp_mysql_instance_home'),
     url(r'^dbmp_mysql_instance/home/$', dbmp_mysql_instance.home, name='dbmp_mysql_instance_home'),
     url(r'^dbmp_mysql_instance/index/$', dbmp_mysql_instance.index, name='dbmp_mysql_instance_index'),
-    url(r'^dbmp_mysql_instance/index/$', dbmp_mysql_instance.index, name='dbmp_mysql_instance_index'),
+    url(r'^dbmp_mysql_instance/add/$', dbmp_mysql_instance.add, name='dbmp_mysql_instance_add'),
 ]

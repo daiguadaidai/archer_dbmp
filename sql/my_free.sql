@@ -155,7 +155,7 @@ CREATE TABLE `cmdb_os` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`os_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COMMENT='操作系统信息';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='操作系统信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -271,7 +271,7 @@ CREATE TABLE `dbmp_mysql_ha_group` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_ha_group_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='MySQL高可用组, 主要用于MySQL备份使用';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='MySQL高可用组, 主要用于MySQL备份使用';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -291,7 +291,7 @@ CREATE TABLE `dbmp_mysql_ha_group_detail` (
   PRIMARY KEY (`mysql_ha_group_detail_id`),
   UNIQUE KEY `udx$mysql_instance_id` (`mysql_instance_id`),
   KEY `idx$mysql_ha_group_id` (`mysql_ha_group_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='MySQL HA 组和MySQL实例关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='MySQL HA 组和MySQL实例关联表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -308,13 +308,14 @@ CREATE TABLE `dbmp_mysql_instance` (
   `port` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '链接MySQL PORT',
   `username` varchar(30) NOT NULL DEFAULT '' COMMENT '管理MySQL用户名',
   `password` varchar(200) NOT NULL DEFAULT '' COMMENT '管理MySQL用户名密码，是个可逆的加密串',
+  `run_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT 'MySQL运行状态:1、停止，2、运行中，3、未知',
   `remark` varchar(50) NOT NULL DEFAULT '' COMMENT '备注',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_instance_id`),
-  UNIQUE KEY `idx$os_id_port` (`os_id`,`port`),
+  UNIQUE KEY `udx$os_id_port` (`os_id`,`port`),
   KEY `idx$os_id` (`os_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
+) ENGINE=InnoDB AUTO_INCREMENT=204 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -332,7 +333,7 @@ CREATE TABLE `dbmp_mysql_instance_info` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_instance_info_id`),
   KEY `idx$mysql_instance_id` (`mysql_instance_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -416,4 +417,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-07-23 20:17:59
+-- Dump completed on 2016-07-25 12:20:31
