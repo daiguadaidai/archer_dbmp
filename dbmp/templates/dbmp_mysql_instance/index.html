@@ -1,4 +1,4 @@
-{%extends 'app_base.html' %}
+{%extends 'dbmp_base.html' %}
 
 {% load staticfiles %}
 {% load ip_filters %}
@@ -9,165 +9,146 @@
     <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
 {% endblock %}
 
-<!-- 显示该页面主要展示的内容 -->
-{% block content %}
 
+<!-- 显示该页面标题 -->
+{% block app_title %}MySQL实例列表{% endblock %}
 
-<div class="ibox float-e-margins">
-    <div class="ibox-title">
-        <h5>MySQL实例列表</h5>
-        <div class="ibox-tools">
-            <a class="collapse-link">
-                <i class="fa fa-chevron-up"></i>
-            </a>
-            <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
-                <i class="fa fa-wrench"></i>
-            </a>
-            <ul class="dropdown-menu dropdown-user">
-                <li><a href="table_basic.html#">选项1</a>
-                </li>
-                <li><a href="table_basic.html#">选项2</a>
-                </li>
-            </ul>
-            <a class="close-link">
-                <i class="fa fa-times"></i>
-            </a>
-        </div>
-    </div>
-
-    <div class="ibox-content">
-        <!-- 添加MySQL实例按钮 -->
-        <div class="row fontawesome-icon-list">
-            <div class="fa-hover col-md-2 col-sm-3">
-                <a href="{% url 'dbmp_mysql_instance_add' %}">
-                    <i class="fa fa-plus-square"></i>
-                    添加实例
-                </a>
-            </div>
-        </div>
-
-        <table class="footable table table-stripped toggle-arrow-tiny table-hover">
-            <thead>
-                <tr>
-                    <th class="text-center">#</th>
-                    <th class="text-center">Host</th>
-                    <th class="text-center">Port</th>
-                    <th class="text-center">用户名</th>
-                    <th class="text-center col-xs-1">密码</th>
-                    <th class="text-center col-xs-1">运行状态</th>
-                    <th class="text-center col-xs-3">操作</th>
-                    <th data-hide="all">更多操作</th>
-                </tr>
-            </thead>
-        
-            <tbody>
-                {% for dbmp_mysql_instance in pagination.objs %}
-                <tr>
-                    <td class="text-center">{{ forloop.counter }}</td>
-                    <td class="text-center">{{ dbmp_mysql_instance.host | f_num2ip }}</td>
-                    <td class="text-center">{{ dbmp_mysql_instance.port }}</td>
-                    <td class="text-center">{{ dbmp_mysql_instance.username }}</td>
-                    <td class="text-center">
-                        <a title="{{ dbmp_mysql_instance.password }}"
-                               data-toggle="password" data-placement="top">
-                            <i class="fa fa-map-pin"></i>
-                            悬停显示
-                        </a>
-                    </td>
-                    <td class="text-center">{{ dbmp_mysql_instance.run_status }}</td>
-                    <td class="text-center">
-                        <a onclick="dbmp_mysql_instance_delete({{dbmp_mysql_instance.mysql_instance_id}}, {{pagination.cur_page}})"
-                           type="button" class="btn btn-danger">
-                            <i class="fa fa-times"></i>
-                            删除
-                        </a>
-                        <a href="#" type="button" class="btn btn-primary">
-                            <i class="fa fa-paste"></i>
-                            编辑
-                        </a>
-                        <a href="#" type="button" class="btn btn-info">
-                            <i class="fa fa-eye"></i>
-                            查看
-                        </a>
-                    </td>
-                    <td class="text-center">
-                        <a type="button" class="btn btn-outline btn-info btn-xs">
-                            <i class="fa fa-terminal"></i>
-                            命令窗口
-                        </a>
-                        <a type="button" class="btn btn-outline btn-success btn-xs">
-                            <i class="fa fa-cubes"></i>
-                            开启备份
-                        </a>
-                        <a type="button" class="btn btn-outline btn-success btn-xs">
-                            <i class="fa fa-cogs"></i>
-                            巡检报告
-                        </a>
-                        <a type="button" class="btn btn-outline btn-danger btn-xs">
-                            <i class="fa fa-power-off"></i>
-                            关闭实例
-                        </a>
-                        <a type="button" class="btn btn-outline btn-danger btn-xs">
-                            <i class="fa fa-caret-square-o-right"></i>
-                            启动实例
-                        </a>
-                        <a type="button" class="btn btn-outline btn-danger btn-xs">
-                            <i class="fa fa-refresh"></i>
-                            重启实例
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <!-- 这里是分页页码 -->
-        <div class="btn-group">
-            <!-- 第一页, 上一页 -->
-            {% if pagination.cur_page != 1 %}
-                <a type="button" class="btn btn-primary btn-outline" href="?cur_page=1">
-                    <i class="fa fa-angle-double-left"></i>
-                </a>
-                <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.pre_page }}">
-                    <i class="fa fa-angle-left"></i>
-                </a>
-            {% endif %}
-            
-            <!-- 省略号 -->
-            {% if pagination.start_page_omit_symbol %}
-                <a type="button" class="btn btn-write btn-outline">
-                    <i class="fa fa-ellipsis-h"></i>
-                </a>
-            {% endif %}
-            
-            <!-- 能点击的页码 -->
-            {% for page_item in pagination.page_items %}
-                {% if page_item == pagination.cur_page %}
-                    <a type="button" class="btn btn-primary">{{ page_item }}</a>
-                {% else %}
-                    <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ page_item }}">{{ page_item }}</a>
-                {% endif %}
-            {% endfor%}
-            
-            <!-- 省略号 -->
-            {% if pagination.end_page_omit_symbol %}
-                <a type="button" class="btn btn-write btn-outline">
-                    <i class="fa fa-ellipsis-h"></i>
-                </a>
-            {% endif %}
-            
-            <!-- 下一页, 最后一页 -->
-            {% if pagination.cur_page != pagination.all_page %}
-                <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.next_page }}">
-                    <i class="fa fa-angle-right"></i>
-                </a>
-                <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.all_page }}">
-                    <i class="fa fa-angle-double-right"></i>
-                </a>
-            {% endif %}
-        </div>
+<!-- 其他元素模块 -->
+{% block top_element %}
+<!-- 添加MySQL实例按钮 -->
+<div class="row fontawesome-icon-list">
+    <div class="fa-hover col-md-2 col-sm-3 pull-right">
+        <a href="{% url 'dbmp_mysql_instance_add' %}">
+            <i class="fa fa-plus-square"></i>
+            添加实例
+        </a>
     </div>
 </div>
+{% endblock %}
 
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<table class="footable table table-stripped toggle-arrow-tiny table-hover">
+    <thead>
+        <tr>
+            <th class="text-center">#</th>
+            <th class="text-center">Host</th>
+            <th class="text-center">Port</th>
+            <th class="text-center">用户名</th>
+            <th class="text-center col-xs-1">密码</th>
+            <th class="text-center col-xs-1">运行状态</th>
+            <th class="text-center col-xs-3">操作</th>
+            <th data-hide="all">更多操作</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for dbmp_mysql_instance in pagination.objs %}
+        <tr>
+            <td class="text-center">{{ forloop.counter }}</td>
+            <td class="text-center">{{ dbmp_mysql_instance.host | f_num2ip }}</td>
+            <td class="text-center">{{ dbmp_mysql_instance.port }}</td>
+            <td class="text-center">{{ dbmp_mysql_instance.username }}</td>
+            <td class="text-center">
+                <a title="{{ dbmp_mysql_instance.password }}"
+                       data-toggle="password" data-placement="top">
+                    <i class="fa fa-thumb-tack"></i>
+                    悬停显示
+                </a>
+            </td>
+            <td class="text-center">{{ dbmp_mysql_instance.run_status }}</td>
+            <td class="text-center">
+                <a onclick="dbmp_mysql_instance_delete({{ dbmp_mysql_instance.mysql_instance_id }}, {{ pagination.cur_page }})"
+                   type="button" class="btn btn-danger">
+                    <i class="fa fa-trash"></i>
+                    删除
+                </a>
+                <a href="{% url 'dbmp_mysql_instance_edit' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}" 
+                   type="button" class="btn btn-primary">
+                    <i class="fa fa-edit"></i>
+                    编辑
+                </a>
+                <a href="#" type="button" class="btn btn-info">
+                    <i class="fa fa-eye"></i>
+                    查看
+                </a>
+            </td>
+            <td class="text-center">
+                <a type="button" class="btn btn-outline btn-info btn-xs">
+                    <i class="fa fa-terminal"></i>
+                    命令窗口
+                </a>
+                <a type="button" class="btn btn-outline btn-success btn-xs">
+                    <i class="fa fa-cubes"></i>
+                    开启备份
+                </a>
+                <a type="button" class="btn btn-outline btn-success btn-xs">
+                    <i class="fa fa-cogs"></i>
+                    巡检报告
+                </a>
+                <a type="button" class="btn btn-outline btn-danger btn-xs">
+                    <i class="fa fa-power-off"></i>
+                    关闭实例
+                </a>
+                <a type="button" class="btn btn-outline btn-danger btn-xs">
+                    <i class="fa fa-caret-square-o-right"></i>
+                    启动实例
+                </a>
+                <a type="button" class="btn btn-outline btn-danger btn-xs">
+                    <i class="fa fa-refresh"></i>
+                    重启实例
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 这里是分页页码 -->
+<div class="btn-group">
+    <!-- 第一页, 上一页 -->
+    {% if pagination.cur_page != 1 %}
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page=1">
+            <i class="fa fa-angle-double-left"></i>
+        </a>
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.pre_page }}">
+            <i class="fa fa-angle-left"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 省略号 -->
+    {% if pagination.start_page_omit_symbol %}
+        <a type="button" class="btn btn-write btn-outline">
+            <i class="fa fa-ellipsis-h"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 能点击的页码 -->
+    {% for page_item in pagination.page_items %}
+        {% if page_item == pagination.cur_page %}
+            <a type="button" class="btn btn-primary">{{ page_item }}</a>
+        {% else %}
+            <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ page_item }}">{{ page_item }}</a>
+        {% endif %}
+    {% endfor%}
+    
+    <!-- 省略号 -->
+    {% if pagination.end_page_omit_symbol %}
+        <a type="button" class="btn btn-write btn-outline">
+            <i class="fa fa-ellipsis-h"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 下一页, 最后一页 -->
+    {% if pagination.cur_page != pagination.all_page %}
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.next_page }}">
+            <i class="fa fa-angle-right"></i>
+        </a>
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.all_page }}">
+            <i class="fa fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+</div>
 {% endblock %}
 
 <!-- 添加该页面自己需要的 js 模板 -->

@@ -1,0 +1,154 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+{% load ip_filters %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block app_title %}MySQL实例编辑{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="row fontawesome-icon-list">
+            <!-- 添加返回首页按钮 -->
+            <div class="fa-hover col-md-4">
+                <a href="{{ request.environ.HTTP_REFERER }}">
+                    <i class="fa fa-reply"></i>
+                    返回
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="row fontawesome-icon-list">
+            <!-- 添加返回MySQL实例列表按钮 -->
+            <div class="fa-hover  col-md-4">
+                <a href="{% url 'dbmp_mysql_instance_index' %}">
+                    <i class="fa fa-home"></i>
+                    实例列表
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="row fontawesome-icon-list">
+            <!-- 添加MySQL实例按钮 -->
+            <div class="fa-hover col-md-10">
+                <a href="{% url 'dbmp_mysql_instance_add' %}">
+                    <i class="fa fa-plus-square"></i>
+                    添加实例
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<!-- OS 信息 -->
+<section id="os_section">
+    <h2 class="page-header">操作系统信息</h2>
+    {% if cmdb_os %}
+    <div id="os_row" class="row">
+        <div class="col-md-4">
+            <strong>主机名:</strong> {{ cmdb_os.hostname }}
+        </div>
+        <div class="col-md-4">
+            <strong>IP地址:</strong> {{ cmdb_os.ip | f_num2ip }}
+        </div>
+        <div class="col-md-4">
+            <strong>别名:</strong> {{ cmdb_os.alias }}
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <a><i class="fa fa-object-ungroup"></i>
+                替换OS
+            </a>
+        </div>
+    </div>
+    {% endif %}
+<section>
+
+<section id="mysql_instance">
+    <h2 class="page-header">MySQL实例信息</h2>
+
+    <h4>&nbsp;</h4>
+    
+    <div class="row">
+        <div class="col-md-3 pull-right">
+            <a href="{{ request.environ.HTTP_REFERER }}" 
+               type="button" class="btn btn-default">
+                <i class="fa fa-times"></i>
+                取消
+            </a>
+            <button onclick="dbmp_mysql_instance_delete({{ dbmp_mysql_instance.mysql_instance_id }})"
+               type="button" class="btn btn-danger">
+                <i class="fa fa-trash"></i>
+                删除
+            </button>
+            <button type="submit" class="btn btn-success">
+                <i class="fa fa-save"></i>
+                保存
+            </button>
+        </div>
+    </div>
+<section>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+
+        //删除 dbmp_mysql_instance
+        function dbmp_mysql_instance_delete(mysql_instance_id) {
+            $(".confirm").unbind("click");
+            swal({
+                title: "您确定要删除这条信息吗?",
+                text: "删除后将无法恢复，请谨慎操作！",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "删除",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_instance_ajax_delete' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_instance_id: mysql_instance_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        swal("删除成功!", "已成功删除数据！", "success");
+                        $(".confirm").click(function(){
+                            location.href="{% url 'dbmp_mysql_instance_index' %}"
+                        });
+                    } else {
+                        swal("对不起!", "删除数据失败了!", "error");
+                    }
+                }).error(function(data) { 
+                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
+                });
+            });
+        }
+        
+    </script>
+{% endblock %}

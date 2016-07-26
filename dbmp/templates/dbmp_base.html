@@ -1,0 +1,95 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html>
+
+<!-- Mirrored from www.zi-han.net/theme/hplus/ by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 20 Jan 2016 14:16:41 GMT -->
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <meta name="keywords" content="自动化,MySQL自动化">
+    <meta name="description" content="一个MySQL自动化管理工具">
+
+    <!--[if lt IE 9]>
+    <meta http-equiv="refresh" content="0;ie.html" />
+    <![endif]-->
+
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+
+    <!-- add css(公共css) -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min14ed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/font-awesome.min93e3.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.min862f.css' %}">
+
+    <!-- module css (各模块自己需要的 css)-->
+    {% block css %}{% endblock %}
+
+
+    <title>{% block title %}默认标题{% endblock %}</title>
+</head>
+
+<body class="gray-bg">
+
+    <div class="wrapper wrapper-content animated fadeInRight">
+        <div class="ibox float-e-margins">
+
+            <div class="ibox-title">
+                <h5>{% block app_title %}默认页面标题{% endblock %}</h5>
+                <div class="ibox-tools">
+                    <a class="collapse-link">
+                        <i class="fa fa-chevron-up"></i>
+                    </a>
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="table_basic.html#">选项1</a>
+                        </li>
+                        <li><a href="table_basic.html#">选项2</a>
+                        </li>
+                    </ul>
+                    <a class="close-link">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </div>
+            </div>        
+
+            <div class="ibox-content">
+            <!-- alert 标签模块 -->
+            {% block alert_tag %}
+                {% if message.code and message.msg %}
+                <div class="row alert alert-{{ message.code }}">
+                    <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                    {{ message.msg }}
+                </div>
+                {% endif %}
+            {% endblock %}
+
+            
+            <!-- 其他元素模块 -->
+            {% block top_element %}
+            {% endblock %}
+
+            <!-- 主要展示内容模块 -->
+            {% block content %}
+                <div>这里是默认内容，所有继承自这个模板的，如果不覆盖就显示这里的默认内容。</div>
+            {% endblock %}
+            </div>
+        
+        </div>
+    </div>
+
+    <!-- add js(公共js) -->
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+    <!-- module js (各模块自己需要的 js)-->
+    {% block js %}{% endblock %}
+</body>
+
+
+<!-- Mirrored from www.zi-han.net/theme/hplus/ by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 20 Jan 2016 14:17:11 GMT -->
+</html>
