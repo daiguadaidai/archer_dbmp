@@ -73,11 +73,13 @@ def edit(request):
 
             if dbmp_mysql_instance:
 
-                dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.get(
+                # 获得MySQL实例额外信息
+                dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.filter(
                        mysql_instance_id = dbmp_mysql_instance.mysql_instance_id)
                 params['dbmp_mysql_instance_info'] = dbmp_mysql_instance_info
 
-                cmdb_os = CmdbOs.objects.get(os_id = dbmp_mysql_instance.os_id)
+                # 获得操作系统
+                cmdb_os = CmdbOs.objects.filter(os_id = dbmp_mysql_instance.os_id)
                 params['cmdb_os'] = cmdb_os
 
                 # 如果MySQL实例没有指定OS则告警

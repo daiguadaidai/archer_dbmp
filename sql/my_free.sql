@@ -72,7 +72,7 @@ CREATE TABLE `auth_permission` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `content_type_id` (`content_type_id`,`codename`),
   CONSTRAINT `auth__content_type_id_508cf46651277a81_fk_django_content_type_id` FOREIGN KEY (`content_type_id`) REFERENCES `django_content_type` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -190,7 +190,7 @@ CREATE TABLE `dbmp_mysql_backup_info` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`mysql_backup_info_id`),
   KEY `idx$mysql_instance_id` (`mysql_instance_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COMMENT='描述整个备份过程的信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='描述整个备份过程的信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -313,9 +313,9 @@ CREATE TABLE `dbmp_mysql_instance` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_instance_id`),
-  UNIQUE KEY `udx$os_id_port` (`os_id`,`port`),
+  UNIQUE KEY `idx$os_id_port` (`os_id`,`port`),
   KEY `idx$os_id` (`os_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=204 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
+) ENGINE=InnoDB AUTO_INCREMENT=299 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -334,6 +334,7 @@ CREATE TABLE `dbmp_mysql_instance_info` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_instance_info_id`),
+  UNIQUE KEY `udx$mysql_instance_id` (`mysql_instance_id`),
   KEY `idx$mysql_instance_id` (`mysql_instance_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -375,7 +376,7 @@ CREATE TABLE `django_content_type` (
   `model` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `django_content_type_app_label_45f3b1d93ec8c61c_uniq` (`app_label`,`model`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -391,7 +392,7 @@ CREATE TABLE `django_migrations` (
   `name` varchar(255) NOT NULL,
   `applied` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -419,4 +420,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-07-27 17:00:02
+-- Dump completed on 2016-07-27 21:17:48

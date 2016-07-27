@@ -15,7 +15,7 @@ from django.db import models
 
 class DbmpMysqlInstanceInfo(models.Model):
     mysql_instance_info_id = models.AutoField(primary_key=True)
-    mysql_instance_id = models.IntegerField()
+    mysql_instance_id = models.IntegerField(unique=True)
     my_cnf_path = models.CharField(max_length=200)
     base_dir = models.CharField(max_length=200)
     start_cmd = models.CharField(max_length=200)

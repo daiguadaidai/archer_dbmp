@@ -8,3 +8,6 @@ ALTER TABLE dbmp_mysql_instance_info
 UPDATE dbmp_mysql_instance_info
 SET start_cmd = '/bin/bash /usr/local/mysql/bin/mysqld_safe --defaults-file=/etc/my_3306.cnf > /dev/null 2>&1 &',
     base_dir = '/usr/local/mysql';
+
+ALTER TABLE dbmp_mysql_instance_info
+    ADD UNIQUE KEY udx$mysql_instance_id(mysql_instance_id); 
