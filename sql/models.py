@@ -199,7 +199,7 @@ class DbmpMysqlInstance(models.Model):
     os_id = models.IntegerField()
     host = models.IntegerField()
     port = models.IntegerField()
-    username = models.CharField(max_length=30)
+    username = models.CharField(max_length=50)
     password = models.CharField(max_length=200)
     run_status = models.IntegerField()
     remark = models.CharField(max_length=50)
@@ -216,6 +216,8 @@ class DbmpMysqlInstanceInfo(models.Model):
     mysql_instance_info_id = models.AutoField(primary_key=True)
     mysql_instance_id = models.IntegerField()
     my_cnf_path = models.CharField(max_length=200)
+    base_dir = models.CharField(max_length=200)
+    start_cmd = models.CharField(max_length=200)
     create_time = models.DateTimeField()
     update_time = models.DateTimeField()
 

@@ -6,6 +6,7 @@
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
     <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/bootstrapvalidator/bootstrapValidator.min.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block app_title %}MySQL实例编辑{% endblock %}
@@ -58,13 +59,13 @@
     {% if cmdb_os %}
     <div id="os_row" class="row">
         <div class="col-md-4">
-            <strong>主机名:</strong> {{ cmdb_os.hostname }}
+            <strong>主机名：</strong> {{ cmdb_os.hostname }}
         </div>
         <div class="col-md-4">
-            <strong>IP地址:</strong> {{ cmdb_os.ip | f_num2ip }}
+            <strong>IP地址：</strong> {{ cmdb_os.ip | f_num2ip }}
         </div>
         <div class="col-md-4">
-            <strong>别名:</strong> {{ cmdb_os.alias }}
+            <strong>别名：</strong> {{ cmdb_os.alias }}
         </div>
     </div>
 
@@ -83,26 +84,133 @@
 <section id="mysql_instance">
     <h2 class="page-header">MySQL实例信息</h2>
 
-    <h4>&nbsp;</h4>
-    
-    <div class="row">
-        <div class="col-md-3 pull-right">
-            <a href="{{ request.environ.HTTP_REFERER }}" 
-               type="button" class="btn btn-default">
-                <i class="fa fa-times"></i>
-                取消
-            </a>
-            <button onclick="dbmp_mysql_instance_delete({{ dbmp_mysql_instance.mysql_instance_id }})"
-               type="button" class="btn btn-danger">
-                <i class="fa fa-trash"></i>
-                删除
-            </button>
-            <button type="submit" class="btn btn-success">
-                <i class="fa fa-save"></i>
-                保存
-            </button>
+
+    <form class="form-horizontal m-t" id="default_form">
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                链接 IP：
+            </label>
+            <div class="col-sm-8">
+                <input id="chost" name="host" type="text" class="form-control"
+                       value="{{ dbmp_mysql_instance.host | f_num2ip }}">
+            </div>
         </div>
-    </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                端口：
+            </label>
+            <div class="col-sm-8">
+                <input id="cport" name="port" type="number" class="form-control"
+                       value="{{ dbmp_mysql_instance.port }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                用户名：
+            </label>
+            <div class="col-sm-8">
+                <input id="cusername" name="username" 
+                       type="text" class="form-control" maxlength="50"
+                       value="{{ dbmp_mysql_instance.username }}">
+                <span class="help-block m-b-none">
+                     <i class="fa fa-info-circle text-success"></i> 
+                     该用户应该具备基本的管理MySQL权限(启动，关闭 等等)
+                </span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                密码：
+            </label>
+            <div class="col-sm-8">
+                <input id="cpassword" name="password" 
+                       type="text" class="form-control" maxlength="200"
+                       value="{{ dbmp_mysql_instance.password }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                备注：
+            </label>
+            <div class="col-sm-8">
+                <textarea id="cremark" name="remark" type="text" class="form-control">{{ dbmp_mysql_instance.remark }}</textarea>
+            </div>
+        </div>
+
+        <hr /> 
+        
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                配置文件路径：
+            </label>
+            <div class="col-sm-8">
+                <input id="dmy_cnf_path" name="my_cnf_path" 
+                       type="text" class="form-control" maxlength="200"
+                       value="{{ dbmp_mysql_instance_info.my_cnf_path }}">
+                <span class="help-block m-b-none">
+                    <i class="fa fa-info-circle text-success"></i> 
+                    如：/etc/my.cnf，/etc/my_3306.cnf
+                </span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                MySQL软件目录：
+            </label>
+            <div class="col-sm-8">
+                <input id="dbase_dir" name="base_dir" 
+                       type="text" class="form-control" maxlength="200"
+                       value="{{ dbmp_mysql_instance_info.base_dir }}">
+                <span class="help-block m-b-none">
+                    <i class="fa fa-info-circle text-success"></i>
+                    如：/usr/local/mysql
+                </span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                启动命令：
+            </label>
+            <div class="col-sm-8">
+                <input id="dstart_cmd" name="start_cmd" 
+                       type="text" class="form-control" maxlength="200"
+                       value="{{ dbmp_mysql_instance_info.start_cmd }}">
+                <span class="help-block m-b-none">
+                     <i class="fa fa-info-circle text-success"></i> 
+                     如：/bin/bash /usr/local/mysql/bin/mysqld_safe --defaults-file=/etc/my_3306.cnf > /dev/null 2>&1 &
+                </span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-4 col-sm-offset-3">
+                <a href="{{ request.environ.HTTP_REFERER }}" 
+                   type="button" class="btn btn-default">
+                    <i class="fa fa-times"></i>
+                    取消
+                </a>
+                <button onclick="dbmp_mysql_instance_delete({{ dbmp_mysql_instance.mysql_instance_id }})"
+                   type="button" class="btn btn-danger">
+                    <i class="fa fa-trash"></i>
+                    删除
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-save"></i>
+                    保存
+                </button>
+            </div>
+        </div>
+    </form>
 <section>
 {% endblock %}
 
@@ -110,6 +218,8 @@
 {% block js %}
     <script src="{% static 'js/content.min.js' %}"></script>
     <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+    <script src="{% static 'js/plugins/bootstrapvalidator/bootstrapValidator.min.js' %}"></script>
+    <script src="{% static 'js/plugins/bootstrapvalidator/language/zh_CN.js' %}"></script>
 
     <script>
         // 使用 Django csrf 功能
@@ -149,6 +259,109 @@
                 });
             });
         }
+
+        $(document).ready(function(){
+            $('#default_form').bootstrapValidator({
+                message: 'This value is not valid',
+                feedbackIcons: {
+                    valid: 'glyphicon glyphicon-ok',
+                    invalid: 'glyphicon glyphicon-remove',
+                    validating: 'glyphicon glyphicon-refresh'
+                },
+                fields: {
+                    host: {
+                        validators: {
+                            notEmpty: {
+                                message: '链接IP不能为空'
+                            },
+                            ip: {
+                                message: '链接IP格式有误'
+                            }
+                        }
+                    },
+                    port: {
+                        validators: {
+                            notEmpty: {
+                                message: '端口不能为空'
+                            },
+                            integer: {
+                                message: '端口必须数字'
+                            },
+                            between: {
+                                min: 1025,
+                                max: 65535,
+                                message: '端口必须在1025到65535之间'
+                            }
+                        }
+                    },
+                    username: {
+                        message: '用户名验证失败',
+                        validators: {
+                            notEmpty: {
+                                message: '用户名不能为空'
+                            },
+                            stringLength: {
+                                min: 1,
+                                max: 50,
+                                message: '用户名长度必须在1到50位之间'
+                            }
+                        }
+                    },
+                    password: {
+                        message: '密码验证失败',
+                        validators: {
+                            notEmpty: {
+                                message: '密码不能为空'
+                            },
+                            stringLength: {
+                                min: 5,
+                                max: 200,
+                                message: '密码长度必须在6到200位之间'
+                            }
+                        }
+                    },
+                    my_cnf_path: {
+                        message: '配置文件路径验证失败',
+                        validators: {
+                            notEmpty: {
+                                message: '配置文件路径不能为空'
+                            },
+                            stringLength: {
+                                min: 5,
+                                max: 200,
+                                message: '密码长度必须在6到200位之间'
+                            }
+                        }
+                    },
+                    base_dir: {
+                        message: 'MySQL软件所在目录验证失败',
+                        validators: {
+                            notEmpty: {
+                                message: 'MySQL软件所在目录不能为空'
+                            },
+                            stringLength: {
+                                min: 5,
+                                max: 200,
+                                message: 'MySQL软件所在目录长度必须在6到200位之间'
+                            }
+                        }
+                    },
+                    start_cmd: {
+                        message: 'MySQL实例启动命令验证失败',
+                        validators: {
+                            notEmpty: {
+                                message: 'MySQL实例启动命令不能为空'
+                            },
+                            stringLength: {
+                                min: 5,
+                                max: 200,
+                                message: 'MySQL实例启动命令长度必须在6到200位之间'
+                            }
+                        }
+                    }
+                }
+            });
+        });
         
     </script>
 {% endblock %}

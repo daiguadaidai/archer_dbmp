@@ -7,6 +7,7 @@ from common.util.pagination import Pagination
 from common.util.view_url_path import ViewUrlPath
 from dbmp.models.cmdb_os import CmdbOs
 from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
+from dbmp.models.dbmp_mysql_instance_info import DbmpMysqlInstanceInfo
 
 import simplejson as json
 
@@ -65,13 +66,18 @@ def edit(request):
 
         if mysql_instance_id:
             # 获取MySQL实例
-            mysql_instance = DbmpMysqlInstance.objects.get(
+            dbmp_mysql_instance = DbmpMysqlInstance.objects.get(
                                  mysql_instance_id = mysql_instance_id)
             
-            params['mysql_instance'] = mysql_instance
+            params['dbmp_mysql_instance'] = dbmp_mysql_instance
 
-            if mysql_instance:
-                cmdb_os = CmdbOs.objects.get(os_id = mysql_instance.os_id)
+            if dbmp_mysql_instance:
+
+                dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.get(
+                       mysql_instance_id = dbmp_mysql_instance.mysql_instance_id)
+                params['dbmp_mysql_instance_info'] = dbmp_mysql_instance_info
+
+                cmdb_os = CmdbOs.objects.get(os_id = dbmp_mysql_instance.os_id)
                 params['cmdb_os'] = cmdb_os
 
                 # 如果MySQL实例没有指定OS则告警

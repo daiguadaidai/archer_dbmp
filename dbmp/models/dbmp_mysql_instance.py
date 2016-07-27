@@ -19,7 +19,7 @@ class DbmpMysqlInstance(models.Model):
     os_id = models.IntegerField()
     host = models.IntegerField()
     port = models.IntegerField()
-    username = models.CharField(max_length=30)
+    username = models.CharField(max_length=50)
     password = models.CharField(max_length=200)
     run_status = models.IntegerField(choices=FieldDbmpMysqlInstance.run_status())
     remark = models.CharField(max_length=50)

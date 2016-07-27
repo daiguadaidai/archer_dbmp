@@ -306,7 +306,7 @@ CREATE TABLE `dbmp_mysql_instance` (
   `os_id` int(10) unsigned NOT NULL COMMENT '操作系统ID',
   `host` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '链接MySQL HOST',
   `port` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '链接MySQL PORT',
-  `username` varchar(30) NOT NULL DEFAULT '' COMMENT '管理MySQL用户名',
+  `username` varchar(50) NOT NULL DEFAULT '' COMMENT '管理MySQL用户名',
   `password` varchar(200) NOT NULL DEFAULT '' COMMENT '管理MySQL用户名密码，是个可逆的加密串',
   `run_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT 'MySQL运行状态:1、停止，2、运行中，3、未知',
   `remark` varchar(50) NOT NULL DEFAULT '' COMMENT '备注',
@@ -329,6 +329,8 @@ CREATE TABLE `dbmp_mysql_instance_info` (
   `mysql_instance_info_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'MySQL实例ID',
   `mysql_instance_id` int(10) unsigned NOT NULL COMMENT 'MySQL实例ID',
   `my_cnf_path` varchar(200) NOT NULL DEFAULT '' COMMENT 'my.cnf 文件路径',
+  `base_dir` varchar(200) NOT NULL DEFAULT '' COMMENT 'MySQL软件目录',
+  `start_cmd` varchar(200) NOT NULL DEFAULT '' COMMENT '启动MySQL命令',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_instance_info_id`),
@@ -417,4 +419,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-07-25 12:20:31
+-- Dump completed on 2016-07-27 17:00:02
