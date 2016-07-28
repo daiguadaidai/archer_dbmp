@@ -9,7 +9,7 @@ from common.util.view_url_path import ViewUrlPath
 from dbmp.models.cmdb_os import CmdbOs
 from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
 from dbmp.models.dbmp_mysql_instance_info import DbmpMysqlInstanceInfo
-from dbmp.views.forms.f_dbmp_mysql_instance import EditForm
+from dbmp.views.forms.form_dbmp_mysql_instance import EditForm
 
 import simplejson as json
 
@@ -134,6 +134,7 @@ def edit(request):
             return HttpResponseRedirect(request.environ['HTTP_REFERER'])
         else: # 表单验证失败
             print '--- valid failure ---'
+            print form
             return HttpResponseRedirect(request.environ['HTTP_REFERER'])
 
 def delete(request):
