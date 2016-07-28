@@ -84,9 +84,13 @@
 <section id="mysql_instance">
     <h2 class="page-header">MySQL实例信息</h2>
 
-
-    <form class="form-horizontal m-t" id="default_form">
-        <input id="cos_id" name="os_id" type="hidden" values="{{ dbmp_mysql_instance.os_id }}">
+    <form method="post" action="{% url 'dbmp_mysql_instance_edit' %}" class="form-horizontal m-t" id="default_form">
+        {% csrf_token %}
+        <input id="cos_id" name="os_id" type="hidden" value="{{ dbmp_mysql_instance.os_id }}" />
+        <input id="dmysql_instance_id" name="mysql_instance_id" type="hidden"
+               value="{{ dbmp_mysql_instance.mysql_instance_id }}" />
+        <input id="dmysql_instance_info_id" name="mysql_instance_info_id" type="hidden"
+               value="{{ dbmp_mysql_instance_info.mysql_instance_info_id }}" />
         <div class="form-group">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
@@ -200,6 +204,11 @@
                     <i class="fa fa-times"></i>
                     取消
                 </a>
+                <button
+                   type="button" class="btn btn-success">
+                    <i class="fa fa-link"></i>
+                    链接测试
+                </button>
                 <button onclick="dbmp_mysql_instance_delete({{ dbmp_mysql_instance.mysql_instance_id }})"
                    type="button" class="btn btn-danger">
                     <i class="fa fa-trash"></i>
@@ -261,6 +270,7 @@
             });
         }
 
+/*
         $(document).ready(function(){
             $('#default_form').bootstrapValidator({
                 message: 'This value is not valid',
@@ -363,6 +373,7 @@
                 }
             });
         });
+*/
         
     </script>
 {% endblock %}

@@ -55,69 +55,74 @@ class Pagination(object):
         find_objs_count_str = '{model_name}.objects.count()'.format(
                                                model_name = model_name)
         all_obj_counts = eval(find_objs_count_str)
-        all_page = all_obj_counts / one_page_data_size
-        remain_obj = all_obj_counts % one_page_data_size
-        if remain_obj > 0:
-            all_page += 1
 
-        # 限制当前页不能小于1和并且大于总页数
-        cur_page = 1 if cur_page < 1 else cur_page
-        cur_page = all_page if cur_page > all_page else cur_page
+        # 有数据才执行分页
+        if all_obj_counts:
+            all_page = all_obj_counts / one_page_data_size
+            remain_obj = all_obj_counts % one_page_data_size
+            if remain_obj > 0:
+                all_page += 1
 
-        # 计算分页开始和结束
-        start_pos = (cur_page - 1) * one_page_data_size  
-        end_pos = start_pos + one_page_data_size  
+            # 限制当前页不能小于1和并且大于总页数
+            cur_page = 1 if cur_page < 1 else cur_page
+            cur_page = all_page if cur_page > all_page else cur_page
 
-        # 查找需要的model数据
-        find_objs_str = ('{model_name}.objects.all()'
-                         '[{start_pos}:{end_pos}]'.format(
-                                               model_name = model_name,
-                                               start_pos = start_pos,
-                                               end_pos = end_pos))
-        objs = eval(find_objs_str)  
+            # 计算分页开始和结束
+            start_pos = (cur_page - 1) * one_page_data_size  
+            end_pos = start_pos + one_page_data_size  
+
+            # 查找需要的model数据
+            find_objs_str = ('{model_name}.objects.all()'
+                             '[{start_pos}:{end_pos}]'.format(
+                                                   model_name = model_name,
+                                                   start_pos = start_pos,
+                                                   end_pos = end_pos))
+            objs = eval(find_objs_str)  
   
-        # 获得显示页数的最小页
-        start_page = cur_page - show_page_item_len / 2
-        if start_page > all_page - show_page_item_len:
-            start_page = all_page - show_page_item_len + 1
-        start_page = 1 if start_page < 1 else start_page
+            # 获得显示页数的最小页
+            start_page = cur_page - show_page_item_len / 2
+            if start_page > all_page - show_page_item_len:
+                start_page = all_page - show_page_item_len + 1
+            start_page = 1 if start_page < 1 else start_page
 
-        # 获得显示页数的最大页
-        end_page = cur_page + show_page_item_len / 2
-        end_page = all_page if end_page > all_page else end_page
-        if end_page < show_page_item_len and all_page > show_page_item_len:
-            end_page = show_page_item_len
+            # 获得显示页数的最大页
+            end_page = cur_page + show_page_item_len / 2
+            end_page = all_page if end_page > all_page else end_page
+            if end_page < show_page_item_len and all_page > show_page_item_len:
+                end_page = show_page_item_len
 
-        # 获得上一页
-        pre_page = cur_page - 1
-        pre_page = 1 if pre_page < 1 else pre_page
+            # 获得上一页
+            pre_page = cur_page - 1
+            pre_page = 1 if pre_page < 1 else pre_page
 
-        # 获得下一页
-        next_page = cur_page + 1
-        next_page = all_page if next_page > all_page else next_page
+            # 获得下一页
+            next_page = cur_page + 1
+            next_page = all_page if next_page > all_page else next_page
 
-        # 处理省略符，是否显示
-        if start_page <= 1:
-            start_page_omit_symbol = ''
-        
-        if end_page >= all_page:
-            end_page_omit_symbol = ''
+            # 处理省略符，是否显示
+            if start_page <= 1:
+                start_page_omit_symbol = ''
+            
+            if end_page >= all_page:
+                end_page_omit_symbol = ''
 
-        # 创建能点击的展示页码
-        page_items = range(start_page, end_page + 1)
+            # 创建能点击的展示页码
+            page_items = range(start_page, end_page + 1)
 
-        pagination = {
-            'objs': objs,
-            'all_obj_counts': all_obj_counts,
-            'start_pos': start_pos,
-            'end_pos': end_pos,
-            'all_page': all_page,
-            'cur_page': cur_page,
-            'pre_page': pre_page,
-            'next_page': next_page,
-            'page_items': page_items,
-            'start_page_omit_symbol': start_page_omit_symbol,
-            'end_page_omit_symbol': end_page_omit_symbol,
-        }
+            pagination = {
+                'objs': objs,
+                'all_obj_counts': all_obj_counts,
+                'start_pos': start_pos,
+                'end_pos': end_pos,
+                'all_page': all_page,
+                'cur_page': cur_page,
+                'pre_page': pre_page,
+                'next_page': next_page,
+                'page_items': page_items,
+                'start_page_omit_symbol': start_page_omit_symbol,
+                'end_page_omit_symbol': end_page_omit_symbol,
+            }
+        else: # 没有数据放回 None
+            pagination = None
 
         return pagination

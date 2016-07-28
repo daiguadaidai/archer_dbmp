@@ -2,6 +2,7 @@
 
 {% load staticfiles %}
 {% load ip_filters %}
+{% load filters_dbmp_mysql_instance %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
@@ -56,7 +57,11 @@
                     悬停显示
                 </a>
             </td>
-            <td class="text-center">{{ dbmp_mysql_instance.run_status }}</td>
+            <td class="text-center">
+                <span class="label label-{{ dbmp_mysql_instance.run_status | f_run_status_color }}">
+                    {{ dbmp_mysql_instance.run_status | f_run_status }}
+                </span>
+            </td>
             <td class="text-center">
                 <a onclick="dbmp_mysql_instance_delete({{ dbmp_mysql_instance.mysql_instance_id }}, {{ pagination.cur_page }})"
                    type="button" class="btn btn-danger">
@@ -107,7 +112,7 @@
 <!-- 这里是分页页码 -->
 <div class="btn-group">
     <!-- 第一页, 上一页 -->
-    {% if pagination.cur_page != 1 %}
+    {% if pagination.cur_page != 1 and pagination %}
         <a type="button" class="btn btn-primary btn-outline" href="?cur_page=1">
             <i class="fa fa-angle-double-left"></i>
         </a>
@@ -140,7 +145,7 @@
     {% endif %}
     
     <!-- 下一页, 最后一页 -->
-    {% if pagination.cur_page != pagination.all_page %}
+    {% if pagination.cur_page != pagination.all_page and pagination %}
         <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.next_page }}">
             <i class="fa fa-angle-right"></i>
         </a>

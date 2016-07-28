@@ -24,7 +24,7 @@ class IpTool(object):
         if isinstance(num, int) or isinstance(num, long):
             return socket.inet_ntoa(struct.pack('I', socket.htonl(num)))
         else:
-            return None
+            return ''
 
     @classmethod
     def ip2num(self, ip):

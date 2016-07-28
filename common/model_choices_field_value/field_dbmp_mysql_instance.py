@@ -8,10 +8,20 @@ class FieldDbmpMysqlInstance(object):
 
     @classmethod
     def run_status(self):
-        """使用备份工具"""
+        """MySQL实例正在运行状态"""
         value = (
             (1, '已停止'),
             (2, '运行中'),
             (3, '未知'),
+        )
+        return value
+
+    @classmethod
+    def run_status_color(self):
+        """MySQL实例正在运行状态 对应显示的颜色"""
+        value = (
+            (1, 'danger'),
+            (2, 'success'),
+            (3, 'warning'),
         )
         return value
