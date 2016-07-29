@@ -61,7 +61,6 @@ def view(request):
 
 @DecoratorTool.get_request_alert_message
 def edit(request):
-    print request.session['alert_message_now']
     params = {}
 
     ####################################################################
@@ -133,7 +132,6 @@ def edit(request):
 
             try:
                 with transaction.atomic():
-                    print '------ 事务开始 ------'
                     # 更新DbmpMysqlInstance
                     DbmpMysqlInstance.objects.filter(
                         mysql_instance_id = mysql_instance_id).update(
@@ -157,8 +155,6 @@ def edit(request):
                                             my_cnf_path = my_cnf_path,
                                             base_dir = base_dir,
                                             start_cmd = start_cmd)
-                    
-                    print '------ 事务结束 ------'
                 # 保存成功转跳到View页面
                 request.session['success_msg'].append('修改成功')
                 # view_url = '{base_url}/view/?mysql_instance_id={id}'.format(
@@ -166,7 +162,6 @@ def edit(request):
                 #                   mysql_instance_id = mysql_instance_id)
                 return HttpResponseRedirect(request.environ['HTTP_REFERER'])
             except IntegrityError, e:
-                print '------ IntegrityError ------'
                 request.session['danger_msg'].append('编辑失败')
                 if e.args[0] == 1062:
                     request.session['danger_msg'].append('需要修改的相关信息重复')
