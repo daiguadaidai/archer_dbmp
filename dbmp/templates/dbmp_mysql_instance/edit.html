@@ -270,8 +270,8 @@
             });
         }
 
-/*
         $(document).ready(function(){
+            // 表单验证
             $('#default_form').bootstrapValidator({
                 message: 'This value is not valid',
                 feedbackIcons: {
@@ -331,6 +331,15 @@
                             }
                         }
                     },
+                    remark: {
+                        message: '备注验证失败',
+                        validators: {
+                            stringLength: {
+                                max: 200,
+                                message: '备注长度必须在0到200位之间'
+                            }
+                        }
+                    },
                     my_cnf_path: {
                         message: '配置文件路径验证失败',
                         validators: {
@@ -373,7 +382,6 @@
                 }
             });
         });
-*/
         
     </script>
 {% endblock %}

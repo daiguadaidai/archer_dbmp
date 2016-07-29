@@ -60,10 +60,69 @@
             <div class="ibox-content">
             <!-- alert 标签模块 -->
             {% block alert_tag %}
-                {% if message.code and message.msg %}
-                <div class="row alert alert-{{ message.code }}">
+                <!-- alert default message -->
+                {% if request.session.alert_message_now.default_msg %}
+                <div class="row alert alert-{{ request.session.alert_message_now.default_code }}">
                     <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
-                    {{ message.msg }}
+                    <p><strong>[消息]</strong></p>
+                    {% for msg in request.session.alert_message_now.default_msg %}
+                        <p>{{ forloop.counter }}.{{ msg }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- alert primary message -->
+                {% if request.session.alert_message_now.primary_msg %}
+                <div class="row alert alert-{{ request.session.alert_message_now.primary_code }}">
+                    <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                    <p><strong>[消息]</strong></p>
+                    {% for msg in request.session.alert_message_now.primary_msg %}
+                        <p>{{ forloop.counter }}.{{ msg }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- alert info message -->
+                {% if request.session.alert_message_now.info_msg %}
+                <div class="row alert alert-{{ request.session.alert_message_now.info_code }}">
+                    <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                    <p><strong>[消息]</strong></p>
+                    {% for msg in request.session.alert_message_now.info_msg %}
+                        <p>{{ forloop.counter }}.{{ msg }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- alert success message -->
+                {% if request.session.alert_message_now.success_msg %}
+                <div class="row alert alert-{{ request.session.alert_message_now.success_code }}">
+                    <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                    <p><strong>[成功]</strong></p>
+                    {% for msg in request.session.alert_message_now.success_msg %}
+                        <p>{{ forloop.counter }}.{{ msg }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- alert wraning message -->
+                {% if request.session.alert_message_now.warning_msg %}
+                <div class="row alert alert-{{ request.session.alert_message_now.warning_code }}">
+                    <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                    <p><strong>[警告]</strong></p>
+                    {% for msg in request.session.alert_message_now.warning_msg %}
+                        <p>{{ forloop.counter }}.{{ msg }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- alert danger message -->
+                {% if request.session.alert_message_now.danger_msg %}
+                <div class="row alert alert-{{ request.session.alert_message_now.danger_code }}">
+                    <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                    <p><strong>[错误]</strong></p>
+                    {% for msg in request.session.alert_message_now.danger_msg %}
+                        <p>{{ forloop.counter }}.{{ msg }}</p>
+                    {% endfor %}
                 </div>
                 {% endif %}
             {% endblock %}
