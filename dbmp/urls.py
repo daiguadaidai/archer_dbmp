@@ -21,6 +21,7 @@ urlpatterns = [
     url(r'^dbmp_mysql_instance/index/$', dbmp_mysql_instance.index, name='dbmp_mysql_instance_index'),
     url(r'^dbmp_mysql_instance/add/$', dbmp_mysql_instance.add, name='dbmp_mysql_instance_add'),
     url(r'^dbmp_mysql_instance/edit/$', dbmp_mysql_instance.edit, name='dbmp_mysql_instance_edit'),
+    url(r'^dbmp_mysql_instance/view/$', dbmp_mysql_instance.view, name='dbmp_mysql_instance_view'),
     url(r'^dbmp_mysql_instance/delete/$', dbmp_mysql_instance.delete, name='dbmp_mysql_instance_delete'),
     url(r'^dbmp_mysql_instance/ajax_delete/$', dbmp_mysql_instance.ajax_delete, name='dbmp_mysql_instance_ajax_delete'),
 ]

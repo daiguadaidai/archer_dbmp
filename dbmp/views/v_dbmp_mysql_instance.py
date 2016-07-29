@@ -56,10 +56,6 @@ def add(request):
     pass
 
 @DecoratorTool.get_request_alert_message
-def view(request):
-    pass
-
-@DecoratorTool.get_request_alert_message
 def edit(request):
     params = {}
 
@@ -157,10 +153,11 @@ def edit(request):
                                             start_cmd = start_cmd)
                 # 保存成功转跳到View页面
                 request.session['success_msg'].append('修改成功')
-                # view_url = '{base_url}/view/?mysql_instance_id={id}'.format(
-                #                   base_url = ViewUrlPath.path_dbmp_mysql_instance,
-                #                   mysql_instance_id = mysql_instance_id)
-                return HttpResponseRedirect(request.environ['HTTP_REFERER'])
+                view_url = '{base_url}/view/?mysql_instance_id={id}'.format(
+                                base_url = ViewUrlPath.path_dbmp_mysql_instance(),
+                                id = mysql_instance_id)
+                print view_url
+                return HttpResponseRedirect(view_url)
             except IntegrityError, e:
                 request.session['danger_msg'].append('编辑失败')
                 if e.args[0] == 1062:
@@ -172,11 +169,58 @@ def edit(request):
                 # import traceback
                 # print traceback.format_exc()
                 # 保存失败转跳会原页面
-                request.session['danger_msg'].append('编辑失败')
+                request.session['danger_msg'].append('编辑失败, 保存数据库错误')
                 return HttpResponseRedirect(request.environ['HTTP_REFERER'])
         else: # 表单验证失败
-            request.session['danger_msg'].append('编辑失败')
+            request.session['danger_msg'].append('编辑失败, 表单验证失败')
             request.session['form_danger_message'] = form.errors
+            return HttpResponseRedirect(request.environ['HTTP_REFERER'])
+
+@DecoratorTool.get_request_alert_message
+def view(request):
+    params = {}
+
+    ####################################################################
+    # GET 请求
+    ####################################################################
+    # 点击链接转跳到编辑页面
+    if request.method == 'GET':
+        # 获取MySQL实例ID
+        mysql_instance_id = int(request.GET.get('mysql_instance_id', '0'))  
+
+        if mysql_instance_id:
+            try:
+                # 1.获取MySQL实例
+                dbmp_mysql_instance = DbmpMysqlInstance.objects.get(
+                                     mysql_instance_id = mysql_instance_id)
+                params['dbmp_mysql_instance'] = dbmp_mysql_instance
+
+                # 2.获得MySQL实例额外信息
+                try:
+                    dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.get(
+                           mysql_instance_id = dbmp_mysql_instance.mysql_instance_id)
+                    params['dbmp_mysql_instance_info'] = dbmp_mysql_instance_info
+                except DbmpMysqlInstanceInfo.DoesNotExist:
+                    request.session['alert_message_now']['warning_msg'].append(
+                                                       '该MySQL实例信息设置不完整')
+
+                # 3.获得操作系统
+                try:
+                    cmdb_os = CmdbOs.objects.get(os_id = dbmp_mysql_instance.os_id)
+                    params['cmdb_os'] = cmdb_os
+                except CmdbOs.DoesNotExist:
+                    # 如果MySQL实例没有指定OS则告警
+                    request.session['alert_message_now']['wraning_msg'].append(
+                                                        '该MySQL实例没有指定一个OS')
+
+                return render(request, 'dbmp_mysql_instance/view.html', params)
+            except DbmpMysqlInstance.DoesNotExist:
+                # 返回点击编辑页面
+                request.session['danger_msg'].append('对不起! 找不到指定的MySQL实例')
+                return HttpResponseRedirect(request.environ['HTTP_REFERER'])
+        else:
+            request.session['danger_msg'] = '对不起! 找不到指定的MySQL实例!'
+            # 返回点击编辑页面
             return HttpResponseRedirect(request.environ['HTTP_REFERER'])
 
 @DecoratorTool.get_request_alert_message
