@@ -51,3 +51,26 @@ class DecoratorTool(object):
             return func(request)
 
         return warpper
+
+    @classmethod
+    def clean_alert_message(self, func):
+        """获得请求的alter信息"""
+        def warpper(request):
+            request.session['alert_message_now'] = {}
+
+            request.session['default_code'] = 'default'
+            request.session['default_msg'] = []
+            request.session['primary_code'] = 'primary'
+            request.session['primary_msg'] = []
+            request.session['warning_code'] = 'warning'
+            request.session['warning_msg'] = []
+            request.session['info_code'] = 'info'
+            request.session['info_msg'] = []
+            request.session['danger_code'] = 'danger'
+            request.session['danger_msg'] = []
+            request.session['success_code'] = 'success'
+            request.session['success_msg'] = [] 
+
+            return func(request)
+
+        return warpper

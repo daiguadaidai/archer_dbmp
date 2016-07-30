@@ -23,8 +23,8 @@ class DbmpMysqlInstance(models.Model):
     password = models.CharField(max_length=200)
     run_status = models.IntegerField(choices=FieldDbmpMysqlInstance.run_status())
     remark = models.CharField(max_length=50)
-    create_time = models.DateTimeField()
-    update_time = models.DateTimeField()
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         """Java toString 方法"""

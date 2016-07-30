@@ -9,7 +9,7 @@
     <link href="{% static 'css/plugins/bootstrapvalidator/bootstrapValidator.min.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block app_title %}MySQL实例编辑{% endblock %}
+{% block app_title %}MySQL实例添加{% endblock %}
 
 <!-- 其他元素模块 -->
 {% block top_element %}
@@ -36,17 +36,6 @@
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="row fontawesome-icon-list">
-            <!-- 添加MySQL实例按钮 -->
-            <div class="fa-hover col-md-10">
-                <a href="{% url 'dbmp_mysql_instance_add' %}">
-                    <i class="fa fa-plus-square"></i>
-                    添加实例
-                </a>
-            </div>
-        </div>
-    </div>
 </div>
 
 {% endblock %}
@@ -56,16 +45,15 @@
 <!-- OS 信息 -->
 <section id="os_section">
     <h2 class="page-header">操作系统信息</h2>
-    {% if cmdb_os %}
     <div id="os_row" class="row">
         <div id="chostname" class="col-md-4">
-            <strong>主机名：</strong> {{ cmdb_os.hostname }}
+            <strong>主机名：</strong> 
         </div>
         <div id="cip" class="col-md-4">
-            <strong>IP地址：</strong> {{ cmdb_os.ip | f_num2ip }}
+            <strong>IP地址：</strong> 
         </div>
         <div id="calias" class="col-md-4">
-            <strong>别名：</strong> {{ cmdb_os.alias }}
+            <strong>别名：</strong> 
         </div>
     </div>
 
@@ -74,23 +62,18 @@
     <div class="row">
         <div class="col-md-3">
             <a id="os_list"><i class="fa fa-object-ungroup"></i>
-                替换OS
+                选择OS
             </a>
         </div>
     </div>
-    {% endif %}
 <section>
 
 <section id="mysql_instance">
     <h2 class="page-header">MySQL实例信息</h2>
 
-    <form method="post" action="{% url 'dbmp_mysql_instance_edit' %}" class="form-horizontal m-t" id="default_form">
+    <form method="post" action="{% url 'dbmp_mysql_instance_add' %}" class="form-horizontal m-t" id="default_form">
         {% csrf_token %}
-        <input id="cos_id" name="os_id" type="hidden" value="{{ dbmp_mysql_instance.os_id }}" />
-        <input id="dmysql_instance_id" name="mysql_instance_id" type="hidden"
-               value="{{ dbmp_mysql_instance.mysql_instance_id }}" />
-        <input id="dmysql_instance_info_id" name="mysql_instance_info_id" type="hidden"
-               value="{{ dbmp_mysql_instance_info.mysql_instance_info_id }}" />
+        <input id="cos_id" name="os_id" type="hidden" />
         <div class="form-group">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
@@ -98,7 +81,7 @@
             </label>
             <div class="col-sm-8">
                 <input id="chost" name="host" type="text" class="form-control"
-                       value="{{ dbmp_mysql_instance.host | f_num2ip }}">
+                       value="{% if form.host.value %}{{ form.host.value }}{% endif %}">
             </div>
         </div>
         <div class="form-group">
@@ -108,7 +91,7 @@
             </label>
             <div class="col-sm-8">
                 <input id="cport" name="port" type="number" class="form-control"
-                       value="{{ dbmp_mysql_instance.port }}">
+                       value="{% if form.port.value %}{{ form.port.value }}{% endif %}">
             </div>
         </div>
 
@@ -120,7 +103,7 @@
             <div class="col-sm-8">
                 <input id="cusername" name="username" 
                        type="text" class="form-control" maxlength="50"
-                       value="{{ dbmp_mysql_instance.username }}">
+                       value="{% if form.username.value %}{{ form.username.value }}{% endif %}">
                 <span class="help-block m-b-none">
                      <i class="fa fa-info-circle text-success"></i> 
                      该用户应该具备基本的管理MySQL权限(启动，关闭 等等)
@@ -135,7 +118,7 @@
             <div class="col-sm-8">
                 <input id="cpassword" name="password" 
                        type="text" class="form-control" maxlength="200"
-                       value="{{ dbmp_mysql_instance.password }}">
+                       value="{% if form.password.value %}{{ form.password.value }}{% endif %}">
             </div>
         </div>
         <div class="form-group">
@@ -143,7 +126,7 @@
                 备注：
             </label>
             <div class="col-sm-8">
-                <textarea id="cremark" name="remark" type="text" class="form-control">{{ dbmp_mysql_instance.remark }}</textarea>
+                <textarea id="cremark" name="remark" type="text" class="form-control">{% if form.remark.value %}{{ form.remark.value }}{% endif %}</textarea>
             </div>
         </div>
 
@@ -157,7 +140,7 @@
             <div class="col-sm-8">
                 <input id="dmy_cnf_path" name="my_cnf_path" 
                        type="text" class="form-control" maxlength="200"
-                       value="{{ dbmp_mysql_instance_info.my_cnf_path }}">
+                       value="{% if form.my_cnf_path.value %}{{ form.my_cnf_path.value }}{% endif %}">
                 <span class="help-block m-b-none">
                     <i class="fa fa-info-circle text-success"></i> 
                     如：/etc/my.cnf，/etc/my_3306.cnf
@@ -173,7 +156,7 @@
             <div class="col-sm-8">
                 <input id="dbase_dir" name="base_dir" 
                        type="text" class="form-control" maxlength="200"
-                       value="{{ dbmp_mysql_instance_info.base_dir }}">
+                       value="{% if form.base_dir.value %}{{ form.base_dir.value }}{% endif %}">
                 <span class="help-block m-b-none">
                     <i class="fa fa-info-circle text-success"></i>
                     如：/usr/local/mysql
@@ -189,7 +172,7 @@
             <div class="col-sm-8">
                 <input id="dstart_cmd" name="start_cmd" 
                        type="text" class="form-control" maxlength="200"
-                       value="{{ dbmp_mysql_instance_info.start_cmd }}">
+                       value="{% if form.start_cmd.value %}{{ form.start_cmd.value }}{% endif %}">
                 <span class="help-block m-b-none">
                      <i class="fa fa-info-circle text-success"></i> 
                      如：/bin/bash /usr/local/mysql/bin/mysqld_safe --defaults-file=/etc/my_3306.cnf > /dev/null 2>&1 &
@@ -208,11 +191,6 @@
                    type="button" class="btn btn-success">
                     <i class="fa fa-link"></i>
                     链接测试
-                </button>
-                <button onclick="dbmp_mysql_instance_delete({{ dbmp_mysql_instance.mysql_instance_id }})"
-                   type="button" class="btn btn-danger">
-                    <i class="fa fa-trash"></i>
-                    删除
                 </button>
                 <button type="submit" class="btn btn-primary">
                     <i class="fa fa-save"></i>
@@ -235,40 +213,6 @@
     <script>
         // 使用 Django csrf 功能
         $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
-
-        //删除 dbmp_mysql_instance
-        function dbmp_mysql_instance_delete(mysql_instance_id) {
-            $(".confirm").unbind("click");
-            swal({
-                title: "您确定要删除这条信息吗?",
-                text: "删除后将无法恢复，请谨慎操作！",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "删除",
-                closeOnConfirm: false
-            }, function () {
-                $.ajax({
-                    url: "{% url 'dbmp_mysql_instance_ajax_delete' %}",
-                    type: "POST",
-                    dataType: "json",
-                    data: {
-                        mysql_instance_id: mysql_instance_id
-                    }
-                }).done(function(data) { 
-                    if(data == true) {
-                        swal("删除成功!", "已成功删除数据！", "success");
-                        $(".confirm").click(function(){
-                            location.href="{% url 'dbmp_mysql_instance_index' %}"
-                        });
-                    } else {
-                        swal("对不起!", "删除数据失败了!", "error");
-                    }
-                }).error(function(data) { 
-                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
-                });
-            });
-        }
 
         $(document).ready(function(){
             // 弹出OS信息 iframe
@@ -392,7 +336,8 @@
                         }
                     }
                 }
-            });
+            }); //结束表单验证
+
         });
         
     </script>

@@ -24,4 +24,5 @@ urlpatterns = [
     url(r'^dbmp_mysql_instance/view/$', dbmp_mysql_instance.view, name='dbmp_mysql_instance_view'),
     url(r'^dbmp_mysql_instance/delete/$', dbmp_mysql_instance.delete, name='dbmp_mysql_instance_delete'),
     url(r'^dbmp_mysql_instance/ajax_delete/$', dbmp_mysql_instance.ajax_delete, name='dbmp_mysql_instance_ajax_delete'),
+    url(r'^dbmp_mysql_instance/iframe_os_list/$', dbmp_mysql_instance.iframe_os_list, name='dbmp_mysql_instance_iframe_os_list'),
 ]
