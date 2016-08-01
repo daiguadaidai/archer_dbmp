@@ -12,6 +12,9 @@ from common.util.decorator_tool import DecoratorTool
 from dbmp.models.cmdb_os import CmdbOs
 from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
 from dbmp.models.dbmp_mysql_instance_info import DbmpMysqlInstanceInfo
+from dbmp.models.dbmp_mysql_backup_info import DbmpMysqlBackupInfo
+from dbmp.models.dbmp_mysql_backup_instance import DbmpMysqlBackupInstance
+from dbmp.models.dbmp_mysql_backup_remote import DbmpMysqlBackupRemote
 from dbmp.views.forms.form_dbmp_mysql_instance import AddForm
 from dbmp.views.forms.form_dbmp_mysql_instance import EditForm
 
@@ -160,7 +163,7 @@ def edit(request):
                     params['dbmp_mysql_instance_info'] = dbmp_mysql_instance_info
                 except DbmpMysqlInstanceInfo.DoesNotExist:
                     request.session['alert_message_now']['warning_msg'].append(
-                                                       '该MySQL实例信息设置不完整')
+                                                       '该MySQL实例信息设置不完整, 请进行编辑')
 
                 # 3.获得操作系统
                 try:
@@ -237,7 +240,6 @@ def edit(request):
                 view_url = '{base_url}/view/?mysql_instance_id={id}'.format(
                                 base_url = ViewUrlPath.path_dbmp_mysql_instance(),
                                 id = mysql_instance_id)
-                print view_url
                 return HttpResponseRedirect(view_url)
             except IntegrityError, e:
                 logger.info(traceback.format_exc())
@@ -282,8 +284,10 @@ def view(request):
                            mysql_instance_id = dbmp_mysql_instance.mysql_instance_id)
                     params['dbmp_mysql_instance_info'] = dbmp_mysql_instance_info
                 except DbmpMysqlInstanceInfo.DoesNotExist:
-                    request.session['alert_message_now']['warning_msg'].append(
-                                                       '该MySQL实例信息设置不完整')
+                    edit_url = '{base_url}/edit/?mysql_instance_id={id}'.format(
+                                    base_url = ViewUrlPath.path_dbmp_mysql_instance(),
+                                    id = mysql_instance_id)
+                    return HttpResponseRedirect(edit_url)
 
                 # 3.获得操作系统
                 try:
@@ -291,9 +295,10 @@ def view(request):
                     params['cmdb_os'] = cmdb_os
                 except CmdbOs.DoesNotExist:
                     logger.info(traceback.format_exc())
-                    # 如果MySQL实例没有指定OS则告警
-                    request.session['alert_message_now']['wraning_msg'].append(
-                                                        '该MySQL实例没有指定一个OS')
+                    edit_url = '{base_url}/edit/?mysql_instance_id={id}'.format(
+                                    base_url = ViewUrlPath.path_dbmp_mysql_instance(),
+                                    id = mysql_instance_id)
+                    return HttpResponseRedirect(edit_url)
 
                 return render(request, 'dbmp_mysql_instance/view.html', params)
             except DbmpMysqlInstance.DoesNotExist:
@@ -318,9 +323,27 @@ def ajax_delete(request):
     if request.method == 'POST':
         mysql_instance_id = int(request.POST.get('mysql_instance_id', '0'))  
         if mysql_instance_id:
-            DbmpMysqlInstance.objects.filter(
-                            mysql_instance_id = mysql_instance_id).delete()
-            is_delete = True
+            try:
+                with transaction.atomic():
+                    DbmpMysqlInstance.objects.filter(
+                                mysql_instance_id = mysql_instance_id).delete()
+                    logger.info('delete DbmpMysqlInstance')
+                    DbmpMysqlInstanceInfo.objects.filter(
+                                mysql_instance_id = mysql_instance_id).delete()
+                    logger.info('delete DbmpMysqlInstanceInfo')
+                    DbmpMysqlBackupInstance.objects.filter(
+                                mysql_instance_id = mysql_instance_id).delete()
+                    logger.info('delete DbmpMysqlBackupInfo')
+                    DbmpMysqlBackupInfo.objects.filter(
+                                mysql_instance_id = mysql_instance_id).delete()
+                    logger.info('delete DbmpMysqlBackupInfo')
+                    DbmpMysqlBackupRemote.objects.filter(
+                                mysql_instance_id = mysql_instance_id).delete()
+                    logger.info('delete DbmpMysqlBackupInfo')
+
+                is_delete = True
+            except Exception, e:
+                logger.info(traceback.format_exc())
 
     respons_data = json.dumps(is_delete)
     return HttpResponse(respons_data, content_type='application/json')

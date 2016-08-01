@@ -73,7 +73,8 @@
                     <i class="fa fa-edit"></i>
                     编辑
                 </a>
-                <a href="#" type="button" class="btn btn-info">
+                <a href="{% url 'dbmp_mysql_instance_view' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}" 
+                   type="button" class="btn btn-info">
                     <i class="fa fa-eye"></i>
                     查看
                 </a>

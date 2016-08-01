@@ -35,9 +35,9 @@ def ajax_mysql_is_alived(request):
             except CmdbOs.DoesNotExist:
                 logger.info(traceback.format_exc())
 
-
         if (cmdb_os and mysql_host and mysql_port and mysql_user
                     and mysql_password and mysql_base_dir):
+
 
 
             # 获得操作系统

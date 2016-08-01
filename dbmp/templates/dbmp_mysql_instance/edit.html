@@ -281,13 +281,28 @@
                 mysql_base_dir = $('#dbase_dir').val();
                 os_id = $('#cos_id').val();
 
-                text = '<div class="row">';
-                text += '<strong>操作系统ID:</strong> ' + os_id;
-                text += '<strong>MySQL 连接:</strong> ' + mysql_host;
-                text += '<strong>MySQL 端口:</strong> ' + mysql_port;
-                text += '<strong>MySQL 用户:</strong> ' + mysql_user;
-                text += '<strong>MySQL 密码:</strong> ' + mysql_password;
-                text += '<strong>MySQL 软件路径:</strong> ' + mysql_base_dir;
+                text = '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;操作系统ID: <code class="text-primary">' + os_id + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 连接: <code class="text-primary">' + mysql_host + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 端口: <code class="text-primary">' + mysql_port + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 用户: <code class="text-primary">' + mysql_user + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 密码: <code class="text-primary">' + mysql_password + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 软件路径: <code class="text-primary">' + mysql_base_dir + '</code>';
                 text += '</div>';
 
 
