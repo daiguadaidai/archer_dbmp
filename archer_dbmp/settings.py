@@ -117,16 +117,26 @@ STATICFILES_DIRS = (
 )
 
 # 开启debug
-"""
 LOGGING = {  
-    'disable_existing_loggers': False,  
+    'disable_existing_loggers': True,  
     'version': 1,  
+    'formatters': {
+        'standard': {
+            'format': '%(levelname)s %(asctime)s %(message)s'
+        },
+    },
     'handlers': {  
         'console': {  
             # logging handler that outputs log messages to terminal  
             'class': 'logging.StreamHandler',  
             'level': 'DEBUG', # message level to be written to console  
-        },  
+        },
+        'default': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename':'logs/default.log',
+            'formatter':'standard',
+        },
     },  
     'loggers': {  
         '': {  
@@ -140,7 +150,11 @@ LOGGING = {
         },  
         'django.db': {  
             # django also has database level logging  
-        },  
+        },
+        'default':{
+            'handlers': ['default'],
+            'level': 'INFO',
+            'propagate': False
+        },
     },  
 }
-"""

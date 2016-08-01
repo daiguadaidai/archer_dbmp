@@ -204,8 +204,7 @@
                     <i class="fa fa-times"></i>
                     取消
                 </a>
-                <button
-                   type="button" class="btn btn-success">
+                <button id="test_mysql_alived" type="button" class="btn btn-success">
                     <i class="fa fa-link"></i>
                     链接测试
                 </button>
@@ -271,6 +270,62 @@
         }
 
         $(document).ready(function(){
+
+            // 测试MySQL连接是否正常
+            $('#test_mysql_alived').on('click', function() {
+
+                mysql_host = $('#chost').val();
+                mysql_port = $('#cport').val();
+                mysql_user = $('#cusername').val();
+                mysql_password = $('#cpassword').val();
+                mysql_base_dir = $('#dbase_dir').val();
+                os_id = $('#cos_id').val();
+
+                text = '<div class="row">';
+                text += '<strong>操作系统ID:</strong> ' + os_id;
+                text += '<strong>MySQL 连接:</strong> ' + mysql_host;
+                text += '<strong>MySQL 端口:</strong> ' + mysql_port;
+                text += '<strong>MySQL 用户:</strong> ' + mysql_user;
+                text += '<strong>MySQL 密码:</strong> ' + mysql_password;
+                text += '<strong>MySQL 软件路径:</strong> ' + mysql_base_dir;
+                text += '</div>';
+
+
+                swal({
+                    title: "连接信息如下",
+                    text: text,
+                    type: "warning",
+                    html: true,
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "测试",
+                    closeOnConfirm: false
+                }, function () {
+                    $.ajax({
+                        url: "{% url 'dbmp_mysql_handler_ajax_mysql_is_alived' %}",
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            mysql_host: mysql_host,
+                            mysql_port: mysql_port,
+                            mysql_user: mysql_user,
+                            mysql_password: mysql_password,
+                            mysql_base_dir: mysql_base_dir,
+                            os_id: os_id
+                        }
+                    }).done(function(data) { 
+                        if(data == true) {
+                            swal("连接成功!", "该链接可以使用！", "success");
+                        } else {
+                            swal("连接失败!", "请确认，连接参数是否正确!", "error");
+                        }
+                    }).error(function(data) { 
+                        swal("连接失败!", "估计服务器内部出现了错误!", "error");
+                    });
+                });
+            });
+
+
             // 弹出OS信息 iframe
             $('#os_list').on('click', function(){
                 layer.open({

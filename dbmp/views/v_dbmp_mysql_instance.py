@@ -16,6 +16,10 @@ from dbmp.views.forms.form_dbmp_mysql_instance import AddForm
 from dbmp.views.forms.form_dbmp_mysql_instance import EditForm
 
 import simplejson as json
+import traceback
+import logging
+
+logger = logging.getLogger('default')
 
 # Create your views here.
 
@@ -55,11 +59,8 @@ def add(request):
     if request.method == 'GET':
         form = AddForm()
         params['form'] = form
-        print form
 
         return render(request, 'dbmp_mysql_instance/add.html', params)
-
-
 
 
     ####################################################################
@@ -110,6 +111,7 @@ def add(request):
 
                 return HttpResponseRedirect(view_url)
             except IntegrityError, e:
+                logger.info(traceback.format_exc())
                 request.session['danger_msg'].append('添加失败')
                 if e.args[0] == 1062:
                     request.session['alert_message_now']['danger_msg'].append(
@@ -117,8 +119,7 @@ def add(request):
                 request.session['alert_message_now']['danger_msg'].append(e.args)
                 return render(request, 'dbmp_mysql_instance/add.html', params)
             except Exception, e:
-                # import traceback
-                # print traceback.format_exc()
+                logger.info(traceback.format_exc())
                 # 保存失败转跳会原页面
                 request.session['alert_message_now']['danger_msg'].append(
                                                         '添加失败, 保存数据库错误')
@@ -166,12 +167,14 @@ def edit(request):
                     cmdb_os = CmdbOs.objects.get(os_id = dbmp_mysql_instance.os_id)
                     params['cmdb_os'] = cmdb_os
                 except CmdbOs.DoesNotExist:
+                    logger.info(traceback.format_exc())
                     # 如果MySQL实例没有指定OS则告警
                     request.session['alert_message_now']['wraning_msg'].append(
                                                         '该MySQL实例没有指定一个OS')
 
                 return render(request, 'dbmp_mysql_instance/edit.html', params)
             except DbmpMysqlInstance.DoesNotExist:
+                logger.info(traceback.format_exc())
                 # 返回点击编辑页面
                 request.session['danger_msg'].append('对不起! 找不到指定的MySQL实例')
                 return HttpResponseRedirect(request.environ['HTTP_REFERER'])
@@ -237,6 +240,7 @@ def edit(request):
                 print view_url
                 return HttpResponseRedirect(view_url)
             except IntegrityError, e:
+                logger.info(traceback.format_exc())
                 request.session['danger_msg'].append('编辑失败')
                 if e.args[0] == 1062:
                     request.session['danger_msg'].append('需要修改的相关信息重复')
@@ -244,8 +248,7 @@ def edit(request):
                 request.session['danger_msg'].append(e.args)
                 return HttpResponseRedirect(request.environ['HTTP_REFERER'])
             except Exception, e:
-                # import traceback
-                # print traceback.format_exc()
+                logger.info(traceback.format_exc())
                 # 保存失败转跳会原页面
                 request.session['danger_msg'].append('编辑失败, 保存数据库错误')
                 return HttpResponseRedirect(request.environ['HTTP_REFERER'])
@@ -287,12 +290,14 @@ def view(request):
                     cmdb_os = CmdbOs.objects.get(os_id = dbmp_mysql_instance.os_id)
                     params['cmdb_os'] = cmdb_os
                 except CmdbOs.DoesNotExist:
+                    logger.info(traceback.format_exc())
                     # 如果MySQL实例没有指定OS则告警
                     request.session['alert_message_now']['wraning_msg'].append(
                                                         '该MySQL实例没有指定一个OS')
 
                 return render(request, 'dbmp_mysql_instance/view.html', params)
             except DbmpMysqlInstance.DoesNotExist:
+                logger.info(traceback.format_exc())
                 # 返回点击编辑页面
                 request.session['danger_msg'].append('对不起! 找不到指定的MySQL实例')
                 return HttpResponseRedirect(request.environ['HTTP_REFERER'])
@@ -328,6 +333,7 @@ def iframe_os_list(request):
     try:  
         cur_page = int(request.GET.get('cur_page', '1'))  
     except ValueError:  
+        logger.info(traceback.format_exc())
         cur_page = 1  
   
     # 创建分页数据

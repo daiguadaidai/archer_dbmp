@@ -14,8 +14,10 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from dbmp.views import v_dbmp_mysql_instance as dbmp_mysql_instance
+from dbmp.views import v_dbmp_mysql_handler as dbmp_mysql_handler
 
 urlpatterns = [
+    # dbmp_mysql_instance
     url(r'^$', dbmp_mysql_instance.home, name='dbmp_mysql_instance_home'),
     url(r'^dbmp_mysql_instance/home/$', dbmp_mysql_instance.home, name='dbmp_mysql_instance_home'),
     url(r'^dbmp_mysql_instance/index/$', dbmp_mysql_instance.index, name='dbmp_mysql_instance_index'),
@@ -25,4 +27,7 @@ urlpatterns = [
     url(r'^dbmp_mysql_instance/delete/$', dbmp_mysql_instance.delete, name='dbmp_mysql_instance_delete'),
     url(r'^dbmp_mysql_instance/ajax_delete/$', dbmp_mysql_instance.ajax_delete, name='dbmp_mysql_instance_ajax_delete'),
     url(r'^dbmp_mysql_instance/iframe_os_list/$', dbmp_mysql_instance.iframe_os_list, name='dbmp_mysql_instance_iframe_os_list'),
+
+    # dbmp_mysql_instance
+    url(r'^dbmp_mysql_handler/ajax_mysql_is_alived/$', dbmp_mysql_handler.ajax_mysql_is_alived, name='dbmp_mysql_handler_ajax_mysql_is_alived'),
 ]
