@@ -54,3 +54,19 @@ def ajax_mysql_is_alived(request):
 
     respons_data = json.dumps(is_alived)
     return HttpResponse(respons_data, content_type='application/json')
+
+def ajax_start_instance(request):
+    """启动MySQL实例"""
+    pass
+
+def ajax_stop_instance(request):
+    """停止MySQL实例"""
+    pass
+
+def ajax_restart_instance(request):
+    """启动MySQL实例"""
+    pass
+
+def ajax_mysql_instance_status(request):
+    """获取和修改MySQL实例状态"""
+    pass

@@ -373,6 +373,46 @@ def iframe_os_list(request):
     
     return render(request, 'dbmp_mysql_instance/iframe_os_list.html', params)
 
+def start_instance_terminal(request):
+    """转跳到并打开以个 开启MySQL instance 的terminal提示界面"""
+    params = {}
+    params['error_msg'] = []
+
+    if request.method == 'GET':
+        try:  
+            # 获得传入的MySQL实例ID
+            mysql_instance_id = int(request.GET.get('mysql_instance_id', '0'))  
+        except ValueError:  
+            logger.info(traceback.format_exc())
+            mysql_instance_id = 0  
+
+        if not mysql_instance_id:
+            params['error_msg'].append('输入的MySQL实例ID错误') 
+
+        try:
+            # 获取MySQL实例
+            dbmp_mysql_instance = DbmpMysqlInstance.objects.get(
+                        mysql_instance_id = mysql_instance_id)
+            params['dbmp_mysql_instance'] = dbmp_mysql_instance
+        except Exception, e:
+            logger.info(traceback.format_exc())
+            params['error_msg'].append('查找MySQL实例出错') 
+            return render(request, 'dbmp_mysql_handler/start_instance_terminal.html', params)
+
+        # 如果没有找到相关的MySQL实例信息则写入错误信息
+        if not dbmp_mysql_instance:
+            params['error_msg'].append('没有找到输入的MySQL实例') 
+        
+        return render(request, 'dbmp_mysql_handler/start_instance_terminal.html', params)
+
+def stop_instance_terminal(request):
+    """转跳到并打开以个 关闭MySQL instance 的terminal提示界面"""
+    pass
+
+def restart_instance_terminal(request):
+    """转跳到并打开以个 重启MySQL instance 的terminal提示界面"""
+    pass
+
 @DecoratorTool.get_request_alert_message
 def test(request):
     return render(request, 'test.html')

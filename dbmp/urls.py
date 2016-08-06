@@ -27,7 +27,13 @@ urlpatterns = [
     url(r'^dbmp_mysql_instance/delete/$', dbmp_mysql_instance.delete, name='dbmp_mysql_instance_delete'),
     url(r'^dbmp_mysql_instance/ajax_delete/$', dbmp_mysql_instance.ajax_delete, name='dbmp_mysql_instance_ajax_delete'),
     url(r'^dbmp_mysql_instance/iframe_os_list/$', dbmp_mysql_instance.iframe_os_list, name='dbmp_mysql_instance_iframe_os_list'),
+    url(r'^dbmp_mysql_instance/start_instance_terminal/$', dbmp_mysql_instance.start_instance_terminal, name='dbmp_mysql_instance_start_instance_terminal'),
+    url(r'^dbmp_mysql_instance/stop_instance_terminal/$', dbmp_mysql_instance.stop_instance_terminal, name='dbmp_mysql_instance_stop_instance_terminal'),
+    url(r'^dbmp_mysql_instance/restart_instance_terminal/$', dbmp_mysql_instance.start_instance_terminal, name='dbmp_mysql_instance_restart_instance_terminal'),
 
-    # dbmp_mysql_instance
+    # dbmp_mysql_handler
     url(r'^dbmp_mysql_handler/ajax_mysql_is_alived/$', dbmp_mysql_handler.ajax_mysql_is_alived, name='dbmp_mysql_handler_ajax_mysql_is_alived'),
+    url(r'^dbmp_mysql_handler/ajax_start_instance$', dbmp_mysql_handler.ajax_start_instance, name='dbmp_mysql_handler_ajax_start_instance'),
+    url(r'^dbmp_mysql_handler/ajax_stop_instance$', dbmp_mysql_handler.ajax_stop_instance, name='dbmp_mysql_handler_ajax_stop_instance'),
+    url(r'^dbmp_mysql_handler/ajax_restart_instance$', dbmp_mysql_handler.ajax_restart_instance, name='dbmp_mysql_handler_ajax_restart_instance'),
 ]

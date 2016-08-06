@@ -80,27 +80,48 @@
                 </a>
             </td>
             <td class="text-center">
-                <a type="button" class="btn btn-outline btn-info btn-xs">
+                <a type="button" class="more_btn btn btn-info btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-terminal"></i>
                     命令窗口
                 </a>
-                <a type="button" class="btn btn-outline btn-success btn-xs">
+                <a type="button" class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
                     <i class="fa fa-cubes"></i>
-                    开启备份
+                    设置备份
                 </a>
-                <a type="button" class="btn btn-outline btn-success btn-xs">
+                <a type="button" class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-cogs"></i>
                     巡检报告
                 </a>
-                <a type="button" class="btn btn-outline btn-danger btn-xs">
+
+
+                <a type="button" 
+                   {% if dbmp_mysql_instance.run_status == 2 %}
+                       onclick="stop_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }})"
+                   {% endif %}
+                   class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-power-off"></i>
                     关闭实例
                 </a>
-                <a type="button" class="btn btn-outline btn-danger btn-xs">
+                <a type="button" 
+                   {% if dbmp_mysql_instance.run_status == 1 %}
+                       onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }})"
+                   {% endif %}
+                   class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 %}btn-outline{% endif %}"
+                   {% if dbmp_mysql_instance.run_status != 1 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-caret-square-o-right"></i>
                     启动实例
                 </a>
-                <a type="button" class="btn btn-outline btn-danger btn-xs">
+
+
+                <a type="button" 
+                   {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}
+                       onclick="restart_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }})"
+                   {% endif %}
+                   class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}btn-outline{% endif %}"
+                    {% if dbmp_mysql_instance.run_status != 1 and dbmp_mysql_instance.run_status != 2 and dbmp_mysql_instance.run_status != 3 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-refresh"></i>
                     重启实例
                 </a>
@@ -162,13 +183,14 @@
     <script src="{% static 'js/content.min.js' %}"></script>
     <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
     <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
 
     <script>
         // 使用 Django csrf 功能
         $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
 
         $(document).ready(function(){
-            // 表个插件
+            // 表格插件
             $(".footable").footable();
 
             // 显示密码
@@ -207,6 +229,24 @@
                 }).error(function(data) { 
                     swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
                 });
+            });
+        }
+
+        function start_mysql_instance(mysql_instance_id) {
+            // 点击启动按钮打开一个新的iframe命令窗口
+            console.log(mysql_instance_id);
+            index = layer.open({
+                type: 2,
+                title: "启动MySQL实例命令窗口",
+                shadeClose: true,
+                shade: false, // 没有遮罩
+                offset: "rb", // 左下角弹框
+                maxmin: true,
+                shift: 2,
+                shadeClose: true, //点击遮罩关闭层
+                area : ["100%" , "40%"], // 弹窗大小
+                moveOut: false, // 不可以在窗口外拖拽
+                content: "{% url 'dbmp_mysql_instance_start_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
             });
         }
         

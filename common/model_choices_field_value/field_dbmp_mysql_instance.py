@@ -13,6 +13,8 @@ class FieldDbmpMysqlInstance(object):
             (1, '已停止'),
             (2, '运行中'),
             (3, '未知'),
+            (4, '正在关闭'),
+            (5, '正在启动'),
         )
         return value
 
@@ -21,7 +23,9 @@ class FieldDbmpMysqlInstance(object):
         """MySQL实例正在运行状态 对应显示的颜色"""
         value = (
             (1, 'danger'),
-            (2, 'success'),
+            (2, 'primary'),
             (3, 'warning'),
+            (4, 'danger'),
+            (5, 'info'),
         )
         return value
