@@ -58,7 +58,8 @@
                 </a>
             </td>
             <td class="text-center">
-                <span class="label label-{{ dbmp_mysql_instance.run_status | f_run_status_color }}">
+                <span id="run_status_{{ dbmp_mysql_instance.mysql_instance_id }}" class="label 
+                      label-{{ dbmp_mysql_instance.run_status | f_run_status_color }}">
                     {{ dbmp_mysql_instance.run_status | f_run_status }}
                 </span>
             </td>
@@ -80,27 +81,27 @@
                 </a>
             </td>
             <td class="text-center">
-                <a type="button" id="terminal_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                <button type="button" id="terminal_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    class="more_btn btn btn-info btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-terminal"></i>
                     命令窗口
-                </a>
-                <a type="button" id="backup_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                </button>
+                <button type="button" id="backup_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-cubes"></i>
                     设置备份
-                </a>
-                <a type="button" id="polling_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                </button>
+                <button type="button" id="polling_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-cogs"></i>
                     巡检报告
-                </a>
+                </button>
 
 
-                <a type="button" id="stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                <button type="button" id="stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    {% if dbmp_mysql_instance.run_status == 2 %}
                        onclick="stop_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
                    {% endif %}
@@ -108,19 +109,20 @@
                     {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-power-off"></i>
                     关闭实例
-                </a>
-                <a type="button" id="start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                </button>
+                <button type="button" id="start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    {% if dbmp_mysql_instance.run_status == 1 %}
                        onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
                    {% endif %}
-                   class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 %}btn-outline{% endif %}"
+                   class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 %}btn-outline{% endif %}
+                         start_instance_cls"
                    {% if dbmp_mysql_instance.run_status != 1 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-caret-square-o-right"></i>
                     启动实例
-                </a>
+                </button>
 
 
-                <a type="button" id="restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                <button type="button" id="restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}
                        onclick="restart_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
                    {% endif %}
@@ -128,7 +130,7 @@
                     {% if dbmp_mysql_instance.run_status != 1 and dbmp_mysql_instance.run_status != 2 and dbmp_mysql_instance.run_status != 3 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-refresh"></i>
                     重启实例
-                </a>
+                </button>
             </td>
         </tr>
         {% endfor %}
@@ -245,6 +247,13 @@
             $(obj).siblings().removeAttr("onclick");
             $(obj).siblings().attr({disabled: "disabled"});
 
+            // 修改状态
+            $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
+                return (css.match (/\blabel-\S+/g) || []).join(' ');
+            });
+            $("#run_status_" + mysql_instance_id).addClass("label-{{ 5 | f_run_status_color }}");
+            $("#run_status_" + mysql_instance_id).html("{{ 5 | f_run_status }}");
+
             // 点击启动按钮打开一个新的iframe命令窗口
             index = layer.open({
                 type: 2,
@@ -270,6 +279,13 @@
             $(obj).siblings().removeAttr("onclick");
             $(obj).siblings().attr({disabled: "disabled"});
 
+            // 修改状态
+            $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
+                return (css.match (/\blabel-\S+/g) || []).join(' ');
+            });
+            $("#run_status_" + mysql_instance_id).addClass("label-{{ 4 | f_run_status_color }}");
+            $("#run_status_" + mysql_instance_id).html("{{ 4 | f_run_status }}");
+
             // 点击启动按钮打开一个新的iframe命令窗口
             index = layer.open({
                 type: 2,
@@ -294,6 +310,13 @@
             $(obj).siblings().removeClass("btn-outline");
             $(obj).siblings().removeAttr("onclick");
             $(obj).siblings().attr({disabled: "disabled"});
+
+            // 修改状态
+            $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
+                return (css.match (/\blabel-\S+/g) || []).join(' ');
+            });
+            $("#run_status_" + mysql_instance_id).addClass("label-{{ 4 | f_run_status_color }}");
+            $("#run_status_" + mysql_instance_id).html("{{ 4 | f_run_status }}");
 
             // 点击启动按钮打开一个新的iframe命令窗口
             index = layer.open({
