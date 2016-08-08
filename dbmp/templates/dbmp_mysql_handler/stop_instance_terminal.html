@@ -88,7 +88,7 @@
                         header += "{{ msg }} \n";
                     {% endfor %}
                 {% else %} // 没有错误信息则显示 MySQL 实例信息
-                    header += "正在操作 MySQL 实例(启动MySQL): \n";
+                    header += "正在操作 MySQL 实例(关闭MySQL): \n";
                     header += "  Host: {{ dbmp_mysql_instance.host | f_num2ip }} \n";
                     header += "  Port: {{ dbmp_mysql_instance.port }} \n";
                     header += "  Username: {{ dbmp_mysql_instance.username }} \n";

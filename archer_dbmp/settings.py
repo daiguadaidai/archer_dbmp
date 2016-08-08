@@ -86,7 +86,7 @@ DATABASES = {
         'NAME': 'my_free',
         'USER':'HH',
         'PASSWORD':'oracle',
-        'HOST':'192.168.137.11',
+        'HOST':'192.168.1.233',
         'PORT':'3306',
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }

@@ -80,34 +80,38 @@
                 </a>
             </td>
             <td class="text-center">
-                <a type="button" class="more_btn btn btn-info btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
-                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
+                <a type="button" id="terminal_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                   class="more_btn btn btn-info btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                   {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-terminal"></i>
                     命令窗口
                 </a>
-                <a type="button" class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                <a type="button" id="backup_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                   class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                   {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-cubes"></i>
                     设置备份
                 </a>
-                <a type="button" class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
-                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
+                <a type="button" id="polling_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                   class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                   {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-cogs"></i>
                     巡检报告
                 </a>
 
 
-                <a type="button" 
+                <a type="button" id="stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    {% if dbmp_mysql_instance.run_status == 2 %}
-                       onclick="stop_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }})"
+                       onclick="stop_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
                    {% endif %}
                    class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
                     {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-power-off"></i>
                     关闭实例
                 </a>
-                <a type="button" 
+                <a type="button" id="start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    {% if dbmp_mysql_instance.run_status == 1 %}
-                       onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }})"
+                       onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
                    {% endif %}
                    class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 %}btn-outline{% endif %}"
                    {% if dbmp_mysql_instance.run_status != 1 %}disabled="disabled"{% endif %}>
@@ -116,9 +120,9 @@
                 </a>
 
 
-                <a type="button" 
+                <a type="button" id="restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
                    {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}
-                       onclick="restart_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }})"
+                       onclick="restart_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
                    {% endif %}
                    class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}btn-outline{% endif %}"
                     {% if dbmp_mysql_instance.run_status != 1 and dbmp_mysql_instance.run_status != 2 and dbmp_mysql_instance.run_status != 3 %}disabled="disabled"{% endif %}>
@@ -232,9 +236,16 @@
             });
         }
 
-        function start_mysql_instance(mysql_instance_id) {
+        function start_mysql_instance(mysql_instance_id, obj) {
+            // 禁用该实例的其他按钮
+            $(obj).removeClass("btn-outline");
+            $(obj).removeAttr("onclick");
+            $(obj).attr({disabled: "disabled"});
+            $(obj).siblings().removeClass("btn-outline");
+            $(obj).siblings().removeAttr("onclick");
+            $(obj).siblings().attr({disabled: "disabled"});
+
             // 点击启动按钮打开一个新的iframe命令窗口
-            console.log(mysql_instance_id);
             index = layer.open({
                 type: 2,
                 title: "启动MySQL实例命令窗口",
@@ -247,6 +258,56 @@
                 area : ["100%" , "40%"], // 弹窗大小
                 moveOut: false, // 不可以在窗口外拖拽
                 content: "{% url 'dbmp_mysql_instance_start_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
+            });
+        }
+
+        function stop_mysql_instance(mysql_instance_id, obj) {
+            // 禁用该实例的其他按钮
+            $(obj).removeClass("btn-outline");
+            $(obj).removeAttr("onclick");
+            $(obj).attr({disabled: "disabled"});
+            $(obj).siblings().removeClass("btn-outline");
+            $(obj).siblings().removeAttr("onclick");
+            $(obj).siblings().attr({disabled: "disabled"});
+
+            // 点击启动按钮打开一个新的iframe命令窗口
+            index = layer.open({
+                type: 2,
+                title: "启动MySQL实例命令窗口",
+                shadeClose: true,
+                shade: false, // 没有遮罩
+                offset: "rb", // 左下角弹框
+                maxmin: true,
+                shift: 2,
+                shadeClose: true, //点击遮罩关闭层
+                area : ["100%" , "40%"], // 弹窗大小
+                moveOut: false, // 不可以在窗口外拖拽
+                content: "{% url 'dbmp_mysql_instance_stop_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
+            });
+        }
+
+        function restart_mysql_instance(mysql_instance_id, obj) {
+            // 禁用该实例的其他按钮
+            $(obj).removeClass("btn-outline");
+            $(obj).removeAttr("onclick");
+            $(obj).attr({disabled: "disabled"});
+            $(obj).siblings().removeClass("btn-outline");
+            $(obj).siblings().removeAttr("onclick");
+            $(obj).siblings().attr({disabled: "disabled"});
+
+            // 点击启动按钮打开一个新的iframe命令窗口
+            index = layer.open({
+                type: 2,
+                title: "启动MySQL实例命令窗口",
+                shadeClose: true,
+                shade: false, // 没有遮罩
+                offset: "rb", // 左下角弹框
+                maxmin: true,
+                shift: 2,
+                shadeClose: true, //点击遮罩关闭层
+                area : ["100%" , "40%"], // 弹窗大小
+                moveOut: false, // 不可以在窗口外拖拽
+                content: "{% url 'dbmp_mysql_instance_restart_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
             });
         }
         
