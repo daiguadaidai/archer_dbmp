@@ -3,6 +3,8 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from dbmp.models.cmdb_os import CmdbOs
+from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
+from dbmp.models.dbmp_mysql_instance_info import DbmpMysqlInstanceInfo
 from common.util.decorator_tool import DecoratorTool
 from common.util.ip_tool import IpTool
 from common.util.mysql_admin_tool import MysqlAdminTool
@@ -56,8 +58,52 @@ def ajax_mysql_is_alived(request):
     return HttpResponse(respons_data, content_type='application/json')
 
 def ajax_start_instance(request):
-    """启动MySQL实例"""
-    pass
+    """执行启动MySQL实例命令"""
+
+    is_ok = False
+    if request.method == 'POST':
+        ###################################
+        # 获取MySQL实例信息并执行启动命令
+        ###################################
+        try:
+            # 获得传入的MySQL实例ID
+            mysql_instance_id = int(request.POST.get('mysql_instance_id', '0'))
+        except ValueError:
+            logger.error(traceback.format_exc())
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        try:
+            # 获取MySQL实例
+            dbmp_mysql_instance_count = DbmpMysqlInstance.objects.filter(
+                        mysql_instance_id = mysql_instance_id).count()
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('查找dbmp_mysql_instance_count失败')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        # 如果没有找到或找到多个MySQL实例返回失败
+        if dbmp_mysql_instance_count != 1:
+            logger.error('没有找到或找到多个MySQL实例')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        try:
+            # 获取MySQL而外信息
+            dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.values(
+                                        'mysql_instance_info_id',
+                                        'start_cmd').get(
+                        mysql_instance_id = mysql_instance_id)
+            print dbmp_mysql_instance
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('查找MySQL实例Info失败DbmpMysqlInstanceInfo')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        respons_data = json.dumps(is_ok)
+        return HttpResponse(respons_data, content_type='application/json')
 
 def ajax_stop_instance(request):
     """停止MySQL实例"""

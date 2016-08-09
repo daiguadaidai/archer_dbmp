@@ -115,7 +115,7 @@
                        onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
                    {% endif %}
                    class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 %}btn-outline{% endif %}
-                         start_instance_cls"
+                          start_instance_cls"
                    {% if dbmp_mysql_instance.run_status != 1 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-caret-square-o-right"></i>
                     启动实例
@@ -241,10 +241,8 @@
         function start_mysql_instance(mysql_instance_id, obj) {
             // 禁用该实例的其他按钮
             $(obj).removeClass("btn-outline");
-            $(obj).removeAttr("onclick");
             $(obj).attr({disabled: "disabled"});
             $(obj).siblings().removeClass("btn-outline");
-            $(obj).siblings().removeAttr("onclick");
             $(obj).siblings().attr({disabled: "disabled"});
 
             // 修改状态
@@ -333,6 +331,6 @@
                 content: "{% url 'dbmp_mysql_instance_restart_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
             });
         }
-        
+
     </script>
 {% endblock %}

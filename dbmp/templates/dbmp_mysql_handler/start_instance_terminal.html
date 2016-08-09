@@ -1,5 +1,6 @@
 {% load staticfiles %}
 {% load ip_filters %}
+{% load filters_dbmp_mysql_instance %}
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -80,6 +81,9 @@
             {% endif %}
         </style>
         <script>
+            // 使用 Django csrf 功能
+            $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
             $(function() {
                 // Creating the console.
                 var header = "";
@@ -93,6 +97,8 @@
                     header += "  Port: {{ dbmp_mysql_instance.port }} \n";
                     header += "  Username: {{ dbmp_mysql_instance.username }} \n";
                     header += "  password: ******** \n";
+                    header += "  ...... \n";
+                    header += "=============================================== \n";
                 {% endif %}
                 window.jqconsole = $("#console").jqconsole(header, "> ");
                 
@@ -116,7 +122,60 @@
                 
                 // Initiate the first prompt.
                 handler();
-                window.jqconsole.Write("  ......" + "\n", "jqconsole-output-success");
+
+                // 后台调用启动MySQL
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_handler_ajax_start_instance' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_instance_id: {{ dbmp_mysql_instance.mysql_instance_id }}
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        setTimeout(function () { 
+                            window.jqconsole.Write("  执行启动MySQL命令成功" + "\n", "jqconsole-output-success");
+                        }, 1000);
+                        window.jqconsole.Write("\n  正在检测MySQL是否启动成功" + "\n", "jqconsole-output-success");
+                    } else {
+                        setTimeout(function () { 
+                            window.jqconsole.Write("  执行启动MySQL失败" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  1.请确保启动命令或相关参数正确" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  2.实在不行请找DBA介入进行排查" + "\n", "jqconsole-output-error");
+
+                            // 添加可点击css
+                            $("#start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                            $("#restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                            $("#start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                            $("#restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                            
+                            // 修改状态
+                            $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeClass(function(index, css){
+                                return (css.match (/\blabel-\S+/g) || []).join(' ');
+                            });
+                            $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("label-{{ 1 | f_run_status_color }}");
+                            $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).html("{{ 1 | f_run_status }}");
+                        }, 1000);
+                    }
+                }).error(function(data) { 
+                    setTimeout(function () { 
+                       window.jqconsole.Write("  执行启动MySQL失败" + "\n", "jqconsole-output-error");
+                       window.jqconsole.Write("  1.在调用启动方法出错(服务器内部有问题)" + "\n", "jqconsole-output-error");
+                       window.jqconsole.Write("  2.请排产网络等是否是畅通" + "\n", "jqconsole-output-error");
+                       // 添加可点击css
+                       $("#start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                       $("#restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                       $("#start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                       $("#restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                       
+                       // 修改状态
+                       $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeClass(function(index, css){
+                           return (css.match (/\blabel-\S+/g) || []).join(' ');
+                       });
+                       $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("label-{{ 1 | f_run_status_color }}");
+                       $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).html("{{ 1 | f_run_status }}");
+                    }, 1000);
+                }); 
             });
         </script>
     </head>
