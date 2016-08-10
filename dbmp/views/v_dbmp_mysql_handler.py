@@ -62,9 +62,6 @@ def ajax_start_instance(request):
 
     is_ok = False
     if request.method == 'POST':
-        ###################################
-        # 获取MySQL实例信息并执行启动命令
-        ###################################
         try:
             # 获得传入的MySQL实例ID
             mysql_instance_id = int(request.POST.get('mysql_instance_id', '0'))
@@ -73,34 +70,93 @@ def ajax_start_instance(request):
             respons_data = json.dumps(is_ok)
             return HttpResponse(respons_data, content_type='application/json')
 
+        #################################################################
+        # 获取MySQL实例
+        #################################################################
         try:
-            # 获取MySQL实例
-            dbmp_mysql_instance_count = DbmpMysqlInstance.objects.filter(
-                        mysql_instance_id = mysql_instance_id).count()
+            dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
+                                                'mysql_instance_id',
+                                                'os_id',
+                                                'username',
+                                                'password',
+                                                'port',
+                                                'host',).get(
+                               mysql_instance_id = mysql_instance_id)
         except Exception, e:
             logger.error(traceback.format_exc())
-            logger.error('查找dbmp_mysql_instance_count失败')
+            logger.error('查找dbmp_mysql_instance失败')
             respons_data = json.dumps(is_ok)
             return HttpResponse(respons_data, content_type='application/json')
 
-        # 如果没有找到或找到多个MySQL实例返回失败
-        if dbmp_mysql_instance_count != 1:
-            logger.error('没有找到或找到多个MySQL实例')
-            respons_data = json.dumps(is_ok)
-            return HttpResponse(respons_data, content_type='application/json')
-
+        #################################################################
+        # 获取MySQL而外信息
+        #################################################################
         try:
-            # 获取MySQL而外信息
             dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.values(
                                         'mysql_instance_info_id',
                                         'start_cmd').get(
                         mysql_instance_id = mysql_instance_id)
-            print dbmp_mysql_instance
         except Exception, e:
             logger.error(traceback.format_exc())
             logger.error('查找MySQL实例Info失败DbmpMysqlInstanceInfo')
             respons_data = json.dumps(is_ok)
             return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取 OS 信息
+        #################################################################
+        try:
+            cmdb_os = CmdbOs.objects.values('os_id',
+                                            'ip',
+                                            'username',
+                                            'password').get(
+                        os_id = dbmp_mysql_instance.get('os_id', 0))
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('未找到相关的操作系统(OS)信息')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取 当前操作系统存在的 mysqld pid, 通过ps -ef 获得
+        #################################################################
+        is_ok, exist_pids, errs = MysqlAdminTool.mysqld_pids(
+                                   os_ip = IpTool.num2ip(cmdb_os.get('ip', '')),
+                                   os_user = cmdb_os.get('username', ''),
+                                   os_password = cmdb_os.get('password', ''))
+        if not is_ok:
+            logger.error('获取 当前操作系统存在的 mysqld pid命令错误')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 执行启动MySQL并获得返回的pid并且将这些pid保存到DbmpMysqlInstance中
+        #################################################################
+        is_ok, start_pids, errs = MysqlAdminTool.start_mysql_and_pids(
+                                   cmd = dbmp_mysql_instance_info.get('start_cmd', ''),
+                                   os_ip = IpTool.num2ip(cmdb_os.get('ip', '')),
+                                   os_user = cmdb_os.get('username', ''),
+                                   os_password = cmdb_os.get('password', ''))
+        if not is_ok:
+            logger.error('执行启动MySQL命令失败')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        # 获得MySQL可能的pid
+        possible_pid = '|'.join(list(set(start_pids) - set(exist_pids)))
+        """
+        # 改变MySQL状态为正在启动(5) 并且 保存 可能的pid
+        try:
+            DbmpMysqlInstance.objects.filter(
+                          mysql_instance_id = mysql_instance_id).update(
+                                             run_status = 5,
+                                             possible_pid = possible_pid)
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('更新MySQL状态为 正在启动 和 添加 可能的MySQL pid 失败')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+        """
 
         respons_data = json.dumps(is_ok)
         return HttpResponse(respons_data, content_type='application/json')
@@ -115,4 +171,8 @@ def ajax_restart_instance(request):
 
 def ajax_mysql_instance_status(request):
     """获取和修改MySQL实例状态"""
-    pass
+    
+    run_status = True
+    if request.method == 'POST':
+        respons_data = json.dumps(run_status)
+        return HttpResponse(respons_data, content_type='application/json')

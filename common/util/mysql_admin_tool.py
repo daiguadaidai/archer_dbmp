@@ -44,6 +44,41 @@ class MysqlAdminTool(object):
                 is_alived = True 
         return is_alived
 
+    @classmethod
+    def mysqld_pids(self, os_ip='127.0.0.1', os_user='root',
+                              os_password='root', os_port=22):
+        """使用 grep 命令查看含有mysqld的相关pid"""
+        cmd = "ps -ef | grep mysqld | grep -v grep | awk '{print $2}'"
+
+        # ssh 远程执行命令
+        is_ok, out_msg, err_msg = SSHTool.ssh_exec_cmd(cmd,
+                                                       host = os_ip,
+                                                       username = os_user,
+                                                       password = os_password,
+                                                       port = os_port)
+        pids = [pid.strip() for pid in out_msg]
+        return is_ok, pids, err_msg
+
+    @classmethod
+    def start_mysql_and_pids(self, cmd='', os_ip='127.0.0.1', os_user='root',
+                              os_password='root', os_port=22):
+        """使用 grep 命令查看含有mysqld的相关pid"""
+
+        # 空命令则返回执行失败
+        if not cmd:
+            return False, '', []
+
+        cmd = ("`{cmd}` && ps -ef | grep -v grep | grep mysqld |"
+               " awk '{col}'".format(cmd = cmd, col = '{print $2}'))
+
+        # ssh 远程执行命令
+        is_ok, out_msg, err_msg = SSHTool.ssh_exec_cmd(cmd,
+                                                       host = os_ip,
+                                                       username = os_user,
+                                                       password = os_password,
+                                                       port = os_port)
+        pids = [pid.strip() for pid in out_msg]
+        return is_ok, pids, err_msg
 
 def main():
     pass

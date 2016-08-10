@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.7.10-3, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.6.31-77.0, for Linux (x86_64)
 --
 -- Host: localhost    Database: my_free
 -- ------------------------------------------------------
--- Server version	5.7.10-3-log
+-- Server version	5.6.31-77.0-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -308,7 +308,8 @@ CREATE TABLE `dbmp_mysql_instance` (
   `port` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '链接MySQL PORT',
   `username` varchar(50) NOT NULL DEFAULT '' COMMENT '管理MySQL用户名',
   `password` varchar(200) NOT NULL DEFAULT '' COMMENT '管理MySQL用户名密码，是个可逆的加密串',
-  `run_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT 'MySQL运行状态:1、停止，2、运行中，3、未知',
+  `run_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT 'MySQL运行状态:1、停止，2、运行中，3、未知，4、正在关闭，5、正在启动',
+  `possible_pid` varchar(100) NOT NULL DEFAULT '' COMMENT 'MySQL可能运行的PID',
   `remark` varchar(50) NOT NULL DEFAULT '' COMMENT '备注',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -419,4 +420,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-08-01 15:56:25
+-- Dump completed on 2016-08-10 13:33:53

@@ -36,4 +36,5 @@ urlpatterns = [
     url(r'^dbmp_mysql_handler/ajax_start_instance$', dbmp_mysql_handler.ajax_start_instance, name='dbmp_mysql_handler_ajax_start_instance'),
     url(r'^dbmp_mysql_handler/ajax_stop_instance$', dbmp_mysql_handler.ajax_stop_instance, name='dbmp_mysql_handler_ajax_stop_instance'),
     url(r'^dbmp_mysql_handler/ajax_restart_instance$', dbmp_mysql_handler.ajax_restart_instance, name='dbmp_mysql_handler_ajax_restart_instance'),
+    url(r'^dbmp_mysql_handler/ajax_mysql_instance_status$', dbmp_mysql_handler.ajax_mysql_instance_status, name='dbmp_mysql_handler_ajax_mysql_instance_status'),
 ]

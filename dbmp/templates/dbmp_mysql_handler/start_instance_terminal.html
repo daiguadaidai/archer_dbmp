@@ -124,6 +124,7 @@
                 handler();
 
                 // 后台调用启动MySQL
+                window.jqconsole.Write("  正在执行MySQL启动命令..." + "\n", "jqconsole-output-warning");
                 $.ajax({
                     url: "{% url 'dbmp_mysql_handler_ajax_start_instance' %}",
                     type: "POST",
@@ -133,10 +134,39 @@
                     }
                 }).done(function(data) { 
                     if(data == true) {
-                        setTimeout(function () { 
-                            window.jqconsole.Write("  执行启动MySQL命令成功" + "\n", "jqconsole-output-success");
-                        }, 1000);
-                        window.jqconsole.Write("\n  正在检测MySQL是否启动成功" + "\n", "jqconsole-output-success");
+                        window.jqconsole.Write("  执行MySQL启动命令成功" + "\n", "jqconsole-output-success");
+                        window.jqconsole.Write("\n  正在检测MySQL是否启动成功..." + "\n", "jqconsole-output-warning");
+                        window.jqconsole.Write("  每隔 5 秒检测一次" + "\n", "jqconsole-output-warning");
+
+                        // 每隔 5 秒检测一次
+                        var times_run = 0;
+                        var interval = setInterval(function(){
+                            times_run += 1;
+                            window.jqconsole.Write("  进行第 " + times_run + " 检测" + "\n", "jqconsole-output-warning");
+                            // 检测超过 60 次就警告
+                            if(times_run >= 60){
+                                window.jqconsole.Write("  !!!持续检测过长, 需要考虑人工确认MySQL是否启动成功!!!" + "\n", "jqconsole-output-warning");
+                            }
+
+                            // 对MySQL进行检测
+                            $.ajax({
+                                url: "{% url 'dbmp_mysql_handler_ajax_mysql_instance_status' %}",
+                                type: "POST",
+                                dataType: "json",
+                                data: {
+                                    mysql_instance_id: {{ dbmp_mysql_instance.mysql_instance_id }}
+                                }
+                            }).done(function(data) { 
+                                if(data == true) {
+                                    window.jqconsole.Write("  !!!持续检测过长, 需要考虑人工确认MySQL是否启动成功!!!" + "\n", "jqconsole-output-success");
+                                    clearInterval(interval);
+                                } else {
+                                    console.log("run_fail");
+                                }
+                            }).error(function(data) { 
+                                console.log("run_internal_error");
+                            }); 
+                        }, 5000);
                     } else {
                         setTimeout(function () { 
                             window.jqconsole.Write("  执行启动MySQL失败" + "\n", "jqconsole-output-error");
