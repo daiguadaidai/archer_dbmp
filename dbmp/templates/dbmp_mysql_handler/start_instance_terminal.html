@@ -158,9 +158,22 @@
                                 }
                             }).done(function(data) { 
                                 if(data == true) {
-                                    window.jqconsole.Write("  !!!持续检测过长, 需要考虑人工确认MySQL是否启动成功!!!" + "\n", "jqconsole-output-success");
+                                    window.jqconsole.Write("  MySQL已经正常启动! " + "\n", "jqconsole-output-success");
                                     clearInterval(interval);
+                                    // 添加可点击css
+                                    $("#stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                                    $("#restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                                    $("#stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                                    $("#restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                                    
+                                    // 修改状态
+                                    $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeClass(function(index, css){
+                                        return (css.match (/\blabel-\S+/g) || []).join(' ');
+                                    });
+                                    $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("label-{{ 2 | f_run_status_color }}");
+                                    $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).html("{{ 2 | f_run_status }}");
                                 } else {
+                                    window.jqconsole.Write("  !!! MySQL 正在启动中, 5秒后再次发出检测 !!!" + "\n", "jqconsole-output-warning");
                                     console.log("run_fail");
                                 }
                             }).error(function(data) { 

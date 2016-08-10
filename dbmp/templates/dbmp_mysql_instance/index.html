@@ -82,52 +82,46 @@
             </td>
             <td class="text-center">
                 <button type="button" id="terminal_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                   class="more_btn btn btn-info btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
-                   {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
+                        class="more_btn btn btn-info btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                        {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-terminal"></i>
                     命令窗口
                 </button>
                 <button type="button" id="backup_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                   class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
-                   {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
+                        class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                        {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-cubes"></i>
                     设置备份
                 </button>
                 <button type="button" id="polling_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                   class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
-                   {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
+                        class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                        {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-cogs"></i>
                     巡检报告
                 </button>
 
 
                 <button type="button" id="stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                   {% if dbmp_mysql_instance.run_status == 2 %}
-                       onclick="stop_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
-                   {% endif %}
-                   class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
-                    {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
+                        onclick="stop_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
+                        class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                        {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-power-off"></i>
                     关闭实例
                 </button>
                 <button type="button" id="start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                   {% if dbmp_mysql_instance.run_status == 1 %}
-                       onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
-                   {% endif %}
-                   class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 %}btn-outline{% endif %}
-                          start_instance_cls"
-                   {% if dbmp_mysql_instance.run_status != 1 %}disabled="disabled"{% endif %}>
+                        onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
+                        class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 %}btn-outline{% endif %}
+                               start_instance_cls"
+                        {% if dbmp_mysql_instance.run_status != 1 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-caret-square-o-right"></i>
                     启动实例
                 </button>
 
 
                 <button type="button" id="restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                   {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}
-                       onclick="restart_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
-                   {% endif %}
-                   class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}btn-outline{% endif %}"
-                    {% if dbmp_mysql_instance.run_status != 1 and dbmp_mysql_instance.run_status != 2 and dbmp_mysql_instance.run_status != 3 %}disabled="disabled"{% endif %}>
+                        onclick="restart_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
+                        class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}btn-outline{% endif %}"
+                        {% if dbmp_mysql_instance.run_status != 1 and dbmp_mysql_instance.run_status != 2 and dbmp_mysql_instance.run_status != 3 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-refresh"></i>
                     重启实例
                 </button>
