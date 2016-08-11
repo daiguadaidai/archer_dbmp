@@ -40,8 +40,6 @@ def ajax_mysql_is_alived(request):
         if (cmdb_os and mysql_host and mysql_port and mysql_user
                     and mysql_password and mysql_base_dir):
 
-
-
             # 获得操作系统
             mysqladmin = '{dir}/bin/mysqladmin'.format(dir = mysql_base_dir)
             # 执行MySQL ping 命令
@@ -144,6 +142,7 @@ def ajax_start_instance(request):
 
         # 获得MySQL可能的pid
         possible_pid = '|'.join(list(set(start_pids) - set(exist_pids)))
+
         """
         # 改变MySQL状态为正在启动(5) 并且 保存 可能的pid
         try:
@@ -172,7 +171,131 @@ def ajax_restart_instance(request):
 def ajax_mysql_instance_status(request):
     """获取和修改MySQL实例状态"""
     
-    run_status = True
+    is_ok = False
     if request.method == 'POST':
-        respons_data = json.dumps(run_status)
+        try:
+            # 获得传入的MySQL实例ID
+            mysql_instance_id = int(request.POST.get('mysql_instance_id', '0'))
+        except ValueError:
+            logger.error(traceback.format_exc())
+            respons_data = json.dumps(run_status)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取MySQL实例
+        #################################################################
+        try:
+            dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
+                                                'mysql_instance_id',
+                                                'os_id',
+                                                'username',
+                                                'password',
+                                                'run_status',
+                                                'possible_pid',
+                                                'port',
+                                                'host',).get(
+                               mysql_instance_id = mysql_instance_id)
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('查找dbmp_mysql_instance失败')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取MySQL而外信息
+        #################################################################
+        try:
+            dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.values(
+                                        'mysql_instance_info_id',
+                                        'base_dir').get(
+                        mysql_instance_id = mysql_instance_id)
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('查找MySQL实例Info失败DbmpMysqlInstanceInfo')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取 OS 信息
+        #################################################################
+        try:
+            cmdb_os = CmdbOs.objects.values('os_id',
+                                            'ip',
+                                            'username',
+                                            'password').get(
+                        os_id = dbmp_mysql_instance.get('os_id', 0))
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('未找到相关的操作系统(OS)信息')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        mysqladmin = '{dir}/bin/mysqladmin'.format(
+                    dir = dbmp_mysql_instance_info.get('base_dir', ''))
+        logger.info(mysqladmin)
+        # 执行MySQL ping 命令
+        is_ok = MysqlAdminTool.mysql_is_alived(mysqladmin = mysqladmin,
+                    mysql_user = dbmp_mysql_instance.get('mysql_user', ''),
+                    mysql_password = dbmp_mysql_instance.get('mysql_password', ''),
+                    mysql_host = dbmp_mysql_instance.get('mysql_host', ''),
+                    mysql_port = mysql_port,
+                    os_ip = IpTool.num2ip(cmdb_os.get('ip', '')),
+                    os_user = cmdb_os.get('username', ''),
+                    os_password = cmdb_os.get('password', ''))
+
+        # 判断相关进程是否存在(通过ps命来查看)
+        cmd = ("ps -ef | egrep '{possible_pid}' | grep -v grep "
+               "| awk '{print_2}'".format(
+                 possible_pid = dbmp_mysql_instance.get('possible_pid', ''),
+                 print_2 = '{print $2}'))
+        is_ok, pids, errs = MysqlAdminTool.get_mysql_start_possible_pids(
+                           cmd = cmd,
+                           os_ip = IpTool.num2ip(cmdb_os.get('ip', '')),
+                           os_user = cmdb_os.get('username', ''),
+                           os_password = cmdb_os.get('password', ''))
+        print '-----------------------'
+        print pids
+        print '-----------------------'
+
+        """
+        # 如果 检测 MySQL还未启动则 查看相关进程是否存在
+        if not is_ok:
+            logger.warning('mysqladmin ping 失败')
+
+            # 判断相关进程是否存在(通过ps命来查看)
+            cmd = ("ps -ef | egrep '{possible_pid}' | grep -v grep "
+                   "| awk '{print_2}'".format(
+                     possible_pid = dbmp_mysql_instance.get('possible_pid', '')),
+                     print_2 = '{print $2}')
+            is_ok, pids, errs = MysqlAdminTool.get_mysql_start_possible_pids(
+                               cmd = cmd,
+                               os_ip = IpTool.num2ip(cmdb_os.get('ip', '')),
+                               os_user = cmdb_os.get('username', ''),
+                               os_password = cmdb_os.get('password', ''))
+            print '-----------------------'
+            print pids
+            print '-----------------------'
+
+            # 1.如果返回的pids个数大于15则判断失败
+            if len(pids) > 15:
+                is_ok = False
+                logger.warning('检测返回MySQL pids 大于 15, 判断为启动失败')
+            
+            # 2.如果没有检测到执行启动命令的pid说明启动失败
+            if not is_ok:
+                logger.error('!!! 启动失败 !!!')
+                # 改变MySQL状态为停止(1)
+                try:
+                    DbmpMysqlInstance.objects.filter(
+                              mysql_instance_id = mysql_instance_id).update(
+                                                 run_status = 1)
+                except Exception, e:
+                    logger.error(traceback.format_exc())
+                    logger.error('更新MySQL状态为 停止(1) 失败')
+                    respons_data = json.dumps(is_ok)
+                    return HttpResponse(respons_data, content_type='application/json')
+        """
+
+        # 最终返回启动成功
+        respons_data = json.dumps(is_ok)
         return HttpResponse(respons_data, content_type='application/json')

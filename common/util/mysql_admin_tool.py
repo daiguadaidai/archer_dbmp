@@ -80,6 +80,23 @@ class MysqlAdminTool(object):
         pids = [pid.strip() for pid in out_msg]
         return is_ok, pids, err_msg
 
+    @classmethod
+    def get_mysql_start_possible_pids(self, cmd='', os_ip='127.0.0.1', os_user='root',
+                              os_password='root', os_port=22):
+        """使用 grep 命令查看含有mysqld的相关pid"""
+
+        # 空命令则返回执行失败
+        if not cmd:
+            return False, [], []
+
+        # ssh 远程执行命令
+        is_ok, out_msg, err_msg = SSHTool.ssh_exec_cmd(cmd,
+                                                       host = os_ip,
+                                                       username = os_user,
+                                                       password = os_password,
+                                                       port = os_port)
+        return is_ok, out_msg, err_msg
+
 def main():
     pass
 
