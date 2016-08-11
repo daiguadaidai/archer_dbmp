@@ -95,7 +95,8 @@ class MysqlAdminTool(object):
                                                        username = os_user,
                                                        password = os_password,
                                                        port = os_port)
-        return is_ok, out_msg, err_msg
+        pids = [pid.strip() for pid in out_msg]
+        return is_ok, pids, err_msg
 
 def main():
     pass

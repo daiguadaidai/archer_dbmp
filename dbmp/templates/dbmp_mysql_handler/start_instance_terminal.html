@@ -150,7 +150,7 @@
 
                             // 对MySQL进行检测
                             $.ajax({
-                                url: "{% url 'dbmp_mysql_handler_ajax_mysql_instance_status' %}",
+                                url: "{% url 'dbmp_mysql_handler_ajax_check_start_mysql' %}",
                                 type: "POST",
                                 dataType: "json",
                                 data: {
@@ -163,8 +163,15 @@
                                     // 添加可点击css
                                     $("#stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
                                     $("#restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                                    $("#terminal_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                                    $("#backup_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+                                    $("#polling_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).addClass("btn-outline");
+
                                     $("#stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
                                     $("#restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                                    $("#terminal_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                                    $("#backup_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
+                                    $("#polling_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeAttr("disabled");
                                     
                                     // 修改状态
                                     $("#run_status_{{ dbmp_mysql_instance.mysql_instance_id }}", parent.document).removeClass(function(index, css){
