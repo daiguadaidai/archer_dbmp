@@ -30,6 +30,11 @@ def ajax_mysql_is_alived(request):
         mysql_user = request.POST.get('mysql_user', '')
         mysql_password = request.POST.get('mysql_password', '')
         mysql_base_dir = request.POST.get('mysql_base_dir', '')
+        # 记录日志
+        info_msg = 'host: {host}, port: {port}'.format(
+                                            host = mysql_host,
+                                            port = mysql_port)
+        logger.info(info_msg)
 
         if(os_id):
             try:
@@ -80,6 +85,10 @@ def ajax_start_instance(request):
                                                 'port',
                                                 'host',).get(
                                mysql_instance_id = mysql_instance_id)
+            info_msg = 'host: {host}, port: {port}'.format(
+                              host = dbmp_mysql_instance.get('host', ''),
+                              port = dbmp_mysql_instance.get('port', 0))
+            logger.info(info_msg)
         except Exception, e:
             logger.error(traceback.format_exc())
             logger.error('查找dbmp_mysql_instance失败')
@@ -143,11 +152,11 @@ def ajax_start_instance(request):
         # 获得MySQL可能的pid
         possible_pid = '|'.join(list(set(start_pids) - set(exist_pids)))
 
-        # 改变MySQL状态为正在启动(5) 并且 保存 可能的pid
+        # 改变MySQL状态为正在启动(4) 并且 保存 可能的pid
         try:
             DbmpMysqlInstance.objects.filter(
                           mysql_instance_id = mysql_instance_id).update(
-                                             run_status = 5,
+                                             run_status = 4,
                                              possible_pid = possible_pid)
         except Exception, e:
             logger.error(traceback.format_exc())
@@ -166,10 +175,19 @@ def ajax_restart_instance(request):
     """启动MySQL实例"""
     pass
 
-def ajax_check_start_mysql(request):
-    """获取和修改MySQL实例状态"""
+def ajax_mysql_instance_status(request):
+    """获取和修改MySQL实例状态
+    对MySQL状态进行测试
+    Args: None
+    return: run_status
+        1. 数据库停止, 启动失败
+        2. 数据库正常运行, 启动成功
+        3. 数据库停止, 继续检测
+        4. 内部错误, 检测失败
+    Raise: None
+    """
     
-    is_ok = False
+    run_status = 1
     if request.method == 'POST':
         try:
             # 获得传入的MySQL实例ID
@@ -193,10 +211,15 @@ def ajax_check_start_mysql(request):
                                                 'port',
                                                 'host',).get(
                                mysql_instance_id = mysql_instance_id)
+            info_msg = 'host: {host}, port: {port}'.format(
+                              host = dbmp_mysql_instance.get('host', ''),
+                              port = dbmp_mysql_instance.get('port', 0))
+            logger.info(info_msg)
         except Exception, e:
             logger.error(traceback.format_exc())
             logger.error('查找dbmp_mysql_instance失败')
-            respons_data = json.dumps(is_ok)
+            run_status = 4
+            respons_data = json.dumps(run_status)
             return HttpResponse(respons_data, content_type='application/json')
 
         #################################################################
@@ -210,7 +233,8 @@ def ajax_check_start_mysql(request):
         except Exception, e:
             logger.error(traceback.format_exc())
             logger.error('查找MySQL实例Info失败DbmpMysqlInstanceInfo')
-            respons_data = json.dumps(is_ok)
+            run_status = 4
+            respons_data = json.dumps(run_status)
             return HttpResponse(respons_data, content_type='application/json')
 
         #################################################################
@@ -225,7 +249,8 @@ def ajax_check_start_mysql(request):
         except Exception, e:
             logger.error(traceback.format_exc())
             logger.error('未找到相关的操作系统(OS)信息')
-            respons_data = json.dumps(is_ok)
+            run_status = 4
+            respons_data = json.dumps(run_status)
             return HttpResponse(respons_data, content_type='application/json')
 
         mysqladmin = '{dir}/bin/mysqladmin'.format(
@@ -256,47 +281,66 @@ def ajax_check_start_mysql(request):
                                os_user = cmdb_os.get('username', ''),
                                os_password = cmdb_os.get('password', ''))
 
-            # 1.如果返回的pids个数大于15则判断失败
-            if len(pids) > 15:
-                is_ok = False
+            # 如果返回的pids个数大于15则判断失败
+            if is_ok and len(pids) > 15:
+                run_status = 1
                 logger.warning('检测返回MySQL pids 大于 15, 判断为启动失败')
-            
-            # 2.如果没有检测到执行启动命令的pid说明启动失败
-            if not is_ok:
                 logger.error('!!! 启动失败 !!!')
                 # 改变MySQL状态为停止(1)
                 try:
                     DbmpMysqlInstance.objects.filter(
                               mysql_instance_id = mysql_instance_id).update(
-                                                 run_status = 1)
+                                                 run_status = run_status)
                 except Exception, e:
                     logger.error(traceback.format_exc())
                     logger.error('更新MySQL状态为 停止(1) 失败')
-                    respons_data = json.dumps(is_ok)
-                    return HttpResponse(respons_data, content_type='application/json')
+
+                respons_data = json.dumps(run_status)
+                return HttpResponse(respons_data, content_type='application/json')
+            # 如果返回的pids个数 <= 0 则判断失败
+            elif is_ok and len(pids) <= 0:
+                run_status = 1
+                logger.warning('检测返回MySQL pids <= 0, 判断为启动失败')
+                logger.error('!!! 启动失败 !!!')
+                # 改变MySQL状态为停止(1)
+                try:
+                    DbmpMysqlInstance.objects.filter(
+                              mysql_instance_id = mysql_instance_id).update(
+                                                 run_status = run_status)
+                except Exception, e:
+                    logger.error(traceback.format_exc())
+                    logger.error('更新MySQL状态为 停止(1) 失败')
+
+                respons_data = json.dumps(run_status)
+                return HttpResponse(respons_data, content_type='application/json')
+            elif is_ok:
+                run_status = 3
+                logger.warning('检测返回MySQL 0 <= pids < 15, 判断为正在启动, 将返回继续检测(3)')
+                respons_data = json.dumps(run_status)
+                return HttpResponse(respons_data, content_type='application/json')
+            else:
+                run_status = 4
+                logger.error('检测MySQL pids 出错(4)')
+                respons_data = json.dumps(run_status)
+                return HttpResponse(respons_data, content_type='application/json')
+             
 
         # 记录启动成功, 并改变成功状态(2)
+        run_status = 2
         success_info = '启动成功 {host}, {port}'.format(
                           host = IpTool.num2ip(dbmp_mysql_instance.get('host', '')),
                           port = dbmp_mysql_instance.get('port', ''))
-        logger.info('')
+        logger.info(success_info)
+
         try:
             DbmpMysqlInstance.objects.filter(
                       mysql_instance_id = mysql_instance_id).update(
-                                         run_status = 2)
+                                         run_status = run_status)
         except Exception, e:
             logger.error(traceback.format_exc())
             logger.error('MySQL启动成功. 但是, 更新MySQL状态为 启动(2) 失败')
-            respons_data = json.dumps(is_ok)
-            return HttpResponse(respons_data, content_type='application/json')
+
         # 最终返回启动成功
-        respons_data = json.dumps(is_ok)
+        respons_data = json.dumps(run_status)
         return HttpResponse(respons_data, content_type='application/json')
-
-def ajax_mysql_instance_status(request):
-    """获取和修改MySQL实例状态"""
-    pass
-
-
-
 

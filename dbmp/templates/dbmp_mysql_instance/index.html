@@ -58,8 +58,13 @@
                 </a>
             </td>
             <td class="text-center">
-                <span id="run_status_{{ dbmp_mysql_instance.mysql_instance_id }}" class="label 
-                      label-{{ dbmp_mysql_instance.run_status | f_run_status_color }}">
+                <span id="run_status_{{ dbmp_mysql_instance.mysql_instance_id }}"
+                      class="label label-{{ dbmp_mysql_instance.run_status | f_run_status_color }}
+                             run_status_cls">
+                    <input type="hidden" class="run_status_value_cls" 
+                           value="{{ dbmp_mysql_instance.run_status }}">
+                    <input type="hidden" class="mysql_instance_id_value_cls" 
+                           value="{{ dbmp_mysql_instance.mysql_instance_id }}">
                     {{ dbmp_mysql_instance.run_status | f_run_status }}
                 </span>
             </td>
@@ -195,6 +200,24 @@
 
             // 显示密码
             $("[data-toggle='password']").tooltip();
+
+            // 检测MySQL状态
+            $(".run_status_cls").each(function (i){
+                run_status = $(this).find(".run_status_value_cls").val();
+                mysql_instance_id = $(this).find(".mysql_instance_id_value_cls").val();
+     
+                if(run_status == 1) { // 停止
+                    check_start_mysql(mysql_instance_id);
+                } else if(run_status == 2) { // 正常运行
+                    check_start_mysql(mysql_instance_id);
+                } else if(run_status == 3) { // 未知
+                    check_start_mysql(mysql_instance_id);
+                } else if(run_status == 4) { // 正在启动
+                    check_start_mysql(mysql_instance_id);
+                } else if(run_status == 5) { // 正在停止
+                    check_start_mysql(mysql_instance_id);
+                }
+            });
         });
 
 
@@ -324,6 +347,82 @@
                 moveOut: false, // 不可以在窗口外拖拽
                 content: "{% url 'dbmp_mysql_instance_restart_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
             });
+        }
+
+        // 当状态为正在启动时检测MySQL状态
+        function check_start_mysql(mysql_instance_id) {
+            // 对MySQL进行检测
+            $.ajax({
+                url: "{% url 'dbmp_mysql_handler_ajax_mysql_instance_status' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    mysql_instance_id: mysql_instance_id
+                }
+            }).done(function(data) { 
+                if(data == 2) { // 启动成功
+                    start_mysql_success_css(mysql_instance_id);
+                } else if(data == 1) { // 启动失败
+                    start_mysql_fail_css(mysql_instance_id);
+                } else if(data == 3) { // 还在启动
+                    // 暂时不做处理
+                    console.log("还在启动");
+                } else { // data == 4 检测失败
+                    // 暂时不做处理
+                    console.log("检测失败 data: " + data);
+                }
+            }).error(function(data) { // 执行检测失败，内部错误
+                // 暂时不做处理
+                console.log("执行检测失败，内部错误");
+            }); 
+        }
+
+        // 当检测到MySQL没有启动 修改为停止状态的CSS
+        function start_mysql_fail_css(mysql_instance_id) {
+            // 添加可点击css
+            $("#start_instance_" + mysql_instance_id).addClass("btn-outline");
+            $("#restart_instance_" + mysql_instance_id).addClass("btn-outline");
+            $("#stop_instance_" + mysql_instance_id).removeClass("btn-outline");
+            $("#terminal_" + mysql_instance_id).removeClass("btn-outline");
+            $("#backup_" + mysql_instance_id).removeClass("btn-outline");
+            $("#polling_" + mysql_instance_id).removeClass("btn-outline");
+
+            $("#start_instance_" + mysql_instance_id).removeAttr("disabled");
+            $("#restart_instance_" + mysql_instance_id).removeAttr("disabled");
+            $("#stop_instance_" + mysql_instance_id).attr({disabled: "disabled"});
+            $("#terminal_" + mysql_instance_id).attr({disabled: "disabled"});
+            $("#backup_" + mysql_instance_id).attr({disabled: "disabled"});
+            $("#polling_" + mysql_instance_id).attr({disabled: "disabled"});
+            
+            // 修改状态
+            $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
+                return (css.match (/\blabel-\S+/g) || []).join(' ');
+            });
+            $("#run_status_" + mysql_instance_id).addClass("label-{{ 1 | f_run_status_color }}");
+            $("#run_status_" + mysql_instance_id).html("{{ 1 | f_run_status }}");
+        }
+
+        // 当检测到MySQL启动成功 修改为运行中状态的CSS
+        function start_mysql_success_css(mysql_instance_id) {
+            // 添加可点击css
+            $("#stop_instance_" + mysql_instance_id).addClass("btn-outline");
+            $("#restart_instance_" + mysql_instance_id).addClass("btn-outline");
+            $("#terminal_" + mysql_instance_id).addClass("btn-outline");
+            $("#backup_" + mysql_instance_id).addClass("btn-outline");
+            $("#polling_" + mysql_instance_id).addClass("btn-outline");
+
+            $("#stop_instance_" + mysql_instance_id).removeAttr("disabled");
+            $("#restart_instance_" + mysql_instance_id).removeAttr("disabled");
+            $("#terminal_" + mysql_instance_id).removeAttr("disabled");
+            $("#backup_" + mysql_instance_id).removeAttr("disabled");
+            $("#polling_" + mysql_instance_id).removeAttr("disabled");
+            
+            // 修改状态
+            $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
+                return (css.match (/\blabel-\S+/g) || []).join(' ');
+            });
+            $("#run_status_" + mysql_instance_id).addClass("label-{{ 2 | f_run_status_color }}");
+            $("#run_status_" + mysql_instance_id).html("{{ 2 | f_run_status }}");
         }
 
     </script>
