@@ -169,7 +169,85 @@ def ajax_start_instance(request):
 
 def ajax_stop_instance(request):
     """停止MySQL实例"""
-    pass
+    is_ok = False
+    if request.method == 'POST':
+        try:
+            # 获得传入的MySQL实例ID
+            mysql_instance_id = int(request.POST.get('mysql_instance_id', '0'))
+        except ValueError:
+            logger.error(traceback.format_exc())
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取MySQL实例
+        #################################################################
+        try:
+            dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
+                                                'mysql_instance_id',
+                                                'os_id',
+                                                'username',
+                                                'password',
+                                                'port',
+                                                'host',).get(
+                               mysql_instance_id = mysql_instance_id)
+            info_msg = 'host: {host}, port: {port}'.format(
+                              host = dbmp_mysql_instance.get('host', ''),
+                              port = dbmp_mysql_instance.get('port', 0))
+            logger.info(info_msg)
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('查找dbmp_mysql_instance失败')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取MySQL而外信息
+        #################################################################
+        try:
+            dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.values(
+                                        'mysql_instance_info_id',
+                                        'base_dir').get(
+                        mysql_instance_id = mysql_instance_id)
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('查找MySQL实例Info失败DbmpMysqlInstanceInfo')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取 OS 信息
+        #################################################################
+        try:
+            cmdb_os = CmdbOs.objects.values('os_id',
+                                            'ip',
+                                            'username',
+                                            'password').get(
+                        os_id = dbmp_mysql_instance.get('os_id', 0))
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error('未找到相关的操作系统(OS)信息')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 获取 当前操作系统存在的 mysqld pid, 通过ps -ef 获得
+        #################################################################
+        is_ok = MysqlAdminTool.start_mysql_instance(
+                base_dir = dbmp_mysql_instance_info.get('base_dir', ''),
+                mysql_user = dbmp_mysql_instance.get('username', ''),
+                mysql_password = dbmp_mysql_instance.get('password', ''),
+                mysql_host = IpTool.num2ip(dbmp_mysql_instance.get('host', '')),
+                mysql_port = dbmp_mysql_instance.get('port', ''),
+                os_ip = IpTool.num2ip(cmdb_os.get('ip', '')),
+                os_user = cmdb_os.get('username', ''),
+                os_password = cmdb_os.get('password', ''))
+        if not is_ok:
+            logger.error('获取 当前操作系统存在的 mysqld pid命令错误')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+    respons_data = json.dumps(is_ok)
+    return HttpResponse(respons_data, content_type='application/json')
 
 def ajax_restart_instance(request):
     """启动MySQL实例"""

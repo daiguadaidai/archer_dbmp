@@ -92,7 +92,7 @@
                         header += "{{ msg }} \n";
                     {% endfor %}
                 {% else %} // 没有错误信息则显示 MySQL 实例信息
-                    header += "正在操作 MySQL 实例(启动MySQL): \n";
+                    header += "正在操作 MySQL 实例(关闭MySQL): \n";
                     header += "  Host: {{ dbmp_mysql_instance.host | f_num2ip }} \n";
                     header += "  Port: {{ dbmp_mysql_instance.port }} \n";
                     header += "  Username: {{ dbmp_mysql_instance.username }} \n";
@@ -133,13 +133,16 @@
                         mysql_instance_id: {{ dbmp_mysql_instance.mysql_instance_id }}
                     }
                 }).done(function(data) { 
-                    if(data == true) {
-                        window.jqconsole.Write("  执行MySQL关闭命令成功" + "\n", "jqconsole-output-success");
-                        stop_mysql_success_css({{ dbmp_mysql_instance.mysql_instance_id }});
-                    } else {
-                        window.jqconsole.Write("  执行MySQL关闭命令成功" + "\n", "jqconsole-output-success");
-                        stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
-                    }
+                    setTimeout(function () { 
+                        console.log(data);
+                        if(data == true) {
+                            window.jqconsole.Write("  执行MySQL关闭命令成功" + "\n", "jqconsole-output-success");
+                            stop_mysql_success_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                        } else {
+                            window.jqconsole.Write("  !!!执行MySQL关闭命令失败!!!" + "\n", "jqconsole-output-error");
+                            stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                        }
+                    }, 1000);
                 }).error(function(data) { 
                     setTimeout(function () { 
                        window.jqconsole.Write("  执行关闭MySQL失败" + "\n", "jqconsole-output-error");
@@ -151,7 +154,7 @@
                        // 修改父窗口css
                        stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
                     }, 1000);
-                }); 
+                });
             });
 
             // 关闭失败修改父窗口的 css
