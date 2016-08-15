@@ -288,10 +288,8 @@
         function stop_mysql_instance(mysql_instance_id, obj) {
             // 禁用该实例的其他按钮
             $(obj).removeClass("btn-outline");
-            $(obj).removeAttr("onclick");
             $(obj).attr({disabled: "disabled"});
             $(obj).siblings().removeClass("btn-outline");
-            $(obj).siblings().removeAttr("onclick");
             $(obj).siblings().attr({disabled: "disabled"});
 
             // 修改状态

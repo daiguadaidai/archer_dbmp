@@ -152,11 +152,11 @@ def ajax_start_instance(request):
         # 获得MySQL可能的pid
         possible_pid = '|'.join(list(set(start_pids) - set(exist_pids)))
 
-        # 改变MySQL状态为正在启动(4) 并且 保存 可能的pid
+        # 改变MySQL状态为正在启动(5) 并且 保存 可能的pid
         try:
             DbmpMysqlInstance.objects.filter(
                           mysql_instance_id = mysql_instance_id).update(
-                                             run_status = 4,
+                                             run_status = 5,
                                              possible_pid = possible_pid)
         except Exception, e:
             logger.error(traceback.format_exc())
