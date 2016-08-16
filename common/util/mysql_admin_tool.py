@@ -105,7 +105,7 @@ class MysqlAdminTool(object):
                               os_password='root', os_port=22):
         """判断MySQL是否启动"""
        
-        is_alived = False
+        shutdown_ok = False
         if not mysqladmin:
             mysqladmin = __mysqladmin
 
@@ -122,11 +122,11 @@ class MysqlAdminTool(object):
                                                        username = os_user,
                                                        password = os_password,
                                                        port = os_port)
-        # 如果命令执行成功并且返回信息是 mysqld is alive就代表MySQL连接成功
-        if is_ok and len(err_msg) <= 1:
-            if out_msg.pop().strip() == 'Warning: Using a password on the command line interface can be insecure.':
-                is_alived = True
-        return is_alived
+        # 命令执行成功，并且error_msg = 'Warning: Using'代表成功
+        if is_ok and len(err_msg) == 1:
+            if err_msg.pop().strip() == 'Warning: Using a password on the command line interface can be insecure.':
+                shutdown_ok = True
+        return shutdown_ok
 
 def main():
     pass

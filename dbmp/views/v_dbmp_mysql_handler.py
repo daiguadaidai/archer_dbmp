@@ -168,15 +168,23 @@ def ajax_start_instance(request):
         return HttpResponse(respons_data, content_type='application/json')
 
 def ajax_stop_instance(request):
-    """停止MySQL实例"""
-    is_ok = False
+    """停止MySQL实例
+    Args: None
+    Return: shutdown_status
+        1: 关闭成功
+        2: 关闭失败 
+        3: 本来就是关闭的
+        4: 关闭失败(catch 到 exception)
+    Raise: None
+    """
+    shutdown_status = 2
     if request.method == 'POST':
         try:
             # 获得传入的MySQL实例ID
             mysql_instance_id = int(request.POST.get('mysql_instance_id', '0'))
         except ValueError:
             logger.error(traceback.format_exc())
-            respons_data = json.dumps(is_ok)
+            respons_data = json.dumps(shutdown_status)
             return HttpResponse(respons_data, content_type='application/json')
 
         #################################################################
@@ -196,9 +204,10 @@ def ajax_stop_instance(request):
                               port = dbmp_mysql_instance.get('port', 0))
             logger.info(info_msg)
         except Exception, e:
+            shutdown_status = 4
             logger.error(traceback.format_exc())
             logger.error('查找dbmp_mysql_instance失败')
-            respons_data = json.dumps(is_ok)
+            respons_data = json.dumps(shutdown_status)
             return HttpResponse(respons_data, content_type='application/json')
 
         #################################################################
@@ -210,9 +219,10 @@ def ajax_stop_instance(request):
                                         'base_dir').get(
                         mysql_instance_id = mysql_instance_id)
         except Exception, e:
+            shutdown_status = 4
             logger.error(traceback.format_exc())
             logger.error('查找MySQL实例Info失败DbmpMysqlInstanceInfo')
-            respons_data = json.dumps(is_ok)
+            respons_data = json.dumps(shutdown_status)
             return HttpResponse(respons_data, content_type='application/json')
 
         #################################################################
@@ -225,16 +235,22 @@ def ajax_stop_instance(request):
                                             'password').get(
                         os_id = dbmp_mysql_instance.get('os_id', 0))
         except Exception, e:
+            shutdown_status = 4
             logger.error(traceback.format_exc())
             logger.error('未找到相关的操作系统(OS)信息')
-            respons_data = json.dumps(is_ok)
+            respons_data = json.dumps(shutdown_status)
             return HttpResponse(respons_data, content_type='application/json')
 
+        # 拼凑mysqladmin 命令
+        mysqladmin = '{base_dir}/bin/mysqladmin'.format(
+                      base_dir = dbmp_mysql_instance_info.get('base_dir', ''))
+        logger.info(mysqladmin)
         #################################################################
-        # 获取 当前操作系统存在的 mysqld pid, 通过ps -ef 获得
+        # 检测MySQL是否已经关闭
         #################################################################
-        is_ok = MysqlAdminTool.start_mysql_instance(
-                base_dir = dbmp_mysql_instance_info.get('base_dir', ''),
+        # 执行MySQL ping 命令
+        is_ok = MysqlAdminTool.mysql_is_alived(
+                mysqladmin = mysqladmin,
                 mysql_user = dbmp_mysql_instance.get('username', ''),
                 mysql_password = dbmp_mysql_instance.get('password', ''),
                 mysql_host = IpTool.num2ip(dbmp_mysql_instance.get('host', '')),
@@ -242,16 +258,42 @@ def ajax_stop_instance(request):
                 os_ip = IpTool.num2ip(cmdb_os.get('ip', '')),
                 os_user = cmdb_os.get('username', ''),
                 os_password = cmdb_os.get('password', ''))
-        if not is_ok:
-            logger.error('获取 当前操作系统存在的 mysqld pid命令错误')
-            respons_data = json.dumps(is_ok)
-            return HttpResponse(respons_data, content_type='application/json')
-    respons_data = json.dumps(is_ok)
-    return HttpResponse(respons_data, content_type='application/json')
 
-def ajax_restart_instance(request):
-    """启动MySQL实例"""
-    pass
+        if not is_ok:
+            shutdown_status = 3
+            logger.warning('mysqladmin ping 不通MySQL, 判断为已经关闭MySQL')
+            respons_data = json.dumps(shutdown_status)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        #################################################################
+        # 使用 mysqladmin shutdown 来关闭数据库
+        #################################################################
+        is_ok = MysqlAdminTool.stop_mysql_instance(
+                mysqladmin = mysqladmin,
+                mysql_user = dbmp_mysql_instance.get('username', ''),
+                mysql_password = dbmp_mysql_instance.get('password', ''),
+                mysql_host = IpTool.num2ip(dbmp_mysql_instance.get('host', '')),
+                mysql_port = dbmp_mysql_instance.get('port', ''),
+                os_ip = IpTool.num2ip(cmdb_os.get('ip', '')),
+                os_user = cmdb_os.get('username', ''),
+                os_password = cmdb_os.get('password', ''))
+
+        if is_ok:
+            shutdown_status = 1
+            logger.info('关闭MySQL成功!')
+            try: # 更新(MySQL)DbmpMysqlInstance状态为 停止(1)
+                DbmpMysqlInstance.objects.filter(
+                          mysql_instance_id = mysql_instance_id).update(
+                                             run_status = 1)
+            except Exception, e:
+                logger.error(traceback.format_exc())
+                logger.error('MySQL成功成功. 但是, 更新MySQL状态为 停止(1) 失败')
+        else:
+            shutdown_status = 2
+            logger.error('!!! 关闭MySQL失败 !!! ')
+        
+        respons_data = json.dumps(shutdown_status)
+        return HttpResponse(respons_data, content_type='application/json')
 
 def ajax_mysql_instance_status(request):
     """获取和修改MySQL实例状态

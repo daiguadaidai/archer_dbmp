@@ -1,5 +1,6 @@
 {% load staticfiles %}
 {% load ip_filters %}
+{% load filters_dbmp_mysql_instance %}
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -80,6 +81,9 @@
             {% endif %}
         </style>
         <script>
+            // 使用 Django csrf 功能
+            $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
             $(function() {
                 // Creating the console.
                 var header = "";
@@ -88,11 +92,13 @@
                         header += "{{ msg }} \n";
                     {% endfor %}
                 {% else %} // 没有错误信息则显示 MySQL 实例信息
-                    header += "正在操作 MySQL 实例(重启动MySQL): \n";
+                    header += "正在操作 MySQL 实例(重启MySQL): \n";
                     header += "  Host: {{ dbmp_mysql_instance.host | f_num2ip }} \n";
                     header += "  Port: {{ dbmp_mysql_instance.port }} \n";
                     header += "  Username: {{ dbmp_mysql_instance.username }} \n";
                     header += "  password: ******** \n";
+                    header += "  ...... \n";
+                    header += "=============================================== \n";
                 {% endif %}
                 window.jqconsole = $("#console").jqconsole(header, "> ");
                 
@@ -116,8 +122,232 @@
                 
                 // Initiate the first prompt.
                 handler();
-                window.jqconsole.Write("  ......" + "\n", "jqconsole-output-success");
+
+                // 后台调用启动MySQL
+                window.jqconsole.Write("  正在执行MySQL关闭命令..." + "\n", "jqconsole-output-warning");
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_handler_ajax_stop_instance' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_instance_id: {{ dbmp_mysql_instance.mysql_instance_id }}
+                    }
+                }).done(function(data) { 
+                    setTimeout(function () { 
+                        console.log(data);
+                        if(data == 1) { // 关闭成功
+                            window.jqconsole.Write("  执行MySQL关闭命令成功" + "\n", "jqconsole-output-success");
+                            stop_mysql_success_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                            window.jqconsole.Write("\n  ===============================================" + "\n", "jqconsole-output-warning");
+                            start_mysql_instance_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                            start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }});
+                        } else if(data == 2) { // 关闭失败
+                            window.jqconsole.Write("  !!!执行MySQL关闭命令失败!!!" + "\n", "jqconsole-output-error");
+                            stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                        } else if(data == 3) { // 本来就是关闭的
+                            window.jqconsole.Write("  执行MySQL关闭命令成功" + "\n", "jqconsole-output-success");
+                            window.jqconsole.Write("  mysqladmin ping 不通MySQL实例，判断为关闭成功" + "\n", "jqconsole-output-warning");
+                            stop_mysql_success_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                            window.jqconsole.Write("\n  ===============================================" + "\n", "jqconsole-output-warning");
+                            start_mysql_instance_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                            start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }});
+                        } else { //data == 4 内部错误，一般是catch到了exception
+                            window.jqconsole.Write("  !!!执行MySQL关闭命令失败!!!" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  1.在调用关闭方法出错(服务器内部有问题)" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  2.一般是catch到了exception" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  3.关闭命令是是用mysqladmin执行的，请确保MySQL实例配置正确" + "\n", "jqconsole-output-error");
+                            stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                        }
+                    }, 1000);
+                }).error(function(data) { 
+                    setTimeout(function () { 
+                        window.jqconsole.Write("  执行关闭MySQL失败" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  1.在调用关闭方法出错(服务器内部有问题)" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  2.关闭命令是是用mysqladmin执行的，请确保MySQL实例配置正确" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  3.请排产网络等是否是畅通" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  4.实在不行就后台自己敲命令解决，但是请确保在测试MySQL链接是正常的。" + "\n", "jqconsole-output-error");
+
+                        // 修改父窗口css
+                        stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                    }, 1000);
+                });
             });
+
+            // 启动MySQL实例
+            function start_mysql_instance(mysql_instance_id) {
+                window.jqconsole.Write("  正在执行MySQL启动命令..." + "\n", "jqconsole-output-warning");
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_handler_ajax_start_instance' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_instance_id: mysql_instance_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        window.jqconsole.Write("  执行MySQL启动命令成功" + "\n", "jqconsole-output-success");
+                        window.jqconsole.Write("\n  正在检测MySQL是否启动成功..." + "\n", "jqconsole-output-warning");
+                        window.jqconsole.Write("  每隔 5 秒检测一次, 5 秒后发出检测" + "\n", "jqconsole-output-warning");
+
+                        // 每隔 5 秒检测一次
+                        var times_run = 0;
+                        var interval = setInterval(function(){
+                            times_run += 1;
+                            window.jqconsole.Write("  进行第 " + times_run + " 检测" + "\n", "jqconsole-output-warning");
+                            // 检测超过 60 次就警告
+                            if(times_run >= 60){
+                                window.jqconsole.Write("  !!!持续检测过长, 需要考虑人工确认MySQL是否启动成功!!!" + "\n", "jqconsole-output-warning");
+                            }
+
+                            // 对MySQL进行检测
+                            $.ajax({
+                                url: "{% url 'dbmp_mysql_handler_ajax_mysql_instance_status' %}",
+                                type: "POST",
+                                dataType: "json",
+                                data: {
+                                    mysql_instance_id: mysql_instance_id
+                                }
+                            }).done(function(data) { 
+                                if(data == 2) {
+                                    window.jqconsole.Write("  MySQL已经正常启动! " + "\n", "jqconsole-output-success");
+                                    start_mysql_success_css(mysql_instance_id);
+                                    clearInterval(interval);
+                                } else if(data == 1) {
+                                    window.jqconsole.Write("  !!! 启动失败 !!!" + "\n", "jqconsole-output-error");
+
+                                    // 修改父窗口css
+                                    start_mysql_fail_css(mysql_instance_id);
+                                    clearInterval(interval);
+                                } else if(data == 3) {
+                                    window.jqconsole.Write("  !!! MySQL 正在启动中, 5秒后再次发出检测 !!!" + "\n", "jqconsole-output-warning");
+                                } else { // data == 4
+                                    window.jqconsole.Write("  !!! 检测内部错误, 需要人为介入查询原因 !!!" + "\n", "jqconsole-output-error");
+
+                                    // 修改父窗口css
+                                    start_mysql_fail_css(mysql_instance_id);
+                                    clearInterval(interval);
+                                }
+                            }).error(function(data) { 
+                                window.jqconsole.Write("  !!! 检测内部错误, 需要人为介入查询原因 !!!" + "\n", "jqconsole-output-error");
+                                start_mysql_fail_css(mysql_instance_id);
+                                clearInterval(interval);
+                            }); 
+                        }, 5000);
+                    } else {
+                        setTimeout(function () { 
+                            window.jqconsole.Write("  执行启动MySQL失败" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  1.请确保启动命令或相关参数正确" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  2.实在不行请找DBA介入进行排查" + "\n", "jqconsole-output-error");
+
+                            // 修改父窗口css
+                            start_mysql_fail_css(mysql_instance_id);
+                        }, 1000);
+                    }
+                }).error(function(data) { 
+                    setTimeout(function () { 
+                       window.jqconsole.Write("  执行启动MySQL失败" + "\n", "jqconsole-output-error");
+                       window.jqconsole.Write("  1.在调用启动方法出错(服务器内部有问题)" + "\n", "jqconsole-output-error");
+                       window.jqconsole.Write("  2.请排产网络等是否是畅通" + "\n", "jqconsole-output-error");
+
+                       // 修改父窗口css
+                       start_mysql_fail_css(mysql_instance_id);
+                    }, 1000);
+                });
+            }
+
+            // 关闭失败修改父窗口的 css
+            function stop_mysql_success_css(mysql_instance_id) {
+                // 添加可点击css
+                $("#start_instance_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#restart_instance_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#start_instance_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#restart_instance_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                
+                // 修改状态
+                $("#run_status_" + mysql_instance_id, parent.document).removeClass(function(index, css){
+                    return (css.match (/\blabel-\S+/g) || []).join(' ');
+                });
+                $("#run_status_" + mysql_instance_id, parent.document).addClass("label-{{ 1 | f_run_status_color }}");
+                $("#run_status_" + mysql_instance_id, parent.document).html("{{ 1 | f_run_status }}");
+            }
+
+            // 关闭成功修改父窗口的 css
+            function stop_mysql_fail_css(mysql_instance_id) {
+                // 添加可点击css
+                $("#stop_instance_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#restart_instance_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#terminal_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#backup_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#polling_" + mysql_instance_id, parent.document).addClass("btn-outline");
+
+                $("#stop_instance_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#restart_instance_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#terminal_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#backup_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#polling_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                
+                // 修改状态
+                $("#run_status_" + mysql_instance_id, parent.document).removeClass(function(index, css){
+                    return (css.match (/\blabel-\S+/g) || []).join(' ');
+                });
+                $("#run_status_" + mysql_instance_id, parent.document).addClass("label-{{ 2 | f_run_status_color }}");
+                $("#run_status_" + mysql_instance_id, parent.document).html("{{ 2 | f_run_status }}");
+            }
+
+            // 启动失败修改父窗口的 css
+            function start_mysql_fail_css(mysql_instance_id) {
+                // 添加可点击css
+                $("#start_instance_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#restart_instance_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#start_instance_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#restart_instance_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                
+                // 修改状态
+                $("#run_status_" + mysql_instance_id, parent.document).removeClass(function(index, css){
+                    return (css.match (/\blabel-\S+/g) || []).join(' ');
+                });
+                $("#run_status_" + mysql_instance_id, parent.document).addClass("label-{{ 1 | f_run_status_color }}");
+                $("#run_status_" + mysql_instance_id, parent.document).html("{{ 1 | f_run_status }}");
+            }
+
+            // 启动成功修改父窗口的 css
+            function start_mysql_success_css(mysql_instance_id) {
+                // 添加可点击css
+                $("#stop_instance_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#restart_instance_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#terminal_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#backup_" + mysql_instance_id, parent.document).addClass("btn-outline");
+                $("#polling_" + mysql_instance_id, parent.document).addClass("btn-outline");
+
+                $("#stop_instance_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#restart_instance_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#terminal_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#backup_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                $("#polling_" + mysql_instance_id, parent.document).removeAttr("disabled");
+                
+                // 修改状态
+                $("#run_status_" + mysql_instance_id, parent.document).removeClass(function(index, css){
+                    return (css.match (/\blabel-\S+/g) || []).join(' ');
+                });
+                $("#run_status_" + mysql_instance_id, parent.document).addClass("label-{{ 2 | f_run_status_color }}");
+                $("#run_status_" + mysql_instance_id, parent.document).html("{{ 2 | f_run_status }}");
+            }
+
+            // 启动时修改MySQL按钮 css
+            function start_mysql_instance_css(mysql_instance_id) {
+                // 禁用该实例的其他按钮
+                $("#start_instance_" + mysql_instance_id, parent.document).removeClass("btn-outline");
+                $("#start_instance_" + mysql_instance_id, parent.document).attr({disabled: "disabled"});
+                $("#start_instance_" + mysql_instance_id, parent.document).siblings().removeClass("btn-outline");
+                $("#start_instance_" + mysql_instance_id, parent.document).siblings().attr({disabled: "disabled"});
+
+                // 修改状态
+                $("#run_status_" + mysql_instance_id, parent.document).removeClass(function(index, css){
+                    return (css.match (/\blabel-\S+/g) || []).join(' ');
+                });
+                $("#run_status_" + mysql_instance_id, parent.document).addClass("label-{{ 5 | f_run_status_color }}");
+                $("#run_status_" + mysql_instance_id, parent.document).html("{{ 5 | f_run_status }}");
+            }
         </script>
     </head>
     <body>

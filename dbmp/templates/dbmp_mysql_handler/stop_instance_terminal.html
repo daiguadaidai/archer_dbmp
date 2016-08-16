@@ -135,24 +135,34 @@
                 }).done(function(data) { 
                     setTimeout(function () { 
                         console.log(data);
-                        if(data == true) {
+                        if(data == 1) { // 关闭成功
                             window.jqconsole.Write("  执行MySQL关闭命令成功" + "\n", "jqconsole-output-success");
                             stop_mysql_success_css({{ dbmp_mysql_instance.mysql_instance_id }});
-                        } else {
+                        } else if(data == 2) { // 关闭失败
                             window.jqconsole.Write("  !!!执行MySQL关闭命令失败!!!" + "\n", "jqconsole-output-error");
+                            stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                        } else if(data == 3) { // 本来就是关闭的
+                            window.jqconsole.Write("  执行MySQL关闭命令成功" + "\n", "jqconsole-output-success");
+                            window.jqconsole.Write("  mysqladmin ping 不通MySQL实例，判断为关闭成功" + "\n", "jqconsole-output-warning");
+                            stop_mysql_success_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                        } else { //data == 4 内部错误，一般是catch到了exception
+                            window.jqconsole.Write("  !!!执行MySQL关闭命令失败!!!" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  1.在调用关闭方法出错(服务器内部有问题)" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  2.一般是catch到了exception" + "\n", "jqconsole-output-error");
+                            window.jqconsole.Write("  3.关闭命令是是用mysqladmin执行的，请确保MySQL实例配置正确" + "\n", "jqconsole-output-error");
                             stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
                         }
                     }, 1000);
                 }).error(function(data) { 
                     setTimeout(function () { 
-                       window.jqconsole.Write("  执行关闭MySQL失败" + "\n", "jqconsole-output-error");
-                       window.jqconsole.Write("  1.在调用关闭方法出错(服务器内部有问题)" + "\n", "jqconsole-output-error");
-                       window.jqconsole.Write("  2.关闭命令是是用mysqladmin执行的，请确保MySQL实例配置正确" + "\n", "jqconsole-output-error");
-                       window.jqconsole.Write("  3.请排产网络等是否是畅通" + "\n", "jqconsole-output-error");
-                       window.jqconsole.Write("  4.实在不行就后台自己敲命令解决，但是请确保在测试MySQL链接是正常的。" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  执行关闭MySQL失败" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  1.在调用关闭方法出错(服务器内部有问题)" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  2.关闭命令是是用mysqladmin执行的，请确保MySQL实例配置正确" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  3.请排产网络等是否是畅通" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("  4.实在不行就后台自己敲命令解决，但是请确保在测试MySQL链接是正常的。" + "\n", "jqconsole-output-error");
 
-                       // 修改父窗口css
-                       stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                        // 修改父窗口css
+                        stop_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
                     }, 1000);
                 });
             });

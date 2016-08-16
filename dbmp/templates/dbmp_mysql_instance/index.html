@@ -107,14 +107,14 @@
 
 
                 <button type="button" id="stop_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                        onclick="stop_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
+                        onclick="stop_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, '{{ dbmp_mysql_instance.host | f_num2ip }}', {{ dbmp_mysql_instance.port }}, this)"
                         class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
                         {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-power-off"></i>
                     关闭实例
                 </button>
                 <button type="button" id="start_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                        onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
+                        onclick="start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, '{{ dbmp_mysql_instance.host | f_num2ip }}', {{ dbmp_mysql_instance.port }}, this)"
                         class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 %}btn-outline{% endif %}
                                start_instance_cls"
                         {% if dbmp_mysql_instance.run_status != 1 %}disabled="disabled"{% endif %}>
@@ -124,7 +124,7 @@
 
 
                 <button type="button" id="restart_instance_{{ dbmp_mysql_instance.mysql_instance_id }}"
-                        onclick="restart_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, this)"
+                        onclick="restart_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }}, '{{ dbmp_mysql_instance.host | f_num2ip }}', {{ dbmp_mysql_instance.port }}, this)"
                         class="more_btn btn btn-danger btn-xs {% if dbmp_mysql_instance.run_status == 1 or dbmp_mysql_instance.run_status == 2 or dbmp_mysql_instance.run_status == 3 %}btn-outline{% endif %}"
                         {% if dbmp_mysql_instance.run_status != 1 and dbmp_mysql_instance.run_status != 2 and dbmp_mysql_instance.run_status != 3 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-refresh"></i>
@@ -255,95 +255,153 @@
             });
         }
 
-        function start_mysql_instance(mysql_instance_id, obj) {
-            // 禁用该实例的其他按钮
-            $(obj).removeClass("btn-outline");
-            $(obj).attr({disabled: "disabled"});
-            $(obj).siblings().removeClass("btn-outline");
-            $(obj).siblings().attr({disabled: "disabled"});
+        function start_mysql_instance(mysql_instance_id, mysql_host,
+                                      mysql_port, obj) {
+            // 获得MySQL 启动、关闭、重启 警告信息
+            text = start_mysql_warning_text(mysql_host, mysql_port);
+            swal({
+                title: "确定(启动)MySQL实例？",
+                text: text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "启动MySQL中...",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+                // 禁用该实例的其他按钮
+                $(obj).removeClass("btn-outline");
+                $(obj).attr({disabled: "disabled"});
+                $(obj).siblings().removeClass("btn-outline");
+                $(obj).siblings().attr({disabled: "disabled"});
 
-            // 修改状态
-            $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
-                return (css.match (/\blabel-\S+/g) || []).join(' ');
-            });
-            $("#run_status_" + mysql_instance_id).addClass("label-{{ 5 | f_run_status_color }}");
-            $("#run_status_" + mysql_instance_id).html("{{ 5 | f_run_status }}");
+                // 修改状态
+                $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
+                    return (css.match (/\blabel-\S+/g) || []).join(' ');
+                });
+                $("#run_status_" + mysql_instance_id).addClass("label-{{ 5 | f_run_status_color }}");
+                $("#run_status_" + mysql_instance_id).html("{{ 5 | f_run_status }}");
 
-            // 点击启动按钮打开一个新的iframe命令窗口
-            index = layer.open({
-                type: 2,
-                title: "启动MySQL实例命令窗口",
-                shadeClose: true,
-                shade: false, // 没有遮罩
-                offset: "rb", // 左下角弹框
-                maxmin: true,
-                shift: 2,
-                shadeClose: true, //点击遮罩关闭层
-                area : ["100%" , "40%"], // 弹窗大小
-                moveOut: false, // 不可以在窗口外拖拽
-                content: "{% url 'dbmp_mysql_instance_start_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
-            });
-        }
-
-        function stop_mysql_instance(mysql_instance_id, obj) {
-            // 禁用该实例的其他按钮
-            $(obj).removeClass("btn-outline");
-            $(obj).attr({disabled: "disabled"});
-            $(obj).siblings().removeClass("btn-outline");
-            $(obj).siblings().attr({disabled: "disabled"});
-
-            // 修改状态
-            $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
-                return (css.match (/\blabel-\S+/g) || []).join(' ');
-            });
-            $("#run_status_" + mysql_instance_id).addClass("label-{{ 4 | f_run_status_color }}");
-            $("#run_status_" + mysql_instance_id).html("{{ 4 | f_run_status }}");
-
-            // 点击启动按钮打开一个新的iframe命令窗口
-            index = layer.open({
-                type: 2,
-                title: "启动MySQL实例命令窗口",
-                shadeClose: true,
-                shade: false, // 没有遮罩
-                offset: "rb", // 左下角弹框
-                maxmin: true,
-                shift: 2,
-                shadeClose: true, //点击遮罩关闭层
-                area : ["100%" , "40%"], // 弹窗大小
-                moveOut: false, // 不可以在窗口外拖拽
-                content: "{% url 'dbmp_mysql_instance_stop_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: "启动MySQL实例命令窗口",
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "rb", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: "{% url 'dbmp_mysql_instance_start_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
+                });
             });
         }
 
-        function restart_mysql_instance(mysql_instance_id, obj) {
-            // 禁用该实例的其他按钮
-            $(obj).removeClass("btn-outline");
-            $(obj).removeAttr("onclick");
-            $(obj).attr({disabled: "disabled"});
-            $(obj).siblings().removeClass("btn-outline");
-            $(obj).siblings().removeAttr("onclick");
-            $(obj).siblings().attr({disabled: "disabled"});
+        function stop_mysql_instance(mysql_instance_id, mysql_host,
+                                      mysql_port, obj) {
+            // 获得MySQL 启动、关闭、重启 警告信息
+            text = start_mysql_warning_text(mysql_host, mysql_port);
+            swal({
+                title: "确定(关闭)MySQL实例？",
+                text: text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "关闭MySQL中...",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+                // 禁用该实例的其他按钮
+                $(obj).removeClass("btn-outline");
+                $(obj).attr({disabled: "disabled"});
+                $(obj).siblings().removeClass("btn-outline");
+                $(obj).siblings().attr({disabled: "disabled"});
 
-            // 修改状态
-            $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
-                return (css.match (/\blabel-\S+/g) || []).join(' ');
+                // 修改状态
+                $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
+                    return (css.match (/\blabel-\S+/g) || []).join(' ');
+                });
+                $("#run_status_" + mysql_instance_id).addClass("label-{{ 4 | f_run_status_color }}");
+                $("#run_status_" + mysql_instance_id).html("{{ 4 | f_run_status }}");
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: "启动MySQL实例命令窗口",
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "rb", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: "{% url 'dbmp_mysql_instance_stop_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
+                });
             });
-            $("#run_status_" + mysql_instance_id).addClass("label-{{ 4 | f_run_status_color }}");
-            $("#run_status_" + mysql_instance_id).html("{{ 4 | f_run_status }}");
+        }
 
-            // 点击启动按钮打开一个新的iframe命令窗口
-            index = layer.open({
-                type: 2,
-                title: "启动MySQL实例命令窗口",
-                shadeClose: true,
-                shade: false, // 没有遮罩
-                offset: "rb", // 左下角弹框
-                maxmin: true,
-                shift: 2,
-                shadeClose: true, //点击遮罩关闭层
-                area : ["100%" , "40%"], // 弹窗大小
-                moveOut: false, // 不可以在窗口外拖拽
-                content: "{% url 'dbmp_mysql_instance_restart_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
+        function restart_mysql_instance(mysql_instance_id, mysql_host,
+                                      mysql_port, obj) {
+            // 获得MySQL 启动、关闭、重启 警告信息
+            text = start_mysql_warning_text(mysql_host, mysql_port);
+            swal({
+                title: "确定(重启)MySQL实例？",
+                text: text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "重启MySQL中...",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+                // 禁用该实例的其他按钮
+                $(obj).removeClass("btn-outline");
+                $(obj).attr({disabled: "disabled"});
+                $(obj).siblings().removeClass("btn-outline");
+                $(obj).siblings().attr({disabled: "disabled"});
+
+                // 修改状态
+                $("#run_status_" + mysql_instance_id).removeClass(function(index, css){
+                    return (css.match (/\blabel-\S+/g) || []).join(' ');
+                });
+                $("#run_status_" + mysql_instance_id).addClass("label-{{ 4 | f_run_status_color }}");
+                $("#run_status_" + mysql_instance_id).html("{{ 4 | f_run_status }}");
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: "启动MySQL实例命令窗口",
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "rb", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: "{% url 'dbmp_mysql_instance_restart_instance_terminal' %}?mysql_instance_id=" + mysql_instance_id
+                });
             });
         }
 
@@ -421,6 +479,33 @@
             });
             $("#run_status_" + mysql_instance_id).addClass("label-{{ 2 | f_run_status_color }}");
             $("#run_status_" + mysql_instance_id).html("{{ 2 | f_run_status }}");
+        }
+
+        // MySQL 启动，关闭，重启 操作的提示警告
+        function start_mysql_warning_text(mysql_host, mysql_port) {
+            text = '';
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 连接: <code class="text-primary">' + mysql_host + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 端口: <code class="text-primary">' + mysql_port + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp; 启动、关闭、重启 MySQL 是一件很重要的，请谨慎操作';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp; 1.在做类似操作时请与开发、运维、DBA等相关人员沟通确认，从而避免一些不必要的问题发生。';
+            text += '</div>';
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp; 2.如果是宕机后的启动，最好先确认宕机的原因再启动';
+            text += '</div>';
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp; 3.关闭和重启操作请再三确认';
+            text += '</div>';
+            return text;
         }
 
     </script>

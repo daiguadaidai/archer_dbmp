@@ -124,13 +124,18 @@
                 handler();
 
                 // 后台调用启动MySQL
+                start_mysql_instance({{ dbmp_mysql_instance.mysql_instance_id }});
+            });
+
+            // 后台调用启动MySQL
+            function start_mysql_instance(mysql_instance_id) {
                 window.jqconsole.Write("  正在执行MySQL启动命令..." + "\n", "jqconsole-output-warning");
                 $.ajax({
                     url: "{% url 'dbmp_mysql_handler_ajax_start_instance' %}",
                     type: "POST",
                     dataType: "json",
                     data: {
-                        mysql_instance_id: {{ dbmp_mysql_instance.mysql_instance_id }}
+                        mysql_instance_id: mysql_instance_id
                     }
                 }).done(function(data) { 
                     if(data == true) {
@@ -154,18 +159,18 @@
                                 type: "POST",
                                 dataType: "json",
                                 data: {
-                                    mysql_instance_id: {{ dbmp_mysql_instance.mysql_instance_id }}
+                                    mysql_instance_id: mysql_instance_id
                                 }
                             }).done(function(data) { 
                                 if(data == 2) {
                                     window.jqconsole.Write("  MySQL已经正常启动! " + "\n", "jqconsole-output-success");
-                                    start_mysql_success_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                                    start_mysql_success_css(mysql_instance_id);
                                     clearInterval(interval);
                                 } else if(data == 1) {
                                     window.jqconsole.Write("  !!! 启动失败 !!!" + "\n", "jqconsole-output-error");
 
                                     // 修改父窗口css
-                                    start_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                                    start_mysql_fail_css(mysql_instance_id);
                                     clearInterval(interval);
                                 } else if(data == 3) {
                                     window.jqconsole.Write("  !!! MySQL 正在启动中, 5秒后再次发出检测 !!!" + "\n", "jqconsole-output-warning");
@@ -173,12 +178,12 @@
                                     window.jqconsole.Write("  !!! 检测内部错误, 需要人为介入查询原因 !!!" + "\n", "jqconsole-output-error");
 
                                     // 修改父窗口css
-                                    start_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                                    start_mysql_fail_css(mysql_instance_id);
                                     clearInterval(interval);
                                 }
                             }).error(function(data) { 
                                 window.jqconsole.Write("  !!! 检测内部错误, 需要人为介入查询原因 !!!" + "\n", "jqconsole-output-error");
-                                start_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                                start_mysql_fail_css(mysql_instance_id);
                                 clearInterval(interval);
                             }); 
                         }, 5000);
@@ -189,7 +194,7 @@
                             window.jqconsole.Write("  2.实在不行请找DBA介入进行排查" + "\n", "jqconsole-output-error");
 
                             // 修改父窗口css
-                            start_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                            start_mysql_fail_css(mysql_instance_id);
                         }, 1000);
                     }
                 }).error(function(data) { 
@@ -199,10 +204,11 @@
                        window.jqconsole.Write("  2.请排产网络等是否是畅通" + "\n", "jqconsole-output-error");
 
                        // 修改父窗口css
-                       start_mysql_fail_css({{ dbmp_mysql_instance.mysql_instance_id }});
+                       start_mysql_fail_css(mysql_instance_id);
                     }, 1000);
                 }); 
-            });
+
+            }
 
             // 启动失败修改父窗口的 css
             function start_mysql_fail_css(mysql_instance_id) {
