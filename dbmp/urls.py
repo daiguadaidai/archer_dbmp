@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^dbmp_mysql_instance/start_instance_terminal/$', dbmp_mysql_instance.start_instance_terminal, name='dbmp_mysql_instance_start_instance_terminal'),
     url(r'^dbmp_mysql_instance/stop_instance_terminal/$', dbmp_mysql_instance.stop_instance_terminal, name='dbmp_mysql_instance_stop_instance_terminal'),
     url(r'^dbmp_mysql_instance/restart_instance_terminal/$', dbmp_mysql_instance.restart_instance_terminal, name='dbmp_mysql_instance_restart_instance_terminal'),
+    url(r'^dbmp_mysql_instance/terminal_sql_console/$', dbmp_mysql_instance.terminal_sql_console, name='dbmp_mysql_instance_terminal_sql_console'),
 
     # dbmp_mysql_handler
     url(r'^dbmp_mysql_handler/ajax_mysql_is_alived/$', dbmp_mysql_handler.ajax_mysql_is_alived, name='dbmp_mysql_handler_ajax_mysql_is_alived'),

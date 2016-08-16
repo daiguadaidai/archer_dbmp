@@ -88,6 +88,7 @@
             <td class="text-center">
                 <button type="button" id="terminal_{{ dbmp_mysql_instance.mysql_instance_id }}"
                         class="more_btn btn btn-info btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
+                        onclick="terminal_sql_console({{ dbmp_mysql_instance.mysql_instance_id }})"
                         {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-terminal"></i>
                     命令窗口
@@ -220,6 +221,39 @@
             });
         });
 
+        // 打开执行SQL命令行窗口
+        function terminal_sql_console(mysql_instance_id) {
+            url = "";
+            url += "{% url 'dbmp_mysql_instance_terminal_sql_console' %}";
+            url += "?mysql_instance_id=" + mysql_instance_id;
+            open_iframe_window("sql窗口", url);
+        }
+
+        // 打开一个 iframe 窗口
+        function open_iframe_window(tab_name, url) {
+            var timestamp = (new Date()).valueOf(); 
+            iframe_name = "name" + timestamp;
+
+            // iframe 菜单 标签
+            iframe_tab = '';
+            iframe_tab += '<a href="javascript:;" class="active J_menuTab" ';
+            iframe_tab += 'data-id="'+ timestamp +'">' + tab_name;
+            iframe_tab += '<i class="fa fa-times-circle"></i>';
+            iframe_tab += '</a>';
+
+            // iframe 内容
+            iframe_content = '';
+            iframe_content += '<iframe class="J_iframe" name="'+ iframe_name +'" width="100%" height="100%" ';
+            iframe_content += 'src="' + url + '" frameborder="0" ';
+            iframe_content += 'data-id="'+ timestamp +'" seamless style="display: inline;">';
+            iframe_content += '</iframe>';
+
+            // 打开标签和 iframe
+            $(".page-tabs .page-tabs-content .J_menuTab", parent.document).removeClass('active');
+            $(".page-tabs .page-tabs-content", parent.document).append(iframe_tab);
+            $("#content-main .J_iframe", parent.document).css('display','none'); 
+            $("#content-main", parent.document).append(iframe_content);
+        }
 
         //删除 dbmp_mysql_instance
         function dbmp_mysql_instance_delete(mysql_instance_id, cur_page) {
