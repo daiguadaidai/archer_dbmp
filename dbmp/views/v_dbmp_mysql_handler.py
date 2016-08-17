@@ -8,6 +8,7 @@ from dbmp.models.dbmp_mysql_instance_info import DbmpMysqlInstanceInfo
 from common.util.decorator_tool import DecoratorTool
 from common.util.ip_tool import IpTool
 from common.util.mysql_admin_tool import MysqlAdminTool
+from common.util.json_date_encoder import JsonDateEncoder
 
 import simplejson as json
 import traceback
@@ -40,7 +41,7 @@ def ajax_mysql_is_alived(request):
             try:
                 cmdb_os = CmdbOs.objects.get(os_id = os_id)
             except CmdbOs.DoesNotExist:
-                logger.info(traceback.format_exc())
+                logger.error(traceback.format_exc())
 
         if (cmdb_os and mysql_host and mysql_port and mysql_user
                     and mysql_password and mysql_base_dir):
@@ -464,3 +465,60 @@ def ajax_mysql_instance_status(request):
         respons_data = json.dumps(run_status)
         return HttpResponse(respons_data, content_type='application/json')
 
+def ajax_execute_sql(request):
+    """执行SQL语句并返回结果
+    Args: None
+    Return: results执行sql返回的结果
+        results = {
+            values: 行的值
+            count: 影响行数
+            start_timestamp: 执行开始的时间
+            stop_timestamp: 执行结束时间
+            interval_timestamp: 执行总时间
+            error_message: 错误信息
+        }
+    Raise: None
+    """
+    if request.method == 'POST':
+        # 获得传来的MySQL连接参数 和 所在的操作系统ID
+        host = request.POST.get('host', '')
+        port = int(request.POST.get('port', 0))
+        user = request.POST.get('user', '')
+        passwd = request.POST.get('passwd', '')
+        db = request.POST.get('db', '')
+        sql_text = request.POST.get('sql_text', '')
+
+        info_msg = 'host: {host}, port: {port}'.format(
+                                            host = host,
+                                            port = port)
+        logger.info(info_msg)
+        # 如果 MySQL 信息不完整则不给予执行
+        if not host or not port or not user or not passwd:
+            respons_data = json.dumps(False)
+            logger.error('MySQL信息不完整，不给予执行SQL')
+            return HttpResponse(respons_data, content_type='application/json')
+
+        # 如果没sql语句则不给予执行
+        if not sql_text:
+            respons_data = json.dumps(False)
+            logger.error('没有填写sql text')
+            return HttpResponse(respons_data, content_type='application/json')
+        
+        db_info = {
+            'host': host,
+            'port': port,
+            'user': user,
+            'passwd': passwd,
+            'db': db,
+            'sql_text': sql_text
+        }
+
+        # 获得执行的 sql 结果
+        result = MysqlAdminTool.get_terminal_result(**db_info)
+        try:
+            respons_data = json.dumps(result, cls = JsonDateEncoder)
+        except:
+            logger.error(traceback.format_exc())
+        return HttpResponse(respons_data, content_type='application/json')
+
+        

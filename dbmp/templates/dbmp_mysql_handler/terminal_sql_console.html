@@ -124,64 +124,58 @@
 
             $(function() {
                 // Creating the console.
-                var header = 'Welcome to JQConsole!\n' +
-                             'Use jqconsole.Write() to write and ' +
-                             'jqconsole.Input() to read.\n';
-                window.jqconsole = $('#console').jqconsole(header, 'JS> ');
-
-                // Abort prompt on Ctrl+Z.
-                jqconsole.RegisterShortcut('Z', function() {
-                    jqconsole.AbortPrompt();
-                    handler();
-                });
+                var header = "";
+                {% if error_msg %} // 如果过错误信息则显示错误信息
+                    {% for msg in error_msg %}
+                        header += "{{ msg }} \n";
+                    {% endfor %}
+                {% else %} // 没有错误信息则显示 MySQL 实例信息
+                    header += "=============================================== \n";
+                    header += "  SQL窗口: ";
+                    header += "  Host: {{ dbmp_mysql_instance.host | f_num2ip }}, ";
+                    header += "  Port: {{ dbmp_mysql_instance.port }} \n";
+                    header += "  查询的好习惯: \n";
+                    header += "      1.不要出现大的查询，避免把数据库搞死 \n";
+                    header += "      2.没一条语句应该使用LIMIT做输出限制, 一般LIMIT 0， 100 是合理的\n";
+                    header += "      3.对于DDL操作请现在测试环境执行以下，再进行评估是否要马上在线上执行\n";
+                    header += "=============================================== \n";
+                {% endif %}
+                window.jqconsole = $("#console").jqconsole(header, "> ");
                 
-                // Move to line start Ctrl+A.
-                jqconsole.RegisterShortcut('A', function() {
-                    jqconsole.MoveToStart();
-                    handler();
-                });
-                
-                // Move to line end Ctrl+E.
-                jqconsole.RegisterShortcut('E', function() {
-                    jqconsole.MoveToEnd();
-                    handler();
-                });
-                
-                jqconsole.RegisterMatching('{', '}', 'brace');
-                jqconsole.RegisterMatching('(', ')', 'paran');
-                jqconsole.RegisterMatching('[', ']', 'bracket');
                 // Handle a command.
                 var handler = function(command) {
-                  if (command) {
-                    try {
-                        jqconsole.Write('==> ' + window.eval(command) + '\n');
-                    } catch (e) {
-                        jqconsole.Write('ERROR: ' + e.message + '\n');
-                    }
-                  }
-                  jqconsole.Prompt(true, handler, function(command) {
-                    // Continue line if can't compile the command.
-                    try {
-                        Function(command);
-                    } catch (e) {
-                        if (/[\[\{\(]$/.test(command)) {
-                            return 1;
-                        } else {
-                            return 0;
+                    jqconsole.Prompt(true, handler, function(command) {
+                        // Continue line if can"t compile the command.
+                        try {
+                            Function(command);
+                        } catch (e) {
+                            if (/[\[\{\(]$/.test(command)) {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
                         }
-                    }
-                    return false;
-                  });
+                        return false;
+                    });
                 };
-
+                
                 // Initiate the first prompt.
                 handler();
+                // 注意信息
+                jqconsole.Write("  注意: \n", "jqconsole-output-warning");
+                jqconsole.Write("      1.改窗口执行的sql数据自动提交，手动自己commit，rollback将无效. \n", "jqconsole-output-warning");
+                jqconsole.Write("      2.执行update、delete时请考虑清楚，或使用其他渠道. \n", "jqconsole-output-warning");
+                jqconsole.Write("=============================================== \n", "jqconsole-output-warning");
 
                 // 注册 Ctrl + Enter 事件
                 $("#sql_area").keypress(function(e){
                     if(e.ctrlKey && e.which == 13 || e.which == 10) { 
                         sql_text = $(this).val(); // 获得sql文本
                         sql_text = $.trim(sql_text); // 去处文本空白
+                        host = "{{ dbmp_mysql_instance.host | f_num2ip }}";
+                        port = "{{ dbmp_mysql_instance.port }}";
+                        user = "{{ dbmp_mysql_instance.username }}";
+                        passwd = "{{ dbmp_mysql_instance.password }}";
                         
                         // 没有值则不执行
                         if('' == sql_text) {
@@ -189,16 +183,103 @@
                             return false;
                         }
                         // 清空 数据
-                        sql_text = $(this).val(''); // 获得sql文本
+                        $(this).val(''); // 获得sql文本
 
                         // 写入 terminal
                         jqconsole.Write("mysql> " + sql_text + "\n", "jqconsole-output-success");
+
+                        // 执行SQL
+                        execute_sql(host, port, user, passwd, sql_text);
                     }
                 })
             });
 
-            function execute_sql() {
+            // ajax 执行sql
+            function execute_sql(host, port, username, password, sql_text) {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_handler_ajax_execute_sql' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        host: host,
+                        port: port,
+                        user: user,
+                        passwd: passwd,
+                        sql_text: sql_text
+                    }
+                }).done(function(data) {
+                    if(data == false) {
+                        window.jqconsole.Write("  查询失败:" + "\n", "jqconsole-output-error");
+                        window.jqconsole.Write("      1.接收的数据库链接参数不正确" + "\n", "jqconsole-output-error");
+                        return false;
+                    }
 
+                    // 如果有错误信息，显示错误并退出
+                    error_msg = $.trim(data["error_msg"]);
+                    if (error_msg != "") {
+                        window.jqconsole.Write(error_msg + "\n", "jqconsole-output-error");
+                        return false;
+                    }
+
+                    // 返回数据
+                    if (data["rows_str"].length != 0) {
+                        col_names = new Array();
+                        title = "";
+                        title_anno = ""; // title的注释 类似: +-------------------------+
+                        for(var i=0; i<data["rows_str"].length; i++) {
+                            // 显示title
+                            if(i == 0) {
+                                // 获取列明
+                                col_names = Object.keys(data["rows_str"][i]);
+                                for(col_name_index in col_names) {
+                                    col_name_len = col_names[col_name_index].length;
+                                    // 拼凑title
+                                    title += "| " + col_names[col_name_index] + "           ";
+                                    title_anno += '+-';
+                                    for(var j=0; j<(col_name_len+11); j++) {
+                                        title_anno += '-';
+                                    }
+                                    
+                                }
+                                title += " |\n";
+                                title_anno += "-+\n";
+                                // 显示 title
+                                window.jqconsole.Write(title_anno);
+                                window.jqconsole.Write(title);
+                                window.jqconsole.Write(title_anno);
+                            }
+
+                            // 拼凑和显示数据
+                            row_data = '';
+                            for(col_name_index in col_names) {
+                                value = data["rows_str"][i][col_names[col_name_index]];
+                                col_length = col_names[col_name_index].length + 11;
+                                value_length = value.toString().length;
+                                if(col_length > value_length) {
+                                    space = '';
+                                    for(var j=0; j<(col_length-value_length); j++) {
+                                        space += ' ';
+                                    }
+                                    row_data += '| ' + value + space;
+                                } else {
+                                    row_data += '| ' + value;
+                                }
+                            }
+
+                            // 显示数据
+                            row_data += ' |\n';
+                            window.jqconsole.Write(row_data);
+                        }
+                    }
+                    window.jqconsole.Write(title_anno);
+                     
+                    exec_msg = "";
+                    exec_msg += "影响 " + data["count"] + " 行记录, ";
+                    exec_msg += "花费 " + data["interval_timestamp"] + " ms.\n";
+                    window.jqconsole.Write(exec_msg);
+                }).error(function(data) {
+                    window.jqconsole.Write("  !!! 内部出错 !!!" + "\n", "jqconsole-output-error");
+                });
             }
 
         </script>

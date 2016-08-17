@@ -3,6 +3,9 @@
 from common.util.ssh_tool import SSHTool
 
 import logging
+import MySQLdb
+import traceback
+import time
 
 logger = logging.getLogger('default')
 
@@ -127,6 +130,95 @@ class MysqlAdminTool(object):
             if err_msg.pop().strip() == 'Warning: Using a password on the command line interface can be insecure.':
                 shutdown_ok = True
         return shutdown_ok
+
+    @classmethod
+    def execute_sql(self, host='127.0.0.1', port=3306, user='root',
+                    passwd='', db='', sql_text = ''):
+        """ 执行SQL返回结果
+        Args:
+            host: ip
+            port: 端口
+            passwd: 密码
+            user: 用户名
+            db: 数据库名
+            sql_text: 需要执行的sql
+        Return: 
+            rows_dict: 行的值
+            count: 影响行数
+            start_timestamp: 执行开始的时间
+            stop_timestamp: 执行结束时间
+            interval_timestamp: 执行总时间
+            error_msg: 错误信息
+        Raise: None
+        """
+    
+        db_conf = {
+            'host': host,
+            'port': port,
+            'user': user,
+            'passwd': passwd,
+            'db': db,
+            'charset': 'utf8',
+        }
+        # 初始化值
+        rows_dict = ()
+        count = 0
+        start_timestamp = 0
+        stop_timestamp = 0
+        error_msg = ''
+
+        try:
+            conn = MySQLdb.connect(**db_conf)
+            cursor = conn.cursor(cursorclass = MySQLdb.cursors.DictCursor)
+
+            start_timestamp = time.time()
+
+            count = cursor.execute(sql_text)
+            rows_dict = cursor.fetchall()
+            conn.commit()
+
+            stop_timestamp = time.time()
+        except:
+            conn.rollback()
+            error_msg = traceback.format_exc()
+            logger.error('执行sql失败')
+            logger.error(error_msg)
+        finally:
+            conn.close()
+
+        return rows_dict, count, start_timestamp, stop_timestamp, error_msg
+
+    @classmethod
+    def get_terminal_result(self, host='127.0.0.1', port=3306, user='root',
+                    passwd='', db='', sql_text = ''):
+        result = {
+            'rows_str': '',
+            'count': 0,
+            'start_timestamp': 0,
+            'stop_timestamp': 0,
+            'interval_timestamp': 0,
+            'error_msg': ''
+        }
+        data = self.execute_sql(host = host, port = port, user = user,
+                         passwd = passwd, db = db, sql_text = sql_text)
+
+        result['count'] = data[1]
+        result['start_timestamp'] = data[2]
+        result['stop_timestamp'] = data[3]
+
+        # 执行时间 单位 ms
+        result['interval_timestamp'] = (data[3] - data[2]) * 1000
+
+        # 过滤输出错误信息
+        if data[4]:
+            error_msg = data[4].split('Error').pop()
+            result['error_msg'] = error_msg
+
+        result['rows_str'] = data[0]
+
+        logger.error(result)
+
+        return result
 
 def main():
     pass
