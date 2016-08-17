@@ -60,6 +60,9 @@
                 color: #0D0;
                 font-size: small;
             }
+            .jqconsole-output-normal {
+                font-size: small;
+            }
             .jqconsole-old-input {
                 color: #bb0;
                 font-size: small;
@@ -244,9 +247,9 @@
                                 title += " |\n";
                                 title_anno += "-+\n";
                                 // 显示 title
-                                window.jqconsole.Write(title_anno);
-                                window.jqconsole.Write(title);
-                                window.jqconsole.Write(title_anno);
+                                window.jqconsole.Write(title_anno, "jqconsole-output-normal");
+                                window.jqconsole.Write(title, "jqconsole-output-normal");
+                                window.jqconsole.Write(title_anno, "jqconsole-output-normal");
                             }
 
                             // 拼凑和显示数据
@@ -256,27 +259,27 @@
                                 col_length = col_names[col_name_index].length + 11;
                                 value_length = value.toString().length;
                                 if(col_length > value_length) {
-                                    space = '';
+                                    space = "";
                                     for(var j=0; j<(col_length-value_length); j++) {
-                                        space += ' ';
+                                        space += " ";
                                     }
-                                    row_data += '| ' + value + space;
+                                    row_data += "| " + value + space;
                                 } else {
-                                    row_data += '| ' + value;
+                                    row_data += "| " + value;
                                 }
                             }
 
                             // 显示数据
-                            row_data += ' |\n';
-                            window.jqconsole.Write(row_data);
+                            row_data += " |\n";
+                            window.jqconsole.Write(row_data, "jqconsole-output-normal");
                         }
                     }
-                    window.jqconsole.Write(title_anno);
+                    window.jqconsole.Write(title_anno, "jqconsole-output-normal");
                      
                     exec_msg = "";
                     exec_msg += "影响 " + data["count"] + " 行记录, ";
                     exec_msg += "花费 " + data["interval_timestamp"] + " ms.\n";
-                    window.jqconsole.Write(exec_msg);
+                    window.jqconsole.Write(exec_msg, "jqconsole-output-normal");
                 }).error(function(data) {
                     window.jqconsole.Write("  !!! 内部出错 !!!" + "\n", "jqconsole-output-error");
                 });
