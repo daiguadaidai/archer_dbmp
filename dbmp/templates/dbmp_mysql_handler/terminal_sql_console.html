@@ -1,0 +1,217 @@
+{% load staticfiles %}
+{% load ip_filters %}
+{% load filters_dbmp_mysql_instance %}
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+    <head>
+        <meta charset="UTF-8"> 
+        <link rel="stylesheet" href="{% static 'js/plugins/jqconsole/css/ansi.css' %}" media="all" />
+        <script src="{% static 'js/plugins/jqconsole/js/jquery-1.5.1.js' %}"></script>
+        <script src="{% static 'js/plugins/jqconsole/js/jqconsole-2.7.min.js' %}"></script>
+
+        <style>
+            html, body {
+                background-color: #333;
+                color: white;
+                font-family: monospace;
+                margin: 0;
+                padding: 0;
+                overflow-x:hidden;
+                overflow-y:hidden;
+            }
+            #console {
+                width: 100%;
+                background-color: black;
+                border: 3px solid #CCC;
+            }
+            .jqconsole {
+                padding: 10px;
+                padding-bottom: 10px;
+            }
+            .jqconsole-cursor {
+                background-color: #999;
+            }
+            .jqconsole-blurred .jqconsole-cursor {
+                background-color: #666;
+            }
+            .jqconsole-prompt {
+                color: #0d0;
+                font-size: small;
+            }
+            .jqconsole-old-prompt {
+                color: #0b0;
+                font-size: small;
+            }
+            .jqconsole-input {
+                color: #dd0;
+                font-size: small;
+            }
+            .jqconsole-output-error {
+                color: #F00;
+                font-size: small;
+            }
+            .jqconsole-output-warning {
+                color: #FF0;
+                font-size: small;
+            }
+            .jqconsole-output-success {
+                color: #0D0;
+                font-size: small;
+            }
+            .jqconsole-old-input {
+                color: #bb0;
+                font-size: small;
+            }
+            .brace {
+                color: #00FFFF;
+            }
+            .paran {
+                color: #FF00FF;
+            }
+            .bracket {
+                color: #FFFF00;
+            }
+            .jqconsole-composition {
+                background-color: red;
+                font-weight: normal;
+            }
+
+            {% if error_msg %}
+                .jqconsole-header {
+                    color: #F00;
+                    font-weight: normal;
+                }
+            {% else %}
+                .jqconsole-header {
+                    color: #0D0;
+                    font-weight: normal;
+                }
+            {% endif %}
+            #result_scroll {
+                width: 100%;
+                height: 85%;
+                position: absolute;
+                top: 0px;
+                bottom: 0px;
+                right: 0px;
+                left: 0px;
+                margin: 0px;
+                overflow-x:hidden;
+                overflow-y:hidden;
+            }
+            #sql_scroll {
+                position: absolute;
+                width: 99%;
+                height: 15%;
+                border: 3px solid #CCC;
+                top: 85%;
+                bottom: 0px;
+                right: 0px;
+                left: 0px;
+                overflow-x:hidden;
+                overflow-y:hidden;
+            }
+            #sql_area{
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+        <script>
+            // 使用 Django csrf 功能
+            $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+            $(function() {
+                // Creating the console.
+                var header = 'Welcome to JQConsole!\n' +
+                             'Use jqconsole.Write() to write and ' +
+                             'jqconsole.Input() to read.\n';
+                window.jqconsole = $('#console').jqconsole(header, 'JS> ');
+
+                // Abort prompt on Ctrl+Z.
+                jqconsole.RegisterShortcut('Z', function() {
+                    jqconsole.AbortPrompt();
+                    handler();
+                });
+                
+                // Move to line start Ctrl+A.
+                jqconsole.RegisterShortcut('A', function() {
+                    jqconsole.MoveToStart();
+                    handler();
+                });
+                
+                // Move to line end Ctrl+E.
+                jqconsole.RegisterShortcut('E', function() {
+                    jqconsole.MoveToEnd();
+                    handler();
+                });
+                
+                jqconsole.RegisterMatching('{', '}', 'brace');
+                jqconsole.RegisterMatching('(', ')', 'paran');
+                jqconsole.RegisterMatching('[', ']', 'bracket');
+                // Handle a command.
+                var handler = function(command) {
+                  if (command) {
+                    try {
+                        jqconsole.Write('==> ' + window.eval(command) + '\n');
+                    } catch (e) {
+                        jqconsole.Write('ERROR: ' + e.message + '\n');
+                    }
+                  }
+                  jqconsole.Prompt(true, handler, function(command) {
+                    // Continue line if can't compile the command.
+                    try {
+                        Function(command);
+                    } catch (e) {
+                        if (/[\[\{\(]$/.test(command)) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }
+                    return false;
+                  });
+                };
+
+                // Initiate the first prompt.
+                handler();
+
+                // 注册 Ctrl + Enter 事件
+                $("#sql_area").keypress(function(e){
+                    if(e.ctrlKey && e.which == 13 || e.which == 10) { 
+                        sql_text = $(this).val(); // 获得sql文本
+                        sql_text = $.trim(sql_text); // 去处文本空白
+                        
+                        // 没有值则不执行
+                        if('' == sql_text) {
+                            console.log('no value');
+                            return false;
+                        }
+                        // 清空 数据
+                        sql_text = $(this).val(''); // 获得sql文本
+
+                        // 写入 terminal
+                        jqconsole.Write("mysql> " + sql_text + "\n", "jqconsole-output-success");
+                    }
+                })
+            });
+
+            function execute_sql() {
+
+            }
+
+        </script>
+    </head>
+    <body>
+        
+        <div id="result_scroll" style="">
+            <div id="console"></div>
+        </div>
+
+        <div id="sql_scroll" style="">
+            <textarea id="sql_area"></textarea>
+        </div>
+    </body>
+</html>
+
