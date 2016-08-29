@@ -1,0 +1,229 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+{% load ip_filters %}
+{% load filters_dbmp_mysql_instance %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block app_title %}MySQL实例详细信息{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row fontawesome-icon-list">
+    <!-- 添加返回MySQL实例列表按钮 -->
+    <div class="fa-hover  col-md-2">
+        <a href="{% url 'dbmp_mysql_instance_index' %}">
+            <i class="fa fa-home"></i>
+            实例列表
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<input type="hidden" id="chost" value="{{ dbmp_mysql_instance.host | f_num2ip }}" />
+<input type="hidden" id="cport" value="{{ dbmp_mysql_instance.port }}" />
+<input type="hidden" id="cusername" value="{{ dbmp_mysql_instance.username }}" />
+<input type="hidden" id="cpassword" value="{{ dbmp_mysql_instance.password }}" />
+<input type="hidden" id="dbase_dir" value="{{ dbmp_mysql_instance_info.base_dir }}" />
+<input type="hidden" id="cos_id" value="{{ cmdb_os.os_id }}">
+<!-- OS 信息 -->
+<section id="os_section">
+    <h2 class="page-header">操作系统信息</h2>
+    {% if cmdb_os %}
+    <div id="os_row" class="row">
+        <div class="col-md-4">
+            <strong>主机名：</strong> {{ cmdb_os.hostname }}
+        </div>
+        <div class="col-md-4">
+            <strong>IP地址：</strong> {{ cmdb_os.ip | f_num2ip }}
+        </div>
+        <div class="col-md-4">
+            <strong>别名：</strong> {{ cmdb_os.alias }}
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <a><i class="fa fa-object-ungroup"></i>
+                替换OS
+            </a>
+        </div>
+    </div>
+    {% endif %}
+<section>
+
+<section id="mysql_instance">
+    <h2 class="page-header">MySQL实例信息&nbsp;
+        <span class="label label-{{ dbmp_mysql_instance.run_status | f_run_status_color }}">
+            {{ dbmp_mysql_instance.run_status | f_run_status }}
+        </span>
+    </h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <strong>链接 IP：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance.host | f_num2ip }}</code>
+        </div>
+        <div class="col-md-3">
+            <strong>端口：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance.port }}</code>
+        </div>
+        <div class="col-md-3">
+            <strong>用户名：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance.username }}</code>
+        </div>
+        <div class="col-md-3">
+            <strong>密码：</strong> 
+            <a title="{{ dbmp_mysql_instance.password }}"
+                   data-toggle="password" data-placement="top">
+                <i class="fa fa-thumb-tack"></i>
+                悬停显示
+            </a>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <strong>配置文件路径：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance_info.my_cnf_path }}</code>
+        </div>
+    </div>
+        
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <strong>MySQL软件目录：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance_info.base_dir }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <strong>启动命令：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance_info.start_cmd }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <strong>备注：</strong> {{ dbmp_mysql_instance.remark }}
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-sm-4 col-sm-offset-9">
+            <button id="test_mysql_alived" type="button" class="btn btn-success">
+                <i class="fa fa-link"></i>
+                链接测试
+            </button>
+            <a href="{% url 'dbmp_mysql_instance_edit' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}" 
+               type="button" class="btn btn-primary">
+                <i class="fa fa-edit"></i>
+                编辑
+            </a>
+        </div>
+    </div>
+<section>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 显示密码
+            $("[data-toggle='password']").tooltip();
+
+            // 测试MySQL连接是否正常
+            $('#test_mysql_alived').on('click', function() {
+
+                mysql_host = $('#chost').val();
+                mysql_port = $('#cport').val();
+                mysql_user = $('#cusername').val();
+                mysql_password = $('#cpassword').val();
+                mysql_base_dir = $('#dbase_dir').val();
+                os_id = $('#cos_id').val();
+
+                text = '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;操作系统ID: <code class="text-primary">' + os_id + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 连接: <code class="text-primary">' + mysql_host + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 端口: <code class="text-primary">' + mysql_port + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 用户: <code class="text-primary">' + mysql_user + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 密码: <code class="text-primary">' + mysql_password + '</code>';
+                text += '</div>';
+
+                text += '<div class="row text-left">';
+                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 软件路径: <code class="text-primary">' + mysql_base_dir + '</code>';
+                text += '</div>';
+
+
+                swal({
+                    title: "连接信息如下",
+                    text: text,
+                    type: "warning",
+                    html: true,
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "测试",
+                    closeOnConfirm: false
+                }, function () {
+                    $.ajax({
+                        url: "{% url 'dbmp_mysql_handler_ajax_mysql_is_alived' %}",
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            mysql_host: mysql_host,
+                            mysql_port: mysql_port,
+                            mysql_user: mysql_user,
+                            mysql_password: mysql_password,
+                            mysql_base_dir: mysql_base_dir,
+                            os_id: os_id
+                        }
+                    }).done(function(data) { 
+                        if(data == true) {
+                            swal("连接成功!", "该链接可以使用！", "success");
+                        } else {
+                            swal("连接失败!", "请确认，连接参数是否正确!", "error");
+                        }
+                    }).error(function(data) { 
+                        swal("连接失败!", "估计服务器内部出现了错误!", "error");
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

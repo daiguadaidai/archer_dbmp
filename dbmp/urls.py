@@ -15,6 +15,7 @@ Including another URLconf
 from django.conf.urls import include, url
 from dbmp.views import v_dbmp_mysql_instance as dbmp_mysql_instance
 from dbmp.views import v_dbmp_mysql_handler as dbmp_mysql_handler
+from dbmp.views import v_dbmp_mysql_backup_instance as dbmp_mysql_backup_instance
 
 urlpatterns = [
     # dbmp_mysql_instance
@@ -38,4 +39,11 @@ urlpatterns = [
     url(r'^dbmp_mysql_handler/ajax_stop_instance$', dbmp_mysql_handler.ajax_stop_instance, name='dbmp_mysql_handler_ajax_stop_instance'),
     url(r'^dbmp_mysql_handler/ajax_mysql_instance_status$', dbmp_mysql_handler.ajax_mysql_instance_status, name='dbmp_mysql_handler_ajax_mysql_instance_status'),
     url(r'^dbmp_mysql_handler/ajax_execute_sql$', dbmp_mysql_handler.ajax_execute_sql, name='dbmp_mysql_handler_ajax_execute_sql'),
+
+    # dbmp_mysql_backup_instance
+    url(r'^dbmp_mysql_backup_instance/index/$', dbmp_mysql_backup_instance.index, name='dbmp_mysql_backup_instance_index'),
+    url(r'^dbmp_mysql_backup_instance/add/$', dbmp_mysql_backup_instance.add, name='dbmp_mysql_backup_instance_add'),
+    url(r'^dbmp_mysql_backup_instance/edit/$', dbmp_mysql_backup_instance.edit, name='dbmp_mysql_backup_instance_edit'),
+    url(r'^dbmp_mysql_backup_instance/view/$', dbmp_mysql_backup_instance.view, name='dbmp_mysql_backup_instance_view'),
+    url(r'^dbmp_mysql_backup_instance/delete/$', dbmp_mysql_backup_instance.delete, name='dbmp_mysql_backup_instance_delete'),
 ]
