@@ -64,11 +64,11 @@
 <section id="mysql_instance">
     <h2 class="page-header">MySQL实例备份信息</h2>
 
-    <form method="post" action="{% url 'dbmp_mysql_instance_edit' %}" class="form-horizontal m-t" id="default_form">
+    <form method="post" action="{% url 'dbmp_mysql_backup_instance_edit' %}" class="form-horizontal m-t" id="default_form">
         {% csrf_token %}
         <input id="dmysql_instance_id" name="mysql_instance_id" type="hidden"
                value="{{ dbmp_mysql_instance.mysql_instance_id }}" />
-        <input id="cos_id" name="os_id" type="hidden" value="{{ cmdb_os.os_id }}" />
+        <input id="cos_id" name="os_id" type="hidden" value="{% if cmdb_os.os_id %}{{ cmdb_os.os_id }}{% else %}0{% endif %}" />
         <div class="form-group">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
@@ -350,40 +350,8 @@
                 });
             });
 
-            // 表单验证
-            $('#default_form').bootstrapValidator({
-                message: 'This value is not valid',
-                feedbackIcons: {
-                    valid: 'glyphicon glyphicon-ok',
-                    invalid: 'glyphicon glyphicon-remove',
-                    validating: 'glyphicon glyphicon-refresh'
-                },
-                fields: {
-                    backup_tool_file: {
-                        validators: {
-                            notEmpty: {
-                                message: '备份工具路径不能为空'
-                            },
-                        }
-                    },
-                    backup_dir: {
-                        validators: {
-                            notEmpty: {
-                                message: '必须填写本地备份存放的目录'
-                            },
-                        }
-                    },
-                    backup_tool_param: {
-                        message: '备份命令而外参数验证失败',
-                        validators: {
-                            stringLength: {
-                                max: 200,
-                                message: '备份命令而外参数长度必须在0到200位之间'
-                            }
-                        }
-                    },
-                }
-            });
+            load_valid_plugin();
+
         });
 
         function show_remote_info(object) {
@@ -423,9 +391,9 @@
             html_str += '        远程目录：';
             html_str += '    </label>';
             html_str += '    <div class="col-sm-8">';
-            html_str += '        <input id="dbase_dir" name="base_dir" ';
+            html_str += '        <input id="dremote_dir" name="remote_dir" data-bv-field="remote_dir" ';
             html_str += '               type="text" class="form-control" maxlength="200"';
-            html_str += '               value="{{ dbmp_mysql_instance_info.base_dir }}">';
+            html_str += '               value="{{ dbmp_mysql_backup_instance.remote_dir }}">';
             html_str += '        <span class="help-block m-b-none">';
             html_str += '            <i class="fa fa-info-circle text-success"></i>';
             html_str += '            如：/u01/backup/db1';
@@ -434,6 +402,7 @@
             html_str += '</div>';
 
             $('#is_to_remote_div').after(html_str);
+            reload_valid_plugin();
 
             // 弹出OS信息 iframe 
             $('#os_list').on('click', function(){ 
@@ -446,6 +415,96 @@
                     content: '{% url 'dbmp_mysql_instance_iframe_os_list' %}' 
                 }); 
             }); 
+        }
+
+        function load_valid_plugin() {
+            // 表单验证
+            $('#default_form').bootstrapValidator({
+                message: 'This value is not valid',
+                feedbackIcons: {
+                    valid: 'glyphicon glyphicon-ok',
+                    invalid: 'glyphicon glyphicon-remove',
+                    validating: 'glyphicon glyphicon-refresh'
+                },
+                fields: {
+                    backup_tool: {
+                        message: '选择的备份工具验证失败',
+                        validators: {
+                            between: {
+                                min: 1,
+                                max: 4,
+                                message: '非法备份工具, 备份工具只能选择(mysqldump, mysqlpump, mydumper, xtrabackup)'
+                            }
+                        }
+                    },
+                    backup_tool_file: {
+                        validators: {
+                            notEmpty: {
+                                message: '备份工具路径不能为空'
+                            },
+                        }
+                    },
+                    backup_type: {
+                        message: '选择备份类型验证失败',
+                        validators: {
+                            between: {
+                                min: 1,
+                                max: 1,
+                                message: '暂时只支持强制指定实例备份'
+                            }
+                        }
+                    },
+                    is_all_instance: {
+                        message: '选择是否全实例备份失败',
+                        validators: {
+                            between: {
+                                min: 0,
+                                max: 1,
+                                message: '暂时只支持全实例备份(对于定时备份的也是建议这么做)'
+                            }
+                        }
+                    },
+                    backup_dir: {
+                        validators: {
+                            notEmpty: {
+                                message: '必须填写本地备份存放的目录'
+                            },
+                        }
+                    },
+                    backup_tool_param: {
+                        message: '备份命令而外参数验证失败',
+                        validators: {
+                            stringLength: {
+                                max: 200,
+                                message: '备份命令而外参数长度必须在0到200位之间'
+                            }
+                        }
+                    },
+                    is_to_remote: {
+                        message: '选择是否将备份发送至远程验证失败',
+                        validators: {
+                            between: {
+                                min: 0,
+                                max: 1,
+                                message: '只能填写 (是/否)'
+                            }
+                        }
+                    },
+                    remote_dir: {
+                        validators: {
+                            notEmpty: {
+                                message: '必须填写远程备份存放的目录'
+                            },
+                        }
+                    },
+                }
+            });
+        }
+
+        function reload_valid_plugin() {
+            $("#default_form").data('bootstrapValidator').destroy();
+            $('#default_form').data('bootstrapValidator', null);
+            load_valid_plugin();
         }
         
     </script>
