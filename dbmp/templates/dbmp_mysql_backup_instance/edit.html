@@ -350,8 +350,8 @@
                 });
             });
 
+            // 加载 bootstrup valid 插件
             load_valid_plugin();
-
         });
 
         function show_remote_info(object) {
@@ -402,6 +402,8 @@
             html_str += '</div>';
 
             $('#is_to_remote_div').after(html_str);
+
+            // 重新加载 bootstrup valid 插件
             reload_valid_plugin();
 
             // 弹出OS信息 iframe 
