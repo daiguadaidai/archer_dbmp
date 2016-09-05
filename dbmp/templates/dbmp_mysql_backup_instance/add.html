@@ -2,6 +2,7 @@
 
 {% load staticfiles %}
 {% load ip_filters %}
+{% load filters_dbmp_mysql_backup_instance %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
@@ -9,17 +10,17 @@
     <link href="{% static 'css/plugins/bootstrapvalidator/bootstrapValidator.min.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block app_title %}MySQL实例添加{% endblock %}
+{% block app_title %}MySQL实例备份设置(新增){% endblock %}
 
 <!-- 其他元素模块 -->
 {% block top_element %}
 <div class="row">
     <div class="col-md-5">
         <div class="row fontawesome-icon-list">
-            <!-- 添加跳转备份设置列表 -->
-            <div class="fa-hover col-md-4">
-                <a href="{{ request.environ.HTTP_REFERER }}">
-                    <i class="fa fa-reply"></i>
+            <!-- 跳转到备份设置列表页面 -->
+            <div class="fa-hover col-md-5">
+                <a href="{% url 'dbmp_mysql_backup_instance_index' %}">
+                    <i class="fa fa-cubes"></i>
                     备份设置列表
                 </a>
             </div>
@@ -42,155 +43,248 @@
 
 <!-- 显示该页面主要展示的内容 -->
 {% block content %}
-<!-- OS 信息 -->
-<section id="os_section">
-    <h2 class="page-header">操作系统信息</h2>
+<!-- MySQL 实例信息 -->
+<section id="mysql_instance_section">
+    <h2 class="page-header">MySQL实例信息</h2>
+    {% if dbmp_mysql_instance %}
     <div id="os_row" class="row">
-        <div id="chostname" class="col-md-4">
-            <strong>主机名：</strong> 
+        <div id="mysql_host" class="col-md-4">
+            <strong>IP地址：</strong> {{ dbmp_mysql_instance.host | f_num2ip }}
         </div>
-        <div id="cip" class="col-md-4">
-            <strong>IP地址：</strong> 
+        <div id="mysql_port" class="col-md-4">
+            <strong>端口</strong> {{ dbmp_mysql_instance.port }}
         </div>
-        <div id="calias" class="col-md-4">
-            <strong>别名：</strong> 
-        </div>
-    </div>
-
-    <h4>&nbsp;</h4>
- 
-    <div class="row">
-        <div class="col-md-3">
-            <a id="os_list"><i class="fa fa-object-ungroup"></i>
-                选择MySQL实例
-            </a>
+        <div id="mysql_username" class="col-md-4">
+            <strong>用户名：</strong> {{ dbmp_mysql_instance.username }}
         </div>
     </div>
+    {% endif %}
 <section>
 
 <section id="mysql_instance">
     <h2 class="page-header">MySQL实例备份信息</h2>
 
-    <form method="post" action="{% url 'dbmp_mysql_instance_add' %}" class="form-horizontal m-t" id="default_form">
+    <form method="post" action="{% url 'dbmp_mysql_backup_instance_add' %}" class="form-horizontal m-t" id="default_form">
         {% csrf_token %}
-        <input id="cos_id" name="os_id" type="hidden" />
+        <input id="dmysql_instance_id" name="mysql_instance_id" type="hidden"
+               value="{{ form.mysql_instance_id.value }}" />
+        <input id="cos_id" name="os_id" type="hidden" value="{% if form.os_id.value %}{{ form.os_id.value }}{% else %}0{% endif %}" />
         <div class="form-group">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
-                链接 IP：
+                备份工具：
             </label>
             <div class="col-sm-8">
-                <input id="chost" name="host" type="text" class="form-control"
-                       value="{% if form.host.value %}{{ form.host.value }}{% endif %}">
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                端口：
-            </label>
-            <div class="col-sm-8">
-                <input id="cport" name="port" type="number" class="form-control"
-                       value="{% if form.port.value %}{{ form.port.value }}{% endif %}">
+                <select class="form-control m-b" name="backup_tool"> 
+                    <option value="4">-- 请选择(默认-xtrabackup) --</option> 
+                    <option value="1" {% if form.backup_tool.value == '1' %}selected="selected"{% endif %}>
+                        {{ 1 | f_backup_tool }}</option>
+                    <option value="2" {% if form.backup_tool.value == '2' %}selected="selected"{% endif %}>
+                        {{ 2 | f_backup_tool }}</option>
+                    <option value="3" {% if form.backup_tool.value == '3' %}selected="selected"{% endif %}>
+                        {{ 3 | f_backup_tool }}</option>
+                    <option value="4" {% if form.backup_tool.value == '4' %}selected="selected"{% endif %}>
+                        {{ 4 | f_backup_tool }}</option> 
+                </select>
             </div>
         </div>
 
         <div class="form-group">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
-                用户名：
+                备份工具路径：
             </label>
             <div class="col-sm-8">
-                <input id="cusername" name="username" 
-                       type="text" class="form-control" maxlength="50"
-                       value="{% if form.username.value %}{{ form.username.value }}{% endif %}">
+                <input id="dbackup_tool_file" name="backup_tool_file" 
+                       type="text" class="form-control" maxlength="200"
+                       value="{% if form.backup_tool_file.value %}{{ form.backup_tool_file.value }}{% endif %}">
                 <span class="help-block m-b-none">
                      <i class="fa fa-info-circle text-success"></i> 
-                     该用户应该具备基本的管理MySQL权限(启动，关闭 等等)
+                     如：/usr/local/percona-xtrabackup/bin/innobackupex
                 </span>
             </div>
         </div>
+
         <div class="form-group">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
-                密码：
+                备份类型：
             </label>
             <div class="col-sm-8">
-                <input id="cpassword" name="password" 
-                       type="text" class="form-control" maxlength="200"
-                       value="{% if form.password.value %}{{ form.password.value }}{% endif %}">
+                <select class="form-control m-b" name="backup_type" onfocus="this.defaultIndex=this.selectedIndex;" onchange="this.selectedIndex=this.defaultIndex;"> 
+                    <option value="1">-- 请选择(默认-{{ 1 | f_backup_type }}) --</option> 
+                    <option value="1" {% if form.backup_type.value == '1' %}selected="selected"{% endif %}>
+                        {{ 1 | f_backup_type }}</option>
+                    <option value="2" {% if form.backup_type.value == '2' %}selected="selected"{% endif %}>
+                        {{ 2 | f_backup_type }}</option>
+                    <option value="3" {% if form.backup_type.value == '3' %}selected="selected"{% endif %}>
+                        {{ 3 | f_backup_type }}</option> 
+                </select>
             </div>
         </div>
+
         <div class="form-group">
             <label class="col-sm-3 control-label">
-                备注：
+                <span class="text-danger">*</span>
+                是否全实例备份：
             </label>
             <div class="col-sm-8">
-                <textarea id="cremark" name="remark" type="text" class="form-control">{% if form.remark.value %}{{ form.remark.value }}{% endif %}</textarea>
+                <select class="form-control m-b" name="is_all_instance" onfocus="this.defaultIndex=this.selectedIndex;" onchange="this.selectedIndex=this.defaultIndex;"> 
+                    <option value="1">-- 请选择(默认-{{ 1 | f_is_all_instance }}) --</option> 
+                    <option value="0" {% if form.is_all_instance.value == '0' %}selected="selected"{% endif %}>
+                        {{ 0 | f_is_all_instance }}</option> 
+                    <option value="1" {% if form.is_all_instance.value == '1' %}selected="selected"{% endif %}>
+                        {{ 1 | f_is_all_instance }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                本地备份目录：
+            </label>
+            <div class="col-sm-8">
+                <input id="dbackup_dir" name="backup_dir" 
+                       type="text" class="form-control" maxlength="200"
+                       value="{% if form.backup_dir.value %}{{ form.backup_dir.value }}{% endif %}">
+                <span class="help-block m-b-none">
+                    <i class="fa fa-info-circle text-success"></i>
+                    如：/u01/backup/db1
+                </span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                备份名称：
+            </label>
+            <div class="col-sm-8">
+                <input id="dbackup_name" name="backup_name" 
+                       type="text" class="form-control" maxlength="200"
+                       value="{% if form.backup_name.value %}{{ form.backup_name.value }}{% endif %}">
+                <span class="help-block m-b-none">
+                    <i class="fa fa-info-circle text-success"></i>
+                    如果是一个文件则是文件名，如果是目录则是文件夹名
+                </span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                是否备份binlog：
+            </label>
+            <div class="col-sm-8">
+                <select class="form-control m-b" name="is_binlog"> 
+                    <option value="1">-- 请选择(默认-{{ 1 | f_is_binlog }}) --</option> 
+                    <option value="0" {% if form.is_binlog.value == '0' %}selected="selected"{% endif %}>
+                        {{ 0 | f_is_binlog }}</option> 
+                    <option value="1" {% if form.is_binlog.value == '1' %}selected="selected"{% endif %}>
+                        {{ 1 | f_is_binlog }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                是否压缩：
+            </label>
+            <div class="col-sm-8">
+                <select class="form-control m-b" name="is_compress"> 
+                    <option value="0">-- 请选择(默认-{{ 0 | f_is_compress }}) --</option> 
+                    <option value="0" {% if form.is_compress.value == '0' %}selected="selected"{% endif %}>
+                        {{ 0 | f_is_compress }}</option>                
+                    <option value="1" {% if form.is_compress.value == '1' %}selected="selected"{% endif %}>
+                        {{ 1 | f_is_compress }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                备份而外参数：
+            </label>
+            <div class="col-sm-8">
+                <textarea id="cbackup_tool_param" name="backup_tool_param" type="text" class="form-control">{% if form.backup_tool_param.value %}{{ form.backup_tool_param.value }}{% endif %}</textarea>
+                <span class="help-block m-b-none">
+                    <i class="fa fa-info-circle text-success"></i>
+                    如：--no-data
+                </span>
             </div>
         </div>
 
         <hr /> 
         
-        <div class="form-group">
+        <div class="form-group" id="is_to_remote_div">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
-                配置文件路径：
+                备份是否传输至远程：
             </label>
             <div class="col-sm-8">
-                <input id="dmy_cnf_path" name="my_cnf_path" 
-                       type="text" class="form-control" maxlength="200"
-                       value="{% if form.my_cnf_path.value %}{{ form.my_cnf_path.value }}{% endif %}">
-                <span class="help-block m-b-none">
-                    <i class="fa fa-info-circle text-success"></i> 
-                    如：/etc/my.cnf，/etc/my_3306.cnf
-                </span>
+                <select class="form-control m-b" id="is_to_remote" name="is_to_remote"> 
+                    <option value="0">-- 请选择(默认-{{ 0 | f_is_to_remote }}) --</option> 
+                    <option value="0" {% if form.is_to_remote.value == '0' %}selected="selected"{% endif %}>
+                        {{ 0 | f_is_to_remote }}</option> 
+                    <option value="1" {% if form.is_to_remote.value == '1' %}selected="selected"{% endif %}>
+                        {{ 1 | f_is_to_remote }}</option>
+                </select>
             </div>
         </div>
 
-        <div class="form-group">
+        <!-- 如果有设置远程则显示远程信息 -->
+        {% if form.is_to_remote.value == '1' %} 
+        <div class="form-group remote_info">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
-                MySQL软件目录：
+                远程操作系统：
             </label>
             <div class="col-sm-8">
-                <input id="dbase_dir" name="base_dir" 
+                <div id="os_row" class="row">
+                    <label class="col-sm-12 control-label"></label>
+                    <div id="chostname" class="col-md-4">
+                        <strong>主机名：</strong> {{ cmdb_os.hostname }}
+                    </div>
+                    <div id="cip" class="col-md-4">
+                        <strong>IP地址：</strong> {{ cmdb_os.ip | f_num2ip }}
+                    </div>
+                    <div id="calias" class="col-md-4">
+                        <strong>别名：</strong> {{ cmdb_os.alias }}
+                    </div>
+                </div>
+            </div>
+            <label class="col-sm-12 control-label"></label>
+            <label class="col-sm-3 control-label"></label>
+            <div class="col-sm-8">
+                <a id="os_list"><i class="fa fa-object-ungroup"></i>
+                    选择远程操作系统
+                </a> 
+            </div>
+        </div>
+
+        <div class="form-group remote_info">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                远程目录：
+            </label>
+            <div class="col-sm-8">
+                <input id="dremote_dir" name="remote_dir" 
                        type="text" class="form-control" maxlength="200"
-                       value="{% if form.base_dir.value %}{{ form.base_dir.value }}{% endif %}">
+                       value="{% if form.remote_dir.value %}{{ form.remote_dir.value }}{% endif %}">
                 <span class="help-block m-b-none">
                     <i class="fa fa-info-circle text-success"></i>
-                    如：/usr/local/mysql
+                    如：/u01/backup/db1
                 </span>
             </div>
         </div>
-
-        <div class="form-group">
-            <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                启动命令：
-            </label>
-            <div class="col-sm-8">
-                <input id="dstart_cmd" name="start_cmd" 
-                       type="text" class="form-control" maxlength="200"
-                       value="{% if form.start_cmd.value %}{{ form.start_cmd.value }}{% endif %}">
-                <span class="help-block m-b-none">
-                     <i class="fa fa-info-circle text-success"></i> 
-                     如：/bin/bash /usr/local/mysql/bin/mysqld_safe --defaults-file=/etc/my_3306.cnf > /dev/null 2>&1 &
-                </span>
-            </div>
-        </div>
+        {% endif %}
 
         <div class="form-group">
             <div class="col-sm-4 col-sm-offset-3">
-                <a href="{{ request.environ.HTTP_REFERER }}" 
-                   type="button" class="btn btn-default">
-                    <i class="fa fa-times"></i>
-                    取消
-                </a>
-                <button
-                   type="button" class="btn btn-success">
-                    <i class="fa fa-link"></i>
-                    链接测试
+                <button onclick="dbmp_mysql_backup_instance_delete({{ dbmp_mysql_backup_instance.mysql_instance_id }})"
+                   type="button" class="btn btn-danger">
+                    <i class="fa fa-trash"></i>
+                    删除
                 </button>
                 <button type="submit" class="btn btn-primary">
                     <i class="fa fa-save"></i>
@@ -214,7 +308,52 @@
         // 使用 Django csrf 功能
         $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
 
+        //删除 dbmp_mysql_instance
+        function dbmp_mysql_instance_delete(mysql_instance_id) {
+            $(".confirm").unbind("click");
+            swal({
+                title: "您确定要删除这条信息吗?",
+                text: "删除后将无法恢复，请谨慎操作！",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "删除",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_instance_ajax_delete' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_instance_id: mysql_instance_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        swal("删除成功!", "已成功删除数据！", "success");
+                        $(".confirm").click(function(){
+                            location.href="{% url 'dbmp_mysql_instance_index' %}"
+                        });
+                    } else {
+                        swal("对不起!", "删除数据失败了!", "error");
+                    }
+                }).error(function(data) { 
+                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
+                });
+            });
+        }
+
         $(document).ready(function(){
+
+            // 选择备份是否传输至远程时弹出需要添加远程信息的指标
+            $('#is_to_remote').change(function(){ 
+                value = $(this).val();
+                if(value == 1) {
+                    show_remote_info(this);
+                } else {
+                    $('.remote_info').remove();
+                }
+            });
+
             // 弹出OS信息 iframe
             $('#os_list').on('click', function(){
                 layer.open({
@@ -227,6 +366,76 @@
                 });
             });
 
+            // 加载 bootstrup valid 插件
+//            load_valid_plugin();
+        });
+
+        function show_remote_info(object) {
+            // 创建 远程操作系统信息 html
+            html_str = '';
+            html_str += '<div class="form-group remote_info">';
+            html_str += '    <label class="col-sm-3 control-label">';
+            html_str += '        <span class="text-danger">*</span>';
+            html_str += '        远程操作系统：';
+            html_str += '    </label>';
+            html_str += '    <div class="col-sm-8">';
+            html_str += '        <div id="os_row" class="row">';
+            html_str += '            <label class="col-sm-12 control-label"></label>';
+            html_str += '            <div id="chostname" class="col-md-4">';
+            html_str += '                <strong>主机名：</strong> {{ cmdb_os.hostname }}';
+            html_str += '            </div>';
+            html_str += '            <div id="cip" class="col-md-4">';
+            html_str += '                <strong>IP地址：</strong> {{ cmdb_os.ip | f_num2ip }}';
+            html_str += '            </div>';
+            html_str += '            <div id="calias" class="col-md-4">';
+            html_str += '                <strong>别名：</strong> {{ cmdb_os.alias }}';
+            html_str += '            </div>';
+            html_str += '        </div>';
+            html_str += '    </div>';
+            html_str += '    <label class="col-sm-12 control-label"></label>';
+            html_str += '    <label class="col-sm-3 control-label"></label>';
+            html_str += '    <div class="col-sm-8">';
+            html_str += '        <a id="os_list"><i class="fa fa-object-ungroup"></i>';
+            html_str += '            选择远程操作系统';
+            html_str += '        </a> ';
+            html_str += '    </div>';
+            html_str += '</div>';
+
+            html_str += '<div class="form-group remote_info">';
+            html_str += '    <label class="col-sm-3 control-label">';
+            html_str += '        <span class="text-danger">*</span>';
+            html_str += '        远程目录：';
+            html_str += '    </label>';
+            html_str += '    <div class="col-sm-8">';
+            html_str += '        <input id="dremote_dir" name="remote_dir" data-bv-field="remote_dir" ';
+            html_str += '               type="text" class="form-control" maxlength="200"';
+            html_str += '               value="{{ dbmp_mysql_backup_instance.remote_dir }}">';
+            html_str += '        <span class="help-block m-b-none">';
+            html_str += '            <i class="fa fa-info-circle text-success"></i>';
+            html_str += '            如：/u01/backup/db1';
+            html_str += '        </span>';
+            html_str += '    </div>';
+            html_str += '</div>';
+
+            $('#is_to_remote_div').after(html_str);
+
+            // 重新加载 bootstrup valid 插件
+//            reload_valid_plugin();
+
+            // 弹出OS信息 iframe 
+            $('#os_list').on('click', function(){ 
+                layer.open({ 
+                    type: 2, 
+                    title: 'iframe父子操作', 
+                    maxmin: true, 
+                    shadeClose: true, //点击遮罩关闭层 
+                    area : ['800px' , '520px'], 
+                    content: '{% url 'dbmp_mysql_instance_iframe_os_list' %}' 
+                }); 
+            }); 
+        }
+
+        function load_valid_plugin() {
             // 表单验证
             $('#default_form').bootstrapValidator({
                 message: 'This value is not valid',
@@ -236,109 +445,92 @@
                     validating: 'glyphicon glyphicon-refresh'
                 },
                 fields: {
-                    host: {
+                    backup_tool: {
+                        message: '选择的备份工具验证失败',
                         validators: {
-                            notEmpty: {
-                                message: '链接IP不能为空'
-                            },
-                            ip: {
-                                message: '链接IP格式有误'
-                            }
-                        }
-                    },
-                    port: {
-                        validators: {
-                            notEmpty: {
-                                message: '端口不能为空'
-                            },
-                            integer: {
-                                message: '端口必须数字'
-                            },
                             between: {
-                                min: 1025,
-                                max: 65535,
-                                message: '端口必须在1025到65535之间'
-                            }
-                        }
-                    },
-                    username: {
-                        message: '用户名验证失败',
-                        validators: {
-                            notEmpty: {
-                                message: '用户名不能为空'
-                            },
-                            stringLength: {
                                 min: 1,
-                                max: 50,
-                                message: '用户名长度必须在1到50位之间'
+                                max: 4,
+                                message: '非法备份工具, 备份工具只能选择(mysqldump, mysqlpump, mydumper, xtrabackup)'
                             }
                         }
                     },
-                    password: {
-                        message: '密码验证失败',
+                    backup_tool_file: {
                         validators: {
                             notEmpty: {
-                                message: '密码不能为空'
+                                message: '备份工具路径不能为空'
                             },
-                            stringLength: {
-                                min: 5,
-                                max: 200,
-                                message: '密码长度必须在6到200位之间'
-                            }
                         }
                     },
-                    remark: {
-                        message: '备注验证失败',
-                        validators: {
-                            stringLength: {
-                                max: 200,
-                                message: '备注长度必须在0到200位之间'
-                            }
-                        }
-                    },
-                    my_cnf_path: {
-                        message: '配置文件路径验证失败',
+                    backup_name: {
                         validators: {
                             notEmpty: {
-                                message: '配置文件路径不能为空'
+                                message: '备份名称不能为空'
                             },
-                            stringLength: {
-                                min: 5,
-                                max: 200,
-                                message: '密码长度必须在6到200位之间'
+                        }
+                    },
+                    backup_type: {
+                        message: '选择备份类型验证失败',
+                        validators: {
+                            between: {
+                                min: 1,
+                                max: 1,
+                                message: '暂时只支持强制指定实例备份'
                             }
                         }
                     },
-                    base_dir: {
-                        message: 'MySQL软件所在目录验证失败',
+                    is_all_instance: {
+                        message: '选择是否全实例备份失败',
                         validators: {
-                            notEmpty: {
-                                message: 'MySQL软件所在目录不能为空'
-                            },
-                            stringLength: {
-                                min: 5,
-                                max: 200,
-                                message: 'MySQL软件所在目录长度必须在6到200位之间'
+                            between: {
+                                min: 0,
+                                max: 1,
+                                message: '暂时只支持全实例备份(对于定时备份的也是建议这么做)'
                             }
                         }
                     },
-                    start_cmd: {
-                        message: 'MySQL实例启动命令验证失败',
+                    backup_dir: {
                         validators: {
                             notEmpty: {
-                                message: 'MySQL实例启动命令不能为空'
+                                message: '必须填写本地备份存放的目录'
                             },
+                        }
+                    },
+                    backup_tool_param: {
+                        message: '备份命令而外参数验证失败',
+                        validators: {
                             stringLength: {
-                                min: 5,
                                 max: 200,
-                                message: 'MySQL实例启动命令长度必须在6到200位之间'
+                                message: '备份命令而外参数长度必须在0到200位之间'
                             }
                         }
-                    }
+                    },
+                    is_to_remote: {
+                        message: '选择是否将备份发送至远程验证失败',
+                        validators: {
+                            between: {
+                                min: 0,
+                                max: 1,
+                                message: '只能填写 (是/否)'
+                            }
+                        }
+                    },
+                    remote_dir: {
+                        validators: {
+                            notEmpty: {
+                                message: '必须填写远程备份存放的目录'
+                            },
+                        }
+                    },
                 }
-            }); //结束表单验证
+            });
+        }
 
-        });
+        function reload_valid_plugin() {
+            $("#default_form").data('bootstrapValidator').destroy();
+            $('#default_form').data('bootstrapValidator', null);
+            load_valid_plugin();
+        }
         
     </script>
 {% endblock %}

@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.6.31-77.0, for Linux (x86_64)
 --
--- Host: localhost    Database: my_free
+-- Host: 192.168.1.233    Database: my_free
 -- ------------------------------------------------------
 -- Server version	5.6.31-77.0-log
 
@@ -14,14 +14,6 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Current Database: `my_free`
---
-
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `my_free` /*!40100 DEFAULT CHARACTER SET utf8 */;
-
-USE `my_free`;
 
 --
 -- Table structure for table `auth_group`
@@ -229,6 +221,7 @@ DROP TABLE IF EXISTS `dbmp_mysql_backup_remote`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `dbmp_mysql_backup_remote` (
   `mysql_backup_remote_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '备份传输到远程系统ID',
+  `mysql_backup_instance_id` int(10) unsigned NOT NULL COMMENT '备份实例ID',
   `os_id` int(10) unsigned NOT NULL COMMENT '操作系统ID',
   `mysql_instance_id` int(10) unsigned NOT NULL COMMENT 'MySQL实例ID',
   `remote_dir` varchar(200) NOT NULL DEFAULT '' COMMENT '远程备份目录',
@@ -236,6 +229,7 @@ CREATE TABLE `dbmp_mysql_backup_remote` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_backup_remote_id`),
   UNIQUE KEY `udx$mysql_instance_id` (`mysql_instance_id`),
+  UNIQUE KEY `udx$mysql_backup_instance_id` (`mysql_backup_instance_id`),
   KEY `idx$os_id` (`os_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='备份传输到远程机器';
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -420,4 +414,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-08-18 14:01:28
+-- Dump completed on 2016-09-05 16:30:30

@@ -10,3 +10,7 @@ class ViewUrlPath(object):
     @classmethod
     def path_dbmp_mysql_instance(self):
         return '/dbmp/dbmp_mysql_instance'
+
+    @classmethod
+    def path_dbmp_mysql_backup_instance(self):
+        return '/dbmp/dbmp_mysql_backup_instance'

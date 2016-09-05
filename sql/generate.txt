@@ -1,0 +1,11 @@
+# 更新语句
+mysqldump \
+    -h192.168.1.233 \
+    -P3306 \
+    -uHH \
+    -poracle \
+    --set-gtid-purged=OFF \
+    --no-data \
+    my_free > my_free_schema.sql
+ 
+python manage.py inspectdb > models.py

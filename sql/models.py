@@ -146,6 +146,7 @@ class DbmpMysqlBackupInstance(models.Model):
 
 class DbmpMysqlBackupRemote(models.Model):
     mysql_backup_remote_id = models.AutoField(primary_key=True)
+    mysql_backup_instance_id = models.IntegerField(unique=True)
     os_id = models.IntegerField()
     mysql_instance_id = models.IntegerField(unique=True)
     remote_dir = models.CharField(max_length=200)

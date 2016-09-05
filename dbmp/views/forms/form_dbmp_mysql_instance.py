@@ -45,3 +45,5 @@ class AddForm(forms.Form):
         error_messages = {'required': 'MySQL 软件路径(base_dir)不能为空', 'invalid': 'MySQL 软件路径(base_dir)长度范围应该1到200'})
     start_cmd = forms.CharField(required = True, min_length = 5, max_length = 200,
         error_messages = {'required': 'MySQL 启动命令不能为空', 'invalid': 'MySQL 启动命令长度范围应该1到200'})
+    mysql_instance_info_id = forms.IntegerField(required=False)
+

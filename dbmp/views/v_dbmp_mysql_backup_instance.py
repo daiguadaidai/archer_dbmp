@@ -1,5 +1,6 @@
 #-*- coding: utf-8 -*-
 
+from django.db import transaction
 from django.db import IntegrityError
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
@@ -8,11 +9,14 @@ from common.util.pagination import Pagination
 from common.util.ip_tool import IpTool
 from common.util.view_url_path import ViewUrlPath
 from common.util.decorator_tool import DecoratorTool
+from dbmp.models.cmdb_os import CmdbOs
 from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
 from dbmp.models.dbmp_mysql_backup_instance import DbmpMysqlBackupInstance
 from dbmp.models.dbmp_mysql_backup_remote import DbmpMysqlBackupRemote
-# from dbmp.views.forms.form_dbmp_mysql_backup_instance import AddForm
-# from dbmp.views.forms.form_dbmp_mysql_backup_instance import EditForm
+from dbmp.views.forms.form_dbmp_mysql_backup_instance import AddForm
+from dbmp.views.forms.form_dbmp_mysql_backup_instance import EditForm
+from dbmp.views.forms.form_dbmp_mysql_backup_instance import AddHasRemoteForm
+from dbmp.views.forms.form_dbmp_mysql_backup_instance import EditHasRemoteForm
 
 import simplejson as json
 import traceback
@@ -22,7 +26,7 @@ logger = logging.getLogger('default')
 
 # Create your views here.
 
-# @DecoratorTool.get_request_alert_message
+@DecoratorTool.get_request_alert_message
 def index(request):
     params = {}
 
@@ -47,66 +51,135 @@ def index(request):
     return render(request, 'dbmp_mysql_instance/index.html', params)
     '''
 
-# @DecoratorTool.get_request_alert_message
+@DecoratorTool.get_request_alert_message
 def add(request):
     params = {}
 
     ####################################################################
     # GET 请求
     ####################################################################
-    '''
     if request.method == 'GET':
-        form = AddForm()
+        mysql_instance_id = int(request.GET.get('mysql_instance_id', '0'))  
+        try:
+            # 1.获取MySQL实例
+            dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
+                                                'mysql_instance_id',
+                                                'username',
+                                                'port',
+                                                'host',).get(
+                               mysql_instance_id = mysql_instance_id)
+            params['dbmp_mysql_instance'] = dbmp_mysql_instance
+        except DbmpMysqlInstance.DoesNotExist: # 没有获取到实例信息则转跳列表页面
+            logger.info(traceback.format_exc())
+            # 返回点击编辑页面
+            request.session['danger_msg'].append('对不起! 找不到指定的MySQL实例')
+            mysql_instnace_index_url = '{base_url}/index'.format(
+                            base_url = ViewUrlPath.path_dbmp_mysql_instance())
+            return HttpResponseRedirect(mysql_instnace_index_url)
+
+        form = AddForm(
+            initial = {
+                'mysql_instance_id': mysql_instance_id
+            }
+        )
         params['form'] = form
 
-        return render(request, 'dbmp_mysql_instance/add.html', params)
-
+        return render(request, 'dbmp_mysql_backup_instance/add.html', params)
 
     ####################################################################
     # POST 请求
     ####################################################################
     if request.method == 'POST':
-        form = AddForm(request.POST)
+        mysql_instance_id = int(request.POST.get('mysql_instance_id', 0))
+        try:
+            # 1.获取MySQL实例
+            dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
+                                                'mysql_instance_id',
+                                                'username',
+                                                'port',
+                                                'host',).get(
+                               mysql_instance_id = mysql_instance_id)
+            params['dbmp_mysql_instance'] = dbmp_mysql_instance
+        except DbmpMysqlInstance.DoesNotExist: # 没有获取到实例信息则转跳列表页面
+            logger.info(traceback.format_exc())
+            # 返回点击编辑页面
+            request.session['danger_msg'].append('对不起! 找不到指定的MySQL实例')
+            mysql_instnace_index_url = '{base_url}/index'.format(
+                            base_url = ViewUrlPath.path_dbmp_mysql_instance())
+            return HttpResponseRedirect(mysql_instnace_index_url)
+
+        # 通过判断是否使用将备份传输至远程来创建不同的 form 对象
+        is_to_remote = int(request.POST.get('is_to_remote', 0))
+        if is_to_remote:
+            os_id = request.POST.get('os_id', 0)
+
+            form = AddHasRemoteForm(request.POST)
+
+            try: # 如果有设置远程备份则获取相关OS
+                cmdb_os = CmdbOs.objects.values('hostname',
+                                                'ip',
+                                                'alias').get(os_id = os_id)
+                params['cmdb_os'] = cmdb_os
+            except CmdbOs.DoesNotExist: # 如果获取相关操作系统失败放回添加页面
+                params['form'] = form
+                logger.info(traceback.format_exc())
+                # 如果MySQL实例没有指定OS则告警
+                request.session['alert_message_now']['danger_msg'].append(
+                                                    '开启了远程备份，却没有选择相关OS')
+                return render(request, 'dbmp_mysql_backup_instance/add.html', params)
+        else: 
+            form = AddForm(request.POST)
+  
         params['form'] = form
+
 
         # 验证表单
         if form.is_valid():
-            os_id = form.cleaned_data['os_id']
-            host = form.cleaned_data['host']
-            port = form.cleaned_data['port']
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            remark = form.cleaned_data['remark']
-            my_cnf_path = form.cleaned_data['my_cnf_path']
-            base_dir = form.cleaned_data['base_dir']
-            start_cmd = form.cleaned_data['start_cmd']
-
-            host = IpTool.ip2num(host)
-            run_status = 3 # 未知
+            mysql_instance_id = form.cleaned_data['mysql_instance_id']
+            backup_tool = form.cleaned_data['backup_tool']
+            backup_type = form.cleaned_data['backup_type']
+            is_all_instance = form.cleaned_data['is_all_instance']
+            is_binlog = form.cleaned_data['is_binlog']
+            is_compress = form.cleaned_data['is_compress']
+            is_to_remote = form.cleaned_data['is_to_remote']
+            backup_dir = form.cleaned_data['backup_dir']
+            backup_name = form.cleaned_data['backup_name']
+            backup_tool_file = form.cleaned_data['backup_tool_file']
+            backup_tool_param = form.cleaned_data['backup_tool_param']
 
             try:
                 with transaction.atomic():
-                    # 更新DbmpMysqlInstance
-                    dbmp_mysql_instance = DbmpMysqlInstance(
-                                                     os_id = os_id,
-                                                     host = host,
-                                                     port = port,
-                                                     username = username,
-                                                     password = password,
-                                                     run_status = run_status,
-                                                     remark = remark)
-                    dbmp_mysql_instance.save()
-                    # 插入数据 dbmp_mysql_instance_info
-                    DbmpMysqlInstanceInfo.objects.create(
-                        mysql_instance_id = dbmp_mysql_instance.mysql_instance_id,
-                        my_cnf_path = my_cnf_path,
-                        base_dir = base_dir,
-                        start_cmd = start_cmd)
+                    # 插入dbmp_mysql_backup_instance数据
+                    dbmp_mysql_backup_instance = DbmpMysqlBackupInstance(
+                                                     mysql_instance_id = mysql_instance_id,
+                                                     backup_tool = backup_tool,
+                                                     backup_type = backup_type,
+                                                     is_all_instance = is_all_instance,
+                                                     is_binlog = is_binlog,
+                                                     is_compress = is_compress,
+                                                     is_to_remote = is_to_remote,
+                                                     backup_dir = backup_dir,
+                                                     backup_tool_file = backup_tool_file,
+                                                     backup_tool_param = backup_tool_param,
+                                                     backup_name = backup_name)
+                    dbmp_mysql_backup_instance.save()
+
+                    # 如果指定了远程传输备份, 插入数据 dbmp_mysql_backup_remote
+                    if is_to_remote:
+                        # 备份发送远程相关参数
+                        os_id = form.cleaned_data['os_id']
+                        remote_dir = form.cleaned_data['remote_dir']
+                        DbmpMysqlBackupRemote.objects.create(
+                                            mysql_backup_instance_id = dbmp_mysql_backup_instance.mysql_backup_instance_id,
+                                            mysql_instance_id = mysql_instance_id,
+                                            os_id = os_id,
+                                            remote_dir = remote_dir)
+
                 # 保存成功转跳到View页面
                 request.session['success_msg'].append('添加成功')
                 view_url = '{base_url}/view/?mysql_instance_id={id}'.format(
-                                base_url = ViewUrlPath.path_dbmp_mysql_instance(),
-                                id = dbmp_mysql_instance.mysql_instance_id)
+                                base_url = ViewUrlPath.path_dbmp_mysql_backup_instance(),
+                                id = mysql_instance_id)
 
                 return HttpResponseRedirect(view_url)
             except IntegrityError, e:
@@ -116,13 +189,13 @@ def add(request):
                     request.session['alert_message_now']['danger_msg'].append(
                                                              '需要添加的相关信息重复')
                 request.session['alert_message_now']['danger_msg'].append(e.args)
-                return render(request, 'dbmp_mysql_instance/add.html', params)
+                return render(request, 'dbmp_mysql_backup_instance/add.html', params)
             except Exception, e:
                 logger.info(traceback.format_exc())
                 # 保存失败转跳会原页面
                 request.session['alert_message_now']['danger_msg'].append(
                                                         '添加失败, 保存数据库错误')
-                return render(request, 'dbmp_mysql_instance/add.html', params)
+                return render(request, 'dbmp_mysql_backup_instance/add.html', params)
         else: # 表单验证失败
             request.session['alert_message_now']['danger_msg'].append(
                                                      '添加失败, 表单验证失败')
@@ -131,18 +204,15 @@ def add(request):
                 for msg in msgs:
                     request.session['alert_message_now']['danger_msg'].append(msg)
 
-            return render(request, 'dbmp_mysql_instance/add.html', params)
-    '''
+            return render(request, 'dbmp_mysql_backup_instance/add.html', params)
 
-# @DecoratorTool.get_request_alert_message
+@DecoratorTool.get_request_alert_message
 def edit(request):
     params = {}
-    return render(request, 'dbmp_mysql_backup_instance/edit.html', params)
     ####################################################################
     # GET 请求
     ####################################################################
     # 点击链接转跳到编辑页面
-    '''
     if request.method == 'GET':
         # 获取MySQL实例ID
         mysql_instance_id = int(request.GET.get('mysql_instance_id', '0'))  
@@ -154,14 +224,18 @@ def edit(request):
                                      mysql_instance_id = mysql_instance_id)
                 params['dbmp_mysql_instance'] = dbmp_mysql_instance
 
-                # 2.获得MySQL实例额外信息
+                # 2.获取MySQL备份信息
                 try:
-                    dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.get(
+                    dbmp_mysql_backup_instance = DbmpMysqlBackupInstance.objects.get(
                            mysql_instance_id = dbmp_mysql_instance.mysql_instance_id)
-                    params['dbmp_mysql_instance_info'] = dbmp_mysql_instance_info
-                except DbmpMysqlInstanceInfo.DoesNotExist:
+                    params['dbmp_mysql_backup_instance'] = dbmp_mysql_instance
+                except DbmpMysqlBackupInstance.DoesNotExist: # 如果没有查到备份设置信息则转跳到添加备份设置信息页面
                     request.session['alert_message_now']['warning_msg'].append(
-                                                       '该MySQL实例信息设置不完整, 请进行编辑')
+                                                       '您还未为该MySQL实例设置备份策略, 请进行编辑')
+                    add_url = '{base_url}/add/?mysql_instance_id={id}'.format(
+                                    base_url = ViewUrlPath.path_dbmp_mysql_backup_instance(),
+                                    id = dbmp_mysql_instance.mysql_instance_id)
+                    return HttpResponseRedirect(add_url)
 
                 # 3.获得操作系统
                 try:
@@ -183,6 +257,7 @@ def edit(request):
             request.session['danger_msg'] = '对不起! 找不到指定的MySQL实例!'
             # 返回点击编辑页面
             return HttpResponseRedirect(request.environ['HTTP_REFERER'])
+    '''
 
 
     ####################################################################
@@ -274,24 +349,40 @@ def view(request):
         if mysql_instance_id:
             try:
                 # 1.获取MySQL实例
-                dbmp_mysql_instance = DbmpMysqlInstance.objects.get(
-                                     mysql_instance_id = mysql_instance_id)
+                dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
+                                                    'mysql_instance_id',
+                                                    'username',
+                                                    'port',
+                                                    'host',).get(
+                                   mysql_instance_id = mysql_instance_id)
                 params['dbmp_mysql_instance'] = dbmp_mysql_instance
+            except DbmpMysqlInstance.DoesNotExist:
+                logger.info(traceback.format_exc())
+                # 返回编辑页面
+                request.session['danger_msg'].append('对不起! 找不到指定的MySQL实例')
+                edit_url = '{base_url}/edit/?mysql_instance_id={id}'.format(
+                                base_url = ViewUrlPath.path_dbmp_mysql_backup_instance(),
+                                id = mysql_instance_id)
+                return HttpResponseRedirect(edit_url)
 
-                # 2.获得MySQL实例额外信息
-                try:
-                    dbmp_mysql_instance_info = DbmpMysqlInstanceInfo.objects.get(
-                           mysql_instance_id = dbmp_mysql_instance.mysql_instance_id)
-                    params['dbmp_mysql_instance_info'] = dbmp_mysql_instance_info
-                except DbmpMysqlInstanceInfo.DoesNotExist:
-                    edit_url = '{base_url}/edit/?mysql_instance_id={id}'.format(
-                                    base_url = ViewUrlPath.path_dbmp_mysql_instance(),
-                                    id = mysql_instance_id)
-                    return HttpResponseRedirect(edit_url)
+            # 2.获取MySQL备份设置信息
+            try:
+                dbmp_mysql_backup_instance = DbmpMysqlBackupInstance.objects.get(
+                                                mysql_instance_id = mysql_instance_id)
+                params['dbmp_mysql_backup_instance'] = dbmp_mysql_backup_instance
+            except DbmpMysqlBackupInstance.DoesNotExist:
+                logger.info(traceback.format_exc())
+                request.session['danger_msg'].append('对不起! 您还没有设置实例备份信息')
+                edit_url = '{base_url}/edit/?mysql_instance_id={id}'.format(
+                                base_url = ViewUrlPath.path_dbmp_mysql_backup_instance(),
+                                id = mysql_instance_id)
+                return HttpResponseRedirect(edit_url)
 
-                # 3.获得操作系统
+            # 3.获得远程备份信息
+            if dbmp_mysql_backup_instance.is_to_remote:
+                # 获得 OS 信息
                 try:
-                    cmdb_os = CmdbOs.objects.get(os_id = dbmp_mysql_instance.os_id)
+                    cmdb_os = CmdbOs.objects.get(os_id = .os_id)
                     params['cmdb_os'] = cmdb_os
                 except CmdbOs.DoesNotExist:
                     logger.info(traceback.format_exc())
@@ -300,16 +391,14 @@ def view(request):
                                     id = mysql_instance_id)
                     return HttpResponseRedirect(edit_url)
 
-                return render(request, 'dbmp_mysql_instance/view.html', params)
-            except DbmpMysqlInstance.DoesNotExist:
-                logger.info(traceback.format_exc())
-                # 返回点击编辑页面
-                request.session['danger_msg'].append('对不起! 找不到指定的MySQL实例')
-                return HttpResponseRedirect(request.environ['HTTP_REFERER'])
+             return render(request, 'dbmp_mysql_instance/view.html', params)
         else:
-            request.session['danger_msg'] = '对不起! 找不到指定的MySQL实例!'
-            # 返回点击编辑页面
-            return HttpResponseRedirect(request.environ['HTTP_REFERER'])
+            request.session['danger_msg'] = '对不起! 没有过的正确的MySQL实例ID!'
+            # MySQL实例列表页
+            request.session['danger_msg'].append('对不起! 您还没有设置实例备份信息')
+            edit_url = '{base_url}/index'.format(
+                            base_url = ViewUrlPath.path_dbmp_mysqlp_instance())
+            return HttpResponseRedirect(edit_url)
     '''
 
 # @DecoratorTool.get_request_alert_message
