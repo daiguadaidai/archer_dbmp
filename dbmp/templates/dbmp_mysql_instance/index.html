@@ -95,7 +95,7 @@
                 </button>
                 <button type="button" id="backup_{{ dbmp_mysql_instance.mysql_instance_id }}"
                         class="more_btn btn btn-success btn-xs {% if dbmp_mysql_instance.run_status == 2 %}btn-outline{% endif %}"
-                        onclick="instance_backup_edit({{ dbmp_mysql_instance.mysql_instance_id }})"
+                        onclick="instance_backup_view({{ dbmp_mysql_instance.mysql_instance_id }})"
                         {% if dbmp_mysql_instance.run_status != 2 %}disabled="disabled"{% endif %}>
                     <i class="fa fa-cubes"></i>
                     设置备份
@@ -544,9 +544,9 @@
         }
 
         // 打开一个实例备份设置标记页面
-        function instance_backup_edit(mysql_instance_id) {
+        function instance_backup_view(mysql_instance_id) {
             url = "";
-            url += "{% url 'dbmp_mysql_backup_instance_edit' %}";
+            url += "{% url 'dbmp_mysql_backup_instance_view' %}";
             url += "?mysql_instance_id=" + mysql_instance_id;
             open_iframe_window("实例备份", url);
         }

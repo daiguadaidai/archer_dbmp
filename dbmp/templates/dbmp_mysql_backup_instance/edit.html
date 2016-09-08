@@ -17,17 +17,6 @@
 <div class="row">
     <div class="col-md-5">
         <div class="row fontawesome-icon-list">
-            <!-- 跳转到备份设置列表页面 -->
-            <div class="fa-hover col-md-5">
-                <a href="{% url 'dbmp_mysql_backup_instance_index' %}">
-                    <i class="fa fa-cubes"></i>
-                    备份设置列表
-                </a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-5">
-        <div class="row fontawesome-icon-list">
             <!-- 添加跳转MySQL实例列表按钮 -->
             <div class="fa-hover  col-md-4">
                 <a href="{% url 'dbmp_mysql_instance_index' %}">
@@ -43,19 +32,19 @@
 
 <!-- 显示该页面主要展示的内容 -->
 {% block content %}
-<!-- OS 信息 -->
-<section id="os_section">
+<!-- MySQL 实例信息 -->
+<section id="mysql_instance_section">
     <h2 class="page-header">MySQL实例信息</h2>
     {% if dbmp_mysql_instance %}
     <div id="os_row" class="row">
-        <div id="chostname" class="col-md-4">
-            <strong>主机名：</strong> {{ cmdb_os.hostname }}
+        <div id="mysql_host" class="col-md-4">
+            <strong>IP地址：</strong> {{ dbmp_mysql_instance.host | f_num2ip }}
         </div>
-        <div id="cip" class="col-md-4">
-            <strong>IP地址：</strong> {{ cmdb_os.ip | f_num2ip }}
+        <div id="mysql_port" class="col-md-4">
+            <strong>端口</strong> {{ dbmp_mysql_instance.port }}
         </div>
-        <div id="calias" class="col-md-4">
-            <strong>别名：</strong> {{ cmdb_os.alias }}
+        <div id="mysql_username" class="col-md-4">
+            <strong>用户名：</strong> {{ dbmp_mysql_instance.username }}
         </div>
     </div>
     {% endif %}
@@ -67,8 +56,13 @@
     <form method="post" action="{% url 'dbmp_mysql_backup_instance_edit' %}" class="form-horizontal m-t" id="default_form">
         {% csrf_token %}
         <input id="dmysql_instance_id" name="mysql_instance_id" type="hidden"
-               value="{{ dbmp_mysql_instance.mysql_instance_id }}" />
-        <input id="cos_id" name="os_id" type="hidden" value="{% if cmdb_os.os_id %}{{ cmdb_os.os_id }}{% else %}0{% endif %}" />
+               value="{{ form.mysql_instance_id.value }}" />
+        <input id="cos_id" name="os_id" type="hidden" 
+               value="{% if form.os_id.value %}{{ form.os_id.value }}{% else %}0{% endif %}" />
+        <input id="cmysql_backup_instance_id" name="mysql_backup_instance_id" type="hidden" 
+               value="{% if form.mysql_backup_instance_id.value %}{{ form.mysql_backup_instance_id.value }}{% else %}0{% endif %}" />
+        <input id="cmysql_backup_remote_id" name="mysql_backup_remote_id" type="hidden" 
+               value="{% if form.mysql_backup_remote_id.value %}{{ form.mysql_backup_remote_id.value }}{% else %}0{% endif %}" />
         <div class="form-group">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
@@ -77,13 +71,13 @@
             <div class="col-sm-8">
                 <select class="form-control m-b" name="backup_tool"> 
                     <option value="4">-- 请选择(默认-xtrabackup) --</option> 
-                    <option value="1" {% if dbmp_mysql_backup_instance.backup_tool == 1 %}selected="selected"{% endif %}>
-                        {{ 1 | f_backup_tool }}</option> 
-                    <option value="2" {% if dbmp_mysql_backup_instance.backup_tool == 2 %}selected="selected"{% endif %}>
+                    <option value="1" {% if form.backup_tool.value == '1' %}selected="selected"{% endif %}>
+                        {{ 1 | f_backup_tool }}</option>
+                    <option value="2" {% if form.backup_tool.value == '2' %}selected="selected"{% endif %}>
                         {{ 2 | f_backup_tool }}</option>
-                    <option value="3" {% if dbmp_mysql_backup_instance.backup_tool == 3 %}selected="selected"{% endif %}>
-                        {{ 3 | f_backup_tool }}</option> 
-                    <option value="4" {% if dbmp_mysql_backup_instance.backup_tool == 4 %}selected="selected"{% endif %}>
+                    <option value="3" {% if form.backup_tool.value == '3' %}selected="selected"{% endif %}>
+                        {{ 3 | f_backup_tool }}</option>
+                    <option value="4" {% if form.backup_tool.value == '4' %}selected="selected"{% endif %}>
                         {{ 4 | f_backup_tool }}</option> 
                 </select>
             </div>
@@ -97,7 +91,7 @@
             <div class="col-sm-8">
                 <input id="dbackup_tool_file" name="backup_tool_file" 
                        type="text" class="form-control" maxlength="200"
-                       value="{{ dbmp_mysql_backup_instance.backup_tool_file }}">
+                       value="{% if form.backup_tool_file.value %}{{ form.backup_tool_file.value }}{% endif %}">
                 <span class="help-block m-b-none">
                      <i class="fa fa-info-circle text-success"></i> 
                      如：/usr/local/percona-xtrabackup/bin/innobackupex
@@ -111,13 +105,13 @@
                 备份类型：
             </label>
             <div class="col-sm-8">
-                <select class="form-control m-b" name="backup_type" disabled="disabled"> 
+                <select class="form-control m-b" name="backup_type" onfocus="this.defaultIndex=this.selectedIndex;" onchange="this.selectedIndex=this.defaultIndex;"> 
                     <option value="1">-- 请选择(默认-{{ 1 | f_backup_type }}) --</option> 
-                    <option value="1" {% if dbmp_mysql_backup_instance.backup_type == 1 %}selected="selected"{% endif %}>
-                        {{ 1 | f_backup_type }}</option> 
-                    <option value="2" {% if dbmp_mysql_backup_instance.backup_type == 2 %}selected="selected"{% endif %}>
+                    <option value="1" {% if form.backup_type.value == '1' %}selected="selected"{% endif %}>
+                        {{ 1 | f_backup_type }}</option>
+                    <option value="2" {% if form.backup_type.value == '2' %}selected="selected"{% endif %}>
                         {{ 2 | f_backup_type }}</option>
-                    <option value="3" {% if dbmp_mysql_backup_instance.backup_type == 3 %}selected="selected"{% endif %}>
+                    <option value="3" {% if form.backup_type.value == '3' %}selected="selected"{% endif %}>
                         {{ 3 | f_backup_type }}</option> 
                 </select>
             </div>
@@ -129,11 +123,11 @@
                 是否全实例备份：
             </label>
             <div class="col-sm-8">
-                <select class="form-control m-b" name="is_all_instance" disabled="disabled"> 
+                <select class="form-control m-b" name="is_all_instance" onfocus="this.defaultIndex=this.selectedIndex;" onchange="this.selectedIndex=this.defaultIndex;"> 
                     <option value="1">-- 请选择(默认-{{ 1 | f_is_all_instance }}) --</option> 
-                    <option value="0" {% if dbmp_mysql_backup_instance.is_all_instance == 0 %}selected="selected"{% endif %}>
+                    <option value="0" {% if form.is_all_instance.value == '0' %}selected="selected"{% endif %}>
                         {{ 0 | f_is_all_instance }}</option> 
-                    <option value="1" {% if dbmp_mysql_backup_instance.is_all_instance == 1 %}selected="selected"{% endif %}>
+                    <option value="1" {% if form.is_all_instance.value == '1' %}selected="selected"{% endif %}>
                         {{ 1 | f_is_all_instance }}</option>
                 </select>
             </div>
@@ -147,10 +141,26 @@
             <div class="col-sm-8">
                 <input id="dbackup_dir" name="backup_dir" 
                        type="text" class="form-control" maxlength="200"
-                       value="{{ dbmp_mysql_backup_instance.backup_dir }}">
+                       value="{% if form.backup_dir.value %}{{ form.backup_dir.value }}{% endif %}">
                 <span class="help-block m-b-none">
                     <i class="fa fa-info-circle text-success"></i>
                     如：/u01/backup/db1
+                </span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                备份名称：
+            </label>
+            <div class="col-sm-8">
+                <input id="dbackup_name" name="backup_name" 
+                       type="text" class="form-control" maxlength="200"
+                       value="{% if form.backup_name.value %}{{ form.backup_name.value }}{% endif %}">
+                <span class="help-block m-b-none">
+                    <i class="fa fa-info-circle text-success"></i>
+                    如果是一个文件则是文件名，如果是目录则是文件夹名
                 </span>
             </div>
         </div>
@@ -162,9 +172,9 @@
             <div class="col-sm-8">
                 <select class="form-control m-b" name="is_binlog"> 
                     <option value="1">-- 请选择(默认-{{ 1 | f_is_binlog }}) --</option> 
-                    <option value="0" {% if dbmp_mysql_backup_instance.is_binlog == 0 %}selected="selected"{% endif %}>
+                    <option value="0" {% if form.is_binlog.value == '0' %}selected="selected"{% endif %}>
                         {{ 0 | f_is_binlog }}</option> 
-                    <option value="1" {% if dbmp_mysql_backup_instance.is_binlog == 1 %}selected="selected"{% endif %}>
+                    <option value="1" {% if form.is_binlog.value == '1' %}selected="selected"{% endif %}>
                         {{ 1 | f_is_binlog }}</option>
                 </select>
             </div>
@@ -177,9 +187,9 @@
             <div class="col-sm-8">
                 <select class="form-control m-b" name="is_compress"> 
                     <option value="0">-- 请选择(默认-{{ 0 | f_is_compress }}) --</option> 
-                    <option value="0" {% if dbmp_mysql_backup_instance.is_compress == 0 %}selected="selected"{% endif %}>
-                        {{ 0 | f_is_compress }}</option> 
-                    <option value="1" {% if dbmp_mysql_backup_instance.is_compress == 1 %}selected="selected"{% endif %}>
+                    <option value="0" {% if form.is_compress.value == '0' %}selected="selected"{% endif %}>
+                        {{ 0 | f_is_compress }}</option>                
+                    <option value="1" {% if form.is_compress.value == '1' %}selected="selected"{% endif %}>
                         {{ 1 | f_is_compress }}</option>
                 </select>
             </div>
@@ -190,7 +200,7 @@
                 备份而外参数：
             </label>
             <div class="col-sm-8">
-                <textarea id="cbackup_tool_param" name="backup_tool_param" type="text" class="form-control">{{ dbmp_mysql_backup_instance.backup_tool_param }}</textarea>
+                <textarea id="cbackup_tool_param" name="backup_tool_param" type="text" class="form-control">{% if form.backup_tool_param.value %}{{ form.backup_tool_param.value }}{% endif %}</textarea>
                 <span class="help-block m-b-none">
                     <i class="fa fa-info-circle text-success"></i>
                     如：--no-data
@@ -208,16 +218,16 @@
             <div class="col-sm-8">
                 <select class="form-control m-b" id="is_to_remote" name="is_to_remote"> 
                     <option value="0">-- 请选择(默认-{{ 0 | f_is_to_remote }}) --</option> 
-                    <option value="0" {% if dbmp_mysql_backup_instance.is_to_remote == 0 %}selected="selected"{% endif %}>
+                    <option value="0" {% if form.is_to_remote.value == '0' %}selected="selected"{% endif %}>
                         {{ 0 | f_is_to_remote }}</option> 
-                    <option value="1" {% if dbmp_mysql_backup_instance.is_to_remote == 1 %}selected="selected"{% endif %}>
+                    <option value="1" {% if form.is_to_remote.value == '1' %}selected="selected"{% endif %}>
                         {{ 1 | f_is_to_remote }}</option>
                 </select>
             </div>
         </div>
 
         <!-- 如果有设置远程则显示远程信息 -->
-        {% if dbmp_mysql_backup_instance.is_to_remote == 1 %} 
+        {% if form.is_to_remote.value == '1' %} 
         <div class="form-group remote_info">
             <label class="col-sm-3 control-label">
                 <span class="text-danger">*</span>
@@ -252,9 +262,9 @@
                 远程目录：
             </label>
             <div class="col-sm-8">
-                <input id="dbase_dir" name="base_dir" 
+                <input id="dremote_dir" name="remote_dir" 
                        type="text" class="form-control" maxlength="200"
-                       value="{{ dbmp_mysql_instance_info.base_dir }}">
+                       value="{% if form.remote_dir.value %}{{ form.remote_dir.value }}{% endif %}">
                 <span class="help-block m-b-none">
                     <i class="fa fa-info-circle text-success"></i>
                     如：/u01/backup/db1
@@ -265,7 +275,9 @@
 
         <div class="form-group">
             <div class="col-sm-4 col-sm-offset-3">
-                <button onclick="dbmp_mysql_instance_delete({{ dbmp_mysql_instance.mysql_instance_id }})"
+                <button onclick="dbmp_mysql_backup_instance_delete(
+                              {% if form.mysql_backup_instance_id.value %}{{ form.mysql_backup_instance_id.value }}{% else %}0{% endif %},
+                              {% if form.mysql_backup_remote_id.value %}{{ form.mysql_backup_remote_id.value }}{% else %}0{% endif %})"
                    type="button" class="btn btn-danger">
                     <i class="fa fa-trash"></i>
                     删除
@@ -446,6 +458,13 @@
                             },
                         }
                     },
+                    backup_name: {
+                        validators: {
+                            notEmpty: {
+                                message: '备份名称不能为空'
+                            },
+                        }
+                    },
                     backup_type: {
                         message: '选择备份类型验证失败',
                         validators: {
@@ -507,6 +526,43 @@
             $("#default_form").data('bootstrapValidator').destroy();
             $('#default_form').data('bootstrapValidator', null);
             load_valid_plugin();
+        }
+
+        //删除 dbmp_mysql_backup_instance
+        function dbmp_mysql_backup_instance_delete(mysql_backup_instance_id, mysql_backup_remote_id) {
+            console.log(mysql_backup_instance_id);
+            console.log(mysql_backup_remote_id);
+            $(".confirm").unbind("click");
+            swal({
+                title: "您确定要删除这条信息吗?",
+                text: "删除后将无法恢复，请谨慎操作！",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "删除",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_backup_instance_ajax_delete' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_backup_instance_id: mysql_backup_instance_id,
+                        mysql_backup_remote_id: mysql_backup_remote_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        swal("删除成功!", "已成功删除数据！", "success");
+                        $(".confirm").click(function(){
+                            location.href="{% url 'dbmp_mysql_instance_index' %}"
+                        });
+                    } else {
+                        swal("对不起!", "删除数据失败了!", "error");
+                    }
+                }).error(function(data) { 
+                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
+                });
+            });
         }
         
     </script>

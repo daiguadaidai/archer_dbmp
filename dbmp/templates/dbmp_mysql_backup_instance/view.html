@@ -3,25 +3,30 @@
 {% load staticfiles %}
 {% load ip_filters %}
 {% load filters_dbmp_mysql_instance %}
+{% load filters_dbmp_mysql_backup_instance %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
     <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block app_title %}MySQL实例详细信息{% endblock %}
+{% block app_title %}MySQL实例备份信息浏览{% endblock %}
 
-<!-- 其他元素模块 -->
-{% block top_element %}
-<div class="row fontawesome-icon-list">
-    <!-- 添加返回MySQL实例列表按钮 -->
-    <div class="fa-hover  col-md-2">
-        <a href="{% url 'dbmp_mysql_instance_index' %}">
-            <i class="fa fa-home"></i>
-            实例列表
-        </a>
-    </div>
-</div>
+<!-- 其他元素模块 --> 
+{% block top_element %} 
+<div class="row"> 
+    <div class="col-md-5"> 
+        <div class="row fontawesome-icon-list"> 
+            <!-- 添加跳转MySQL实例列表按钮 --> 
+            <div class="fa-hover  col-md-4"> 
+                <a href="{% url 'dbmp_mysql_instance_index' %}"> 
+                    <i class="fa fa-home"></i> 
+                    实例列表 
+                </a> 
+            </div> 
+        </div> 
+    </div> 
+</div> 
 {% endblock %}
 
 <!-- 显示该页面主要展示的内容 -->
@@ -32,34 +37,8 @@
 <input type="hidden" id="cpassword" value="{{ dbmp_mysql_instance.password }}" />
 <input type="hidden" id="dbase_dir" value="{{ dbmp_mysql_instance_info.base_dir }}" />
 <input type="hidden" id="cos_id" value="{{ cmdb_os.os_id }}">
-<!-- OS 信息 -->
-<section id="os_section">
-    <h2 class="page-header">操作系统信息</h2>
-    {% if cmdb_os %}
-    <div id="os_row" class="row">
-        <div class="col-md-4">
-            <strong>主机名：</strong> {{ cmdb_os.hostname }}
-        </div>
-        <div class="col-md-4">
-            <strong>IP地址：</strong> {{ cmdb_os.ip | f_num2ip }}
-        </div>
-        <div class="col-md-4">
-            <strong>别名：</strong> {{ cmdb_os.alias }}
-        </div>
-    </div>
 
-    <h4>&nbsp;</h4>
-    
-    <div class="row">
-        <div class="col-md-3">
-            <a><i class="fa fa-object-ungroup"></i>
-                替换OS
-            </a>
-        </div>
-    </div>
-    {% endif %}
-<section>
-
+<!-- # MySQL实例信息 -->
 <section id="mysql_instance">
     <h2 class="page-header">MySQL实例信息&nbsp;
         <span class="label label-{{ dbmp_mysql_instance.run_status | f_run_status_color }}">
@@ -89,51 +68,123 @@
             </a>
         </div>
     </div>
+<section>
 
-    <h4>&nbsp;</h4>
-
-    <div class="row">
-        <div class="col-md-12">
-            <strong>配置文件路径：</strong> 
-            <code class="text-primary">{{ dbmp_mysql_instance_info.my_cnf_path }}</code>
-        </div>
-    </div>
-        
-    <h4>&nbsp;</h4>
-
-    <div class="row">
-        <div class="col-md-12">
-            <strong>MySQL软件目录：</strong> 
-            <code class="text-primary">{{ dbmp_mysql_instance_info.base_dir }}</code>
-        </div>
-    </div>
-
-    <h4>&nbsp;</h4>
+<!-- 备份设置信息 -->
+<section id="backup_section">
+    <h2 class="page-header">备份设置信息
+        <span class="label">
+           更新时间：{{ dbmp_mysql_backup_instance.update_time | date:'Y-m-d H:i:s' }}
+        </span>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <span class="label">
+            创建时间：{{ dbmp_mysql_backup_instance.create_time | date:'Y-m-d H:i:s' }}
+        </span>
+    </h2>
 
     <div class="row">
         <div class="col-md-12">
-            <strong>启动命令：</strong> 
-            <code class="text-primary">{{ dbmp_mysql_instance_info.start_cmd }}</code>
+            <strong>备份工具：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.backup_tool | f_backup_tool }}</code>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <strong>备份工具路径：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.backup_tool_file }}</code>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <strong>备份类型：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.backup_type | f_backup_type }}</code>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <strong>是否全实例备份：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.is_all_instance | f_is_all_instance }}</code>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <strong>地备份目录：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.backup_dir }}</code>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <strong>是否备份binlog：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.is_binlog | f_is_binlog }}</code>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <strong>是否压缩：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.is_compress | f_is_compress }}</code>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+            <strong>备份而外参数：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.backup_tool_param }}</code>
         </div>
     </div>
 
-    <h4>&nbsp;</h4>
+    <h3 class="page-header">备份远程信息</h3>
 
     <div class="row">
         <div class="col-md-12">
-            <strong>备注：</strong> {{ dbmp_mysql_instance.remark }}
+            <strong>备份是否传输至远程：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_instance.is_to_remote | f_is_to_remote }}</code>
         </div>
     </div>
 
-    <h4>&nbsp;</h4>
-
+    <br>
+    {% if dbmp_mysql_backup_instance.is_to_remote == 1 %}
+    <div id="os_row" class="row">
+        <div class="col-md-4">
+            <strong>主机名：</strong>
+            <code class="text-primary"> {{ cmdb_os.hostname }} </code>
+        </div>
+        <div class="col-md-4">
+            <strong>IP地址：</strong>
+            <code class="text-primary"> {{ cmdb_os.ip | f_num2ip }} </code>
+        </div>
+        <div class="col-md-4">
+            <strong>别名：</strong>
+            <code class="text-primary"> {{ cmdb_os.alias }} </code>
+        </div>
+    </div>
+    <br>
     <div class="row">
-        <div class="col-sm-4 col-sm-offset-9">
-            <button id="test_mysql_alived" type="button" class="btn btn-success">
-                <i class="fa fa-link"></i>
-                链接测试
+        <div class="col-md-12">
+            <strong>远程目录：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_backup_remote.remote_dir }}</code>
+        </div>
+    </div>
+    {% endif %}
+<section>
+
+<!-- 编辑按钮 -->
+<section id="button_section">
+    <div class="row">
+        <div class="col-sm-4 col-sm-offset-10">
+            <button onclick="dbmp_mysql_backup_instance_delete(
+                          {{dbmp_mysql_backup_instance.mysql_backup_instance_id}},
+                          {% if dbmp_mysql_backup_remote.mysql_backup_remote_id %}{{dbmp_mysql_backup_remote.mysql_backup_remote_id}}{% else %}0{% endif %})"
+               type="button" class="btn btn-danger">
+                <i class="fa fa-trash"></i>
+                删除
             </button>
-            <a href="{% url 'dbmp_mysql_instance_edit' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}" 
+            <a href="{% url 'dbmp_mysql_backup_instance_edit' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}" 
                type="button" class="btn btn-primary">
                 <i class="fa fa-edit"></i>
                 编辑
@@ -155,75 +206,43 @@
         $(document).ready(function(){
             // 显示密码
             $("[data-toggle='password']").tooltip();
+        });
 
-            // 测试MySQL连接是否正常
-            $('#test_mysql_alived').on('click', function() {
-
-                mysql_host = $('#chost').val();
-                mysql_port = $('#cport').val();
-                mysql_user = $('#cusername').val();
-                mysql_password = $('#cpassword').val();
-                mysql_base_dir = $('#dbase_dir').val();
-                os_id = $('#cos_id').val();
-
-                text = '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;操作系统ID: <code class="text-primary">' + os_id + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 连接: <code class="text-primary">' + mysql_host + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 端口: <code class="text-primary">' + mysql_port + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 用户: <code class="text-primary">' + mysql_user + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 密码: <code class="text-primary">' + mysql_password + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 软件路径: <code class="text-primary">' + mysql_base_dir + '</code>';
-                text += '</div>';
-
-
-                swal({
-                    title: "连接信息如下",
-                    text: text,
-                    type: "warning",
-                    html: true,
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "测试",
-                    closeOnConfirm: false
-                }, function () {
-                    $.ajax({
-                        url: "{% url 'dbmp_mysql_handler_ajax_mysql_is_alived' %}",
-                        type: "POST",
-                        dataType: "json",
-                        data: {
-                            mysql_host: mysql_host,
-                            mysql_port: mysql_port,
-                            mysql_user: mysql_user,
-                            mysql_password: mysql_password,
-                            mysql_base_dir: mysql_base_dir,
-                            os_id: os_id
-                        }
-                    }).done(function(data) { 
-                        if(data == true) {
-                            swal("连接成功!", "该链接可以使用！", "success");
-                        } else {
-                            swal("连接失败!", "请确认，连接参数是否正确!", "error");
-                        }
-                    }).error(function(data) { 
-                        swal("连接失败!", "估计服务器内部出现了错误!", "error");
-                    });
+        //删除 dbmp_mysql_backup_instance
+        function dbmp_mysql_backup_instance_delete(mysql_backup_instance_id, mysql_backup_remote_id) {
+            console.log(mysql_backup_instance_id);
+            console.log(mysql_backup_remote_id);
+            $(".confirm").unbind("click");
+            swal({
+                title: "您确定要删除这条信息吗?",
+                text: "删除后将无法恢复，请谨慎操作！",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "删除",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_backup_instance_ajax_delete' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_backup_instance_id: mysql_backup_instance_id,
+                        mysql_backup_remote_id: mysql_backup_remote_id
+                    }
+                }).done(function(data) {
+                    if(data == true) {
+                        swal("删除成功!", "已成功删除数据！", "success");
+                        $(".confirm").click(function(){
+                            location.href="{% url 'dbmp_mysql_instance_index' %}"
+                        });
+                    } else {
+                        swal("对不起!", "删除数据失败了!", "error");
+                    }
+                }).error(function(data) {
+                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
                 });
             });
-        });
+        }
     </script>
 {% endblock %}

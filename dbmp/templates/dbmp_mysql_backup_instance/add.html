@@ -17,17 +17,6 @@
 <div class="row">
     <div class="col-md-5">
         <div class="row fontawesome-icon-list">
-            <!-- 跳转到备份设置列表页面 -->
-            <div class="fa-hover col-md-5">
-                <a href="{% url 'dbmp_mysql_backup_instance_index' %}">
-                    <i class="fa fa-cubes"></i>
-                    备份设置列表
-                </a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-5">
-        <div class="row fontawesome-icon-list">
             <!-- 添加跳转MySQL实例列表按钮 -->
             <div class="fa-hover  col-md-4">
                 <a href="{% url 'dbmp_mysql_instance_index' %}">
@@ -281,11 +270,6 @@
 
         <div class="form-group">
             <div class="col-sm-4 col-sm-offset-3">
-                <button onclick="dbmp_mysql_backup_instance_delete({{ dbmp_mysql_backup_instance.mysql_instance_id }})"
-                   type="button" class="btn btn-danger">
-                    <i class="fa fa-trash"></i>
-                    删除
-                </button>
                 <button type="submit" class="btn btn-primary">
                     <i class="fa fa-save"></i>
                     保存
@@ -367,7 +351,7 @@
             });
 
             // 加载 bootstrup valid 插件
-//            load_valid_plugin();
+            load_valid_plugin();
         });
 
         function show_remote_info(object) {
@@ -420,7 +404,7 @@
             $('#is_to_remote_div').after(html_str);
 
             // 重新加载 bootstrup valid 插件
-//            reload_valid_plugin();
+            reload_valid_plugin();
 
             // 弹出OS信息 iframe 
             $('#os_list').on('click', function(){ 

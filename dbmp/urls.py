@@ -45,5 +45,5 @@ urlpatterns = [
     url(r'^dbmp_mysql_backup_instance/add/$', dbmp_mysql_backup_instance.add, name='dbmp_mysql_backup_instance_add'),
     url(r'^dbmp_mysql_backup_instance/edit/$', dbmp_mysql_backup_instance.edit, name='dbmp_mysql_backup_instance_edit'),
     url(r'^dbmp_mysql_backup_instance/view/$', dbmp_mysql_backup_instance.view, name='dbmp_mysql_backup_instance_view'),
-    url(r'^dbmp_mysql_backup_instance/delete/$', dbmp_mysql_backup_instance.delete, name='dbmp_mysql_backup_instance_delete'),
+    url(r'^dbmp_mysql_backup_instance/ajax_delete/$', dbmp_mysql_backup_instance.ajax_delete, name='dbmp_mysql_backup_instance_ajax_delete'),
 ]

@@ -5,6 +5,8 @@ from django import forms
 class EditForm(forms.Form):
     mysql_instance_id = forms.IntegerField(required = True, min_value = 0, 
         error_messages = {'required': '找不到MySQL实例', 'invalid': '不合法MySQL实例'})
+    mysql_backup_instance_id = forms.IntegerField(required = True, min_value = 0, 
+        error_messages = {'required': '找不到MySQL备份设置信息', 'invalid': '不合法MySQLMySQL备份设置信息'})
     backup_tool = forms.IntegerField(required = True, min_value = 1, max_value = 4,
         error_messages = {'required': 'MySQL备份工具不能为空', 'invalid': '支持的MySQL备份工具：1、mysqldump，2、mysqlpump、3、mydumper、4、xtrabackup'})
     backup_type = forms.IntegerField(required = True, min_value = 1, max_value = 3,
@@ -26,11 +28,15 @@ class EditForm(forms.Form):
 
     # 备份指定的而外参数
     backup_tool_param = forms.CharField(required=False)
+    # 远程备份主键
+    mysql_backup_remote_id = forms.IntegerField(required = False)
 
 class EditHasRemoteForm(forms.Form):
     """编辑包含远程备份表单"""
     mysql_instance_id = forms.IntegerField(required = True, min_value = 0, 
         error_messages = {'required': '找不到MySQL实例', 'invalid': '不合法MySQL实例'})
+    mysql_backup_instance_id = forms.IntegerField(required = True, min_value = 0, 
+        error_messages = {'required': '找不到MySQL备份设置信息', 'invalid': '不合法MySQLMySQL备份设置信息'})
     backup_tool = forms.IntegerField(required = True, min_value = 1, max_value = 4,
         error_messages = {'required': 'MySQL备份工具不能为空', 'invalid': '支持的MySQL备份工具：1、mysqldump，2、mysqlpump、3、mydumper、4、xtrabackup'})
     backup_type = forms.IntegerField(required = True, min_value = 1, max_value = 3,
@@ -52,6 +58,8 @@ class EditHasRemoteForm(forms.Form):
 
     # 备份指定的而外参数
     backup_tool_param = forms.CharField(required=False)
+    # 远程备份主键
+    mysql_backup_remote_id = forms.IntegerField(required = False)
     # 远程备份操作系统
     os_id = forms.IntegerField(required = True, min_value = 0,
         error_messages = {'required': '找不到MySQL实例对应的OS', 'invalid': '不合法的OS信息'})
