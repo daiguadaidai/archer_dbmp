@@ -6,6 +6,7 @@
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
     <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
 {% endblock %}
 
@@ -45,16 +46,6 @@
         </div>
         <div class="col-md-4">
             <strong>别名：</strong> {{ cmdb_os.alias }}
-        </div>
-    </div>
-
-    <h4>&nbsp;</h4>
-    
-    <div class="row">
-        <div class="col-md-3">
-            <a><i class="fa fa-object-ungroup"></i>
-                替换OS
-            </a>
         </div>
     </div>
     {% endif %}
@@ -141,16 +132,67 @@
         </div>
     </div>
 <section>
+
+<!-- 数据库列表 -->
+<section id="databases_section">
+    <h2 class="page-header">
+        数据库列表
+        <button type="button" id="" class="more_btn btn btn-info btn-sm btn-outline"
+                onclick="">
+            <i class="fa fa-refresh"></i>
+            同步
+        </button>
+    </h2>
+     
+    <div class="ibox-content">
+    <table class="footable table table-stripped toggle-arrow-tiny table-hover">
+        <thead>
+            <tr>
+                <th class="text-center">#</th>
+                <th class="text-center">数据库名</th>
+                <th class="text-center">同步时间</th>
+                <th class="text-center">表数量</th>
+                <th data-hide="all">操作</th>
+            </tr>
+        </thead>
+    
+        <tbody>
+            <tr>
+                <td class="text-center">1</td>
+                <td class="text-center">mysql</td>
+                <td class="text-center">2016-09-14</td>
+                <td class="text-center">100</td>
+                <td class="text-center">
+                    <button type="button" id="" class="more_btn btn btn-info btn-xs btn-outline"
+                            onclick="">
+                        <i class="fa fa-table"></i>
+                        表列表
+                    </button>
+                    <button type="button" id="" class="more_btn btn btn-info btn-xs btn-outline"
+                            onclick="">
+                        <i class="fa fa-refresh"></i>
+                        同步
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+<section>
 {% endblock %}
 
 <!-- 添加该页面自己需要的 js 模板 -->
 {% block js %}
     <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
     <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
 
     <script>
         // 使用 Django csrf 功能
         $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        // 表格插件
+        $(".footable").footable();
 
         $(document).ready(function(){
             // 显示密码
