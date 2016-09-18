@@ -8,6 +8,39 @@
 {% block css %}
     <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
     <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+
+    <style type="text/css">
+        .spin{
+            -webkit-transform-origin: 50% 50%;
+            transform-origin:50% 50%;
+            -ms-transform-origin:50% 50%; /* IE 9 */
+            -webkit-animation: spin .8s infinite linear;
+            -moz-animation: spin .8s infinite linear;
+            -o-animation: spin .8s infinite linear;
+            animation: spin .8s infinite linear;
+        }
+        @-webkit-keyframes spin {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(359deg);
+                transform: rotate(359deg);
+            }
+        }
+        @keyframes spin {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(359deg);
+                transform: rotate(359deg);
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block app_title %}MySQL实例详细信息{% endblock %}
@@ -27,6 +60,7 @@
 
 <!-- 显示该页面主要展示的内容 -->
 {% block content %}
+<input type="hidden" id="cmysql_instance_id" value="{{ dbmp_mysql_instance.mysql_instance_id }}" />
 <input type="hidden" id="chost" value="{{ dbmp_mysql_instance.host | f_num2ip }}" />
 <input type="hidden" id="cport" value="{{ dbmp_mysql_instance.port }}" />
 <input type="hidden" id="cusername" value="{{ dbmp_mysql_instance.username }}" />
@@ -137,9 +171,8 @@
 <section id="databases_section">
     <h2 class="page-header">
         数据库列表
-        <button type="button" id="" class="more_btn btn btn-info btn-sm btn-outline"
-                onclick="">
-            <i class="fa fa-refresh"></i>
+        <button type="button" id="sync_database" class="more_btn btn btn-info btn-sm btn-outline">
+            <i id="refresh_database_icon" class="fa fa-refresh"></i>
             同步
         </button>
     </h2>
@@ -186,6 +219,7 @@
     <script src="{% static 'js/content.min.js' %}"></script>
     <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
     <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
 
     <script>
         // 使用 Django csrf 功能
@@ -200,72 +234,134 @@
 
             // 测试MySQL连接是否正常
             $('#test_mysql_alived').on('click', function() {
+                test_mysql_alived();
+            });
 
-                mysql_host = $('#chost').val();
-                mysql_port = $('#cport').val();
-                mysql_user = $('#cusername').val();
-                mysql_password = $('#cpassword').val();
-                mysql_base_dir = $('#dbase_dir').val();
-                os_id = $('#cos_id').val();
-
-                text = '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;操作系统ID: <code class="text-primary">' + os_id + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 连接: <code class="text-primary">' + mysql_host + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 端口: <code class="text-primary">' + mysql_port + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 用户: <code class="text-primary">' + mysql_user + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 密码: <code class="text-primary">' + mysql_password + '</code>';
-                text += '</div>';
-
-                text += '<div class="row text-left">';
-                text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 软件路径: <code class="text-primary">' + mysql_base_dir + '</code>';
-                text += '</div>';
-
-
-                swal({
-                    title: "连接信息如下",
-                    text: text,
-                    type: "warning",
-                    html: true,
-                    showCancelButton: true,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "测试",
-                    closeOnConfirm: false
-                }, function () {
-                    $.ajax({
-                        url: "{% url 'dbmp_mysql_handler_ajax_mysql_is_alived' %}",
-                        type: "POST",
-                        dataType: "json",
-                        data: {
-                            mysql_host: mysql_host,
-                            mysql_port: mysql_port,
-                            mysql_user: mysql_user,
-                            mysql_password: mysql_password,
-                            mysql_base_dir: mysql_base_dir,
-                            os_id: os_id
-                        }
-                    }).done(function(data) { 
-                        if(data == true) {
-                            swal("连接成功!", "该链接可以使用！", "success");
-                        } else {
-                            swal("连接失败!", "请确认，连接参数是否正确!", "error");
-                        }
-                    }).error(function(data) { 
-                        swal("连接失败!", "估计服务器内部出现了错误!", "error");
-                    });
-                });
+            // 同步实例数据库
+            $('#sync_database').on('click', function() {
+                sync_database(2000);
             });
         });
+
+        // 同步实例数据库
+        function sync_database(delaye) {
+            mysql_instance_id = $('#cmysql_instance_id').val();
+
+            // 让 refresh icon 旋转
+            $("#refresh_database_icon").addClass("spin");
+
+            // 禁用同步按钮
+            $("#sync_database").attr({"disabled":"disabled"});
+            $("#sync_database").removeClass("btn-outline");
+
+            var interval = setTimeout(function(){
+                // 设置通知选项
+                toastr.options = {
+                  "closeButton": true,
+                  "debug": false,
+                  "progressBar": true,
+                  "positionClass": "toast-bottom-left",
+                  "onclick": null,
+                  "showDuration": "400",
+                  "hideDuration": "1000",
+                  "timeOut": "7000",
+                  "extendedTimeOut": "1000",
+                  "showEasing": "swing",
+                  "hideEasing": "linear",
+                  "showMethod": "fadeIn",
+                  "hideMethod": "fadeOut"
+                }
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_database_ajax_sync_database' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_instance_id: mysql_instance_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        toastr.success("同步成功!");
+                    } else {
+                        toastr.error("同步失败!");
+                    }
+                }).error(function(data) { 
+                    toastr.error("同步失败, 异步执行错误!!");
+                });
+
+                // 移除refresh_database_icon旋转
+                $("#refresh_database_icon").removeClass("spin");
+
+                // 恢复(启用)停止同步按钮
+                $("#sync_database").removeAttr("disabled");
+                $("#sync_database").addClass("btn-outline");
+            }, delaye);
+        }
+
+        function test_mysql_alived() {
+            mysql_host = $('#chost').val();
+            mysql_port = $('#cport').val();
+            mysql_user = $('#cusername').val();
+            mysql_password = $('#cpassword').val();
+            mysql_base_dir = $('#dbase_dir').val();
+            os_id = $('#cos_id').val();
+
+            text = '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;操作系统ID: <code class="text-primary">' + os_id + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 连接: <code class="text-primary">' + mysql_host + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 端口: <code class="text-primary">' + mysql_port + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 用户: <code class="text-primary">' + mysql_user + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 密码: <code class="text-primary">' + mysql_password + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 软件路径: <code class="text-primary">' + mysql_base_dir + '</code>';
+            text += '</div>';
+
+
+            swal({
+                title: "连接信息如下",
+                text: text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "测试",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_handler_ajax_mysql_is_alived' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_host: mysql_host,
+                        mysql_port: mysql_port,
+                        mysql_user: mysql_user,
+                        mysql_password: mysql_password,
+                        mysql_base_dir: mysql_base_dir,
+                        os_id: os_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        swal("连接成功!", "该链接可以使用！", "success");
+                    } else {
+                        swal("连接失败!", "请确认，连接参数是否正确!", "error");
+                    }
+                }).error(function(data) { 
+                    swal("连接失败!", "估计服务器内部出现了错误!", "error");
+                });
+            });
+        }
     </script>
 {% endblock %}

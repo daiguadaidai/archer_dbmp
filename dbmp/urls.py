@@ -16,6 +16,7 @@ from django.conf.urls import include, url
 from dbmp.views import v_dbmp_mysql_instance as dbmp_mysql_instance
 from dbmp.views import v_dbmp_mysql_handler as dbmp_mysql_handler
 from dbmp.views import v_dbmp_mysql_backup_instance as dbmp_mysql_backup_instance
+from dbmp.views import v_dbmp_mysql_database as dbmp_mysql_database
 
 urlpatterns = [
     # dbmp_mysql_instance
@@ -46,4 +47,8 @@ urlpatterns = [
     url(r'^dbmp_mysql_backup_instance/edit/$', dbmp_mysql_backup_instance.edit, name='dbmp_mysql_backup_instance_edit'),
     url(r'^dbmp_mysql_backup_instance/view/$', dbmp_mysql_backup_instance.view, name='dbmp_mysql_backup_instance_view'),
     url(r'^dbmp_mysql_backup_instance/ajax_delete/$', dbmp_mysql_backup_instance.ajax_delete, name='dbmp_mysql_backup_instance_ajax_delete'),
+
+    # dbmp_mysql_database
+    url(r'^dbmp_mysql_database/ajax_sync_database/$', dbmp_mysql_database.ajax_sync_database, name='dbmp_mysql_database_ajax_sync_database'),
+    url(r'^dbmp_mysql_database/ajax_search_database/$', dbmp_mysql_database.ajax_search_database, name='dbmp_mysql_database_ajax_search_database'),
 ]

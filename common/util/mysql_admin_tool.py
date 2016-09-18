@@ -220,6 +220,24 @@ class MysqlAdminTool(object):
 
         return result
 
+    @classmethod
+    def get_database_names(self, host='127.0.0.1', port=3306,
+                                 user='root', passwd=''):
+        """获取MySQL实例中所有的数据库名"""
+
+        db_conf = {
+            'host': host,
+            'port': port,
+            'user': user,
+            'passwd': passwd,
+            'sql_text': 'SHOW DATABASES',
+        }
+
+        data = self.execute_sql(**db_conf)
+        database_names = set(item.get('Database', '') for item in data[0])
+        return database_names 
+       
+
 def main():
     pass
 

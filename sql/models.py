@@ -170,6 +170,19 @@ class DbmpMysqlBusinessGroup(models.Model):
         db_table = 'dbmp_mysql_business_group'
 
 
+class DbmpMysqlDatabase(models.Model):
+    mysql_database_id = models.AutoField(primary_key=True)
+    mysql_instance_id = models.IntegerField()
+    name = models.CharField(max_length=50)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_mysql_database'
+        unique_together = (('mysql_instance_id', 'name'),)
+
+
 class DbmpMysqlHaGroup(models.Model):
     mysql_ha_group_id = models.AutoField(primary_key=True)
     alias = models.CharField(max_length=40)
