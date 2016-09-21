@@ -158,16 +158,28 @@ class DbmpMysqlBackupRemote(models.Model):
         db_table = 'dbmp_mysql_backup_remote'
 
 
-class DbmpMysqlBusinessGroup(models.Model):
-    mysql_business_group_id = models.AutoField(primary_key=True)
-    alias = models.CharField(max_length=40)
-    remark = models.CharField(max_length=50)
+class DbmpMysqlBusiness(models.Model):
+    mysql_business_id = models.AutoField(primary_key=True)
+    name = models.CharField(unique=True, max_length=50)
+    remark = models.CharField(max_length=200)
     create_time = models.DateTimeField()
     update_time = models.DateTimeField()
 
     class Meta:
         managed = False
-        db_table = 'dbmp_mysql_business_group'
+        db_table = 'dbmp_mysql_business'
+
+
+class DbmpMysqlBusinessDetail(models.Model):
+    mysql_business_detail_id = models.AutoField(primary_key=True)
+    mysql_business_id = models.IntegerField()
+    mysql_database_id = models.IntegerField()
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_mysql_business_detail'
 
 
 class DbmpMysqlDatabase(models.Model):

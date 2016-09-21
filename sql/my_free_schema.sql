@@ -235,20 +235,40 @@ CREATE TABLE `dbmp_mysql_backup_remote` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `dbmp_mysql_business_group`
+-- Table structure for table `dbmp_mysql_business`
 --
 
-DROP TABLE IF EXISTS `dbmp_mysql_business_group`;
+DROP TABLE IF EXISTS `dbmp_mysql_business`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `dbmp_mysql_business_group` (
-  `mysql_business_group_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '业务组ID',
-  `alias` varchar(40) NOT NULL DEFAULT '' COMMENT '组别名',
-  `remark` varchar(50) NOT NULL DEFAULT '' COMMENT '备注',
+CREATE TABLE `dbmp_mysql_business` (
+  `mysql_business_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '业务组ID',
+  `name` varchar(50) NOT NULL DEFAULT '' COMMENT '业务名称',
+  `remark` varchar(200) NOT NULL DEFAULT '' COMMENT '备注',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`mysql_business_group_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='MySQL业务组, 主要用于批量执行相关SQL';
+  PRIMARY KEY (`mysql_business_id`),
+  UNIQUE KEY `udx$name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='MySQL业务库，主要记录表结构相同的数据库';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `dbmp_mysql_business_detail`
+--
+
+DROP TABLE IF EXISTS `dbmp_mysql_business_detail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `dbmp_mysql_business_detail` (
+  `mysql_business_detail_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `mysql_business_id` int(10) unsigned NOT NULL COMMENT '业务组ID',
+  `mysql_database_id` int(10) unsigned NOT NULL COMMENT 'MySQL数据库ID',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`mysql_business_detail_id`),
+  KEY `idx$mysql_business_id` (`mysql_business_id`),
+  KEY `idx$mysql_database_id` (`mysql_database_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='记录着业务相关表结构相同的数据库';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -266,7 +286,7 @@ CREATE TABLE `dbmp_mysql_database` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_database_id`),
   UNIQUE KEY `udx$mysql_instance_id_name` (`mysql_instance_id`,`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='MySQL实例数据库';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8 COMMENT='MySQL实例数据库';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -432,4 +452,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-09-18  9:30:05
+-- Dump completed on 2016-09-21 11:15:01
