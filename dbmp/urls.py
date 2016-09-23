@@ -59,4 +59,5 @@ urlpatterns = [
     url(r'^dbmp_mysql_business/edit/$', dbmp_mysql_business.edit, name='dbmp_mysql_business_edit'),
     url(r'^dbmp_mysql_business/view/$', dbmp_mysql_business.view, name='dbmp_mysql_business_view'),
     url(r'^dbmp_mysql_business/delete/$', dbmp_mysql_business.delete, name='dbmp_mysql_business_delete'),
+    url(r'^dbmp_mysql_business/ajax_delete/$', dbmp_mysql_business.ajax_delete, name='dbmp_mysql_business_ajax_delete'),
 ]

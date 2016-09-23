@@ -1,0 +1,95 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block app_title %}业务组详细信息{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row fontawesome-icon-list">
+    <!-- 添加返回MySQL实例列表按钮 -->
+    <div class="fa-hover  col-md-2">
+        <a href="{% url 'dbmp_mysql_business_index' %}">
+            <i class="fa fa-list"></i>
+            业务组列表
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<input type="hidden" id="cmysql_business_id" value="{{ dbmp_mysql_business.mysql_business_id }}" />
+
+<section id="mysql_business">
+    <h2 class="page-header">业务组信息</h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <strong>业务组名：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_business.name }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-3">
+            <strong>备注：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_business.remark}}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-3">
+            <strong>创建时间：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_business.create_time | date:"Y-m-d H:i:s" }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-3">
+            <strong>更新时间：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_business.update_time | date:"Y-m-d H:i:s" }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-sm-4 col-sm-offset-9">
+            <a href="{% url 'dbmp_mysql_business_edit' %}?mysql_business_id={{ dbmp_mysql_business.mysql_business_id }}" 
+               type="button" class="btn btn-primary">
+                <i class="fa fa-edit"></i>
+                编辑
+            </a>
+        </div>
+    </div>
+<section>
+
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+        });
+
+    </script>
+{% endblock %}
