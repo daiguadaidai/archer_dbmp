@@ -15,6 +15,7 @@ from dbmp.models.dbmp_mysql_instance_info import DbmpMysqlInstanceInfo
 from dbmp.models.dbmp_mysql_backup_info import DbmpMysqlBackupInfo
 from dbmp.models.dbmp_mysql_backup_instance import DbmpMysqlBackupInstance
 from dbmp.models.dbmp_mysql_backup_remote import DbmpMysqlBackupRemote
+from dbmp.models.dbmp_mysql_database import DbmpMysqlDatabase
 from dbmp.views.forms.form_dbmp_mysql_instance import AddForm
 from dbmp.views.forms.form_dbmp_mysql_instance import EditForm
 
@@ -340,6 +341,9 @@ def ajax_delete(request):
                     DbmpMysqlBackupRemote.objects.filter(
                                 mysql_instance_id = mysql_instance_id).delete()
                     logger.info('delete DbmpMysqlBackupInfo')
+                    DbmpMysqlDatabase.objects.filter(
+                                mysql_instance_id = mysql_instance_id).delete()
+                    logger.info('delete DbmpMysqlDatabase')
 
                 is_delete = True
             except Exception, e:
