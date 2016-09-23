@@ -10,11 +10,11 @@
 
 
 <!-- 显示该页面标题 -->
-{% block app_title %}MySQL实例列表{% endblock %}
+{% block app_title %}业务组列表{% endblock %}
 
 <!-- 其他元素模块 -->
 {% block top_element %}
-<!-- 添加MySQL实例按钮 -->
+<!-- 业务组按钮 -->
 <div class="row fontawesome-icon-list">
     <div class="fa-hover col-md-2 col-sm-3 pull-right">
         <a href="{% url 'dbmp_mysql_business_add' %}">
@@ -66,6 +66,12 @@
                 </a>
             </td>
             <td class="text-center">
+                <button type="button" id="business_detail_{{ dbmp_mysql_business.mysql_business_id }}"
+                        class="more_btn btn btn-success btn-xs btn-outline"
+                        onclick="business_detail({{ dbmp_mysql_business.mysql_business_id }})">
+                    <i class="fa fa-cubes"></i>
+                    业务组数据库列表
+                </button>
             </td>
         </tr>
         {% endfor %}
@@ -169,5 +175,38 @@
             });
         }
 
+        // 打开一个业务数据库列表标记页面
+        function business_detail(mysql_instance_id) {
+            url = "";
+            url += "{% url 'dbmp_mysql_business_detail_index' %}";
+            url += "?mysql_instance_id=" + mysql_instance_id;
+            open_iframe_window("业务数据库列表", url);
+        }
+
+        // 打开一个 iframe 窗口
+        function open_iframe_window(tab_name, url) {
+            var timestamp = (new Date()).valueOf(); 
+            iframe_name = "name" + timestamp;
+
+            // iframe 菜单 标签
+            iframe_tab = '';
+            iframe_tab += '<a href="javascript:;" class="active J_menuTab" ';
+            iframe_tab += 'data-id="'+ timestamp +'">' + tab_name;
+            iframe_tab += '<i class="fa fa-times-circle"></i>';
+            iframe_tab += '</a>';
+
+            // iframe 内容
+            iframe_content = '';
+            iframe_content += '<iframe class="J_iframe" name="'+ iframe_name +'" width="100%" height="100%" ';
+            iframe_content += 'src="' + url + '" frameborder="0" ';
+            iframe_content += 'data-id="'+ timestamp +'" seamless style="display: inline;">';
+            iframe_content += '</iframe>';
+
+            // 打开标签和 iframe
+            $(".page-tabs .page-tabs-content .J_menuTab", parent.document).removeClass('active');
+            $(".page-tabs .page-tabs-content", parent.document).append(iframe_tab);
+            $("#content-main .J_iframe", parent.document).css('display','none'); 
+            $("#content-main", parent.document).append(iframe_content);
+        }
     </script>
 {% endblock %}

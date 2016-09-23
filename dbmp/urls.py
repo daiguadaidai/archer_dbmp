@@ -18,6 +18,7 @@ from dbmp.views import v_dbmp_mysql_handler as dbmp_mysql_handler
 from dbmp.views import v_dbmp_mysql_backup_instance as dbmp_mysql_backup_instance
 from dbmp.views import v_dbmp_mysql_database as dbmp_mysql_database
 from dbmp.views import v_dbmp_mysql_business as dbmp_mysql_business
+from dbmp.views import v_dbmp_mysql_business_detail as dbmp_mysql_business_detail
 
 urlpatterns = [
     # dbmp_mysql_instance
@@ -60,4 +61,9 @@ urlpatterns = [
     url(r'^dbmp_mysql_business/view/$', dbmp_mysql_business.view, name='dbmp_mysql_business_view'),
     url(r'^dbmp_mysql_business/delete/$', dbmp_mysql_business.delete, name='dbmp_mysql_business_delete'),
     url(r'^dbmp_mysql_business/ajax_delete/$', dbmp_mysql_business.ajax_delete, name='dbmp_mysql_business_ajax_delete'),
+
+    # dbmp_mysql_business_detail
+    url(r'^dbmp_mysql_business_detail/index/$', dbmp_mysql_business_detail.index, name='dbmp_mysql_business_detail_index'),
+    url(r'^dbmp_mysql_business_detail/add/$', dbmp_mysql_business_detail.add, name='dbmp_mysql_business_detail_add'),
+    url(r'^dbmp_mysql_business_detail/ajax_delete/$', dbmp_mysql_business_detail.ajax_delete, name='dbmp_mysql_business_detail_ajax_delete'),
 ]

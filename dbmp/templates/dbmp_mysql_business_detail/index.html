@@ -1,0 +1,116 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+{% endblock %}
+
+
+<!-- 显示该页面标题 -->
+{% block app_title %}业务组列表{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<!-- 业务组按钮 -->
+<div class="row fontawesome-icon-list">
+    <div class="fa-hover col-md-2 col-sm-3">
+        <a href="{% url 'dbmp_mysql_business_add' %}">
+            <i class="fa fa-plus-square"></i>
+            添加业务数据库
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<table class="footable table table-stripped toggle-arrow-tiny table-hover">
+    <thead>
+        <tr>
+            <th class="text-center">#</th>
+            <th class="text-center">组名称</th>
+            <th class="text-center">实例名</th>
+            <th class="text-center">实例IP</th>
+            <th class="text-center">数据库名</th>
+            <th class="text-center">备注</th>
+            <th class="text-center col-xs-2">操作</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for dbmp_mysql_business in pagination.objs %}
+        <tr>
+            <td class="text-center">{{ forloop.counter }}</td>
+            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
+            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
+            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
+            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
+            <td class="text-center">{{ dbmp_mysql_business.remark }}</td>
+            <td class="text-center">
+                <a onclick="dbmp_mysql_business_detail_delete({{ dbmp_mysql_business_detail.mysql_business_detail_id }}, {{ pagination.cur_page }})"
+                   type="button" class="btn btn-danger">
+                    <i class="fa fa-trash"></i>
+                    删除
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 表格插件
+            $(".footable").footable();
+        });
+
+        //删除 dbmp_mysql_business
+        function dbmp_mysql_business_detail_delete(mysql_business_detail_id, cur_page) {
+            $(".confirm").unbind("click");
+            swal({
+                title: "您确定要删除这条信息吗?",
+                text: "删除后将无法恢复，请谨慎操作！",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "删除",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_business_detail_ajax_delete' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_business_detail_id: mysql_business_detail_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        swal("删除成功!", "已成功删除数据！", "success");
+                        $(".confirm").click(function(){
+                            setTimeout("location.reload()", 500);
+                        });
+                    } else {
+                        swal("对不起!", "删除数据失败了!", "error");
+                    }
+                }).error(function(data) { 
+                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
+                });
+            });
+        }
+
+    </script>
+{% endblock %}
