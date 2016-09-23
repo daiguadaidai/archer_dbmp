@@ -223,4 +223,20 @@ def delete(request):
 
 @DecoratorTool.get_request_alert_message
 def ajax_delete(request):
-    return render(request, 'dbmp_mysql_database/index.html', params)
+
+    is_delete = False
+    if request.method == 'POST':
+        mysql_business_id = int(request.POST.get('mysql_business_id', '0'))  
+        if mysql_business_id:
+            try:
+                with transaction.atomic():
+                    DbmpMysqlBusiness.objects.filter(
+                                mysql_business_id = mysql_business_id).delete()
+                    logger.info('delete DbmpMysqlBusiness')
+
+                is_delete = True
+            except Exception, e:
+                logger.info(traceback.format_exc())
+
+    respons_data = json.dumps(is_delete)
+    return HttpResponse(respons_data, content_type='application/json')
