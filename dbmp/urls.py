@@ -35,6 +35,7 @@ urlpatterns = [
     url(r'^dbmp_mysql_instance/stop_instance_terminal/$', dbmp_mysql_instance.stop_instance_terminal, name='dbmp_mysql_instance_stop_instance_terminal'),
     url(r'^dbmp_mysql_instance/restart_instance_terminal/$', dbmp_mysql_instance.restart_instance_terminal, name='dbmp_mysql_instance_restart_instance_terminal'),
     url(r'^dbmp_mysql_instance/terminal_sql_console/$', dbmp_mysql_instance.terminal_sql_console, name='dbmp_mysql_instance_terminal_sql_console'),
+    url(r'^dbmp_mysql_instance/list_instance_use_business_detail/$', dbmp_mysql_instance.list_instance_use_business_detail, name='list_instance_use_business_detail'),
 
     # dbmp_mysql_handler
     url(r'^dbmp_mysql_handler/ajax_mysql_is_alived/$', dbmp_mysql_handler.ajax_mysql_is_alived, name='dbmp_mysql_handler_ajax_mysql_is_alived'),
@@ -51,6 +52,7 @@ urlpatterns = [
     url(r'^dbmp_mysql_backup_instance/ajax_delete/$', dbmp_mysql_backup_instance.ajax_delete, name='dbmp_mysql_backup_instance_ajax_delete'),
 
     # dbmp_mysql_database
+    url(r'^dbmp_mysql_database/list_database_use_business_detail/$', dbmp_mysql_database.list_database_use_business_detail, name='list_database_use_business_detail'),
     url(r'^dbmp_mysql_database/ajax_sync_database/$', dbmp_mysql_database.ajax_sync_database, name='dbmp_mysql_database_ajax_sync_database'),
     url(r'^dbmp_mysql_database/ajax_search_database/$', dbmp_mysql_database.ajax_search_database, name='dbmp_mysql_database_ajax_search_database'),
 

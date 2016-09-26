@@ -27,9 +27,15 @@ logger = logging.getLogger('default')
 @DecoratorTool.get_request_alert_message
 def index(request):
     params = {}
-    sql_business_detail_handler = SQLDbmpMysqlBusinessDetail()
-    sql_business_detail_handler.get_business_detail_index(1)
-    return render(request, 'dbmp_mysql_business_detail/index.html', params)
+    mysql_business_id = int(request.GET.get('mysql_business_id', '0')) 
+    params['mysql_business_id'] = mysql_business_id
+
+    if request.method == 'GET':
+        sql_business_detail_handler = SQLDbmpMysqlBusinessDetail()
+        business_detail_index = sql_business_detail_handler.get_business_detail_index(
+                                                                mysql_business_id)
+        params['business_detail_index'] = business_detail_index
+        return render(request, 'dbmp_mysql_business_detail/index.html', params)
 
 @DecoratorTool.get_request_alert_message
 def add(request):

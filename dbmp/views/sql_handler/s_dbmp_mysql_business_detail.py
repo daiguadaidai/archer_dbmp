@@ -11,6 +11,7 @@ class SQLDbmpMysqlBusinessDetail(object):
 
         sql = """
             SELECT dmb.mysql_business_id AS mysql_business_id,
+                dmbd.mysql_business_detail_id AS mysql_business_detail_id,
                 dmb.name AS business_name,
                 dmb.remark AS business_remark,
                 dmd.name AS database_name,
@@ -27,14 +28,8 @@ class SQLDbmpMysqlBusinessDetail(object):
                 ON dmd.mysql_instance_id = dmi.mysql_instance_id
         """.format(mysql_business_id = mysql_business_id)
 
-        sql2 = """
-            SELECT *
-            FROM dbmp_mysql_instance
-            WHERE mysql_instance_id = 2
-        """
-
         cursor = connection.cursor()
-        cursor.execute(sql2)
+        cursor.execute(sql)
         results = self._dict_fetchall(cursor)
         # results = cursor.fetchall()
         print results

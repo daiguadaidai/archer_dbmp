@@ -1,0 +1,418 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+{% load ip_filters %}
+{% load filters_dbmp_mysql_instance %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+
+    <style type="text/css">
+        .spin{
+            -webkit-transform-origin: 50% 50%;
+            transform-origin:50% 50%;
+            -ms-transform-origin:50% 50%; /* IE 9 */
+            -webkit-animation: spin .8s infinite linear;
+            -moz-animation: spin .8s infinite linear;
+            -o-animation: spin .8s infinite linear;
+            animation: spin .8s infinite linear;
+        }
+        @-webkit-keyframes spin {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(359deg);
+                transform: rotate(359deg);
+            }
+        }
+        @keyframes spin {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(359deg);
+                transform: rotate(359deg);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block app_title %}MySQL实例详细信息{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row fontawesome-icon-list">
+    <!-- 添加返回MySQL实例列表按钮 -->
+    <div class="fa-hover  col-md-2">
+        <a href="{% url 'dbmp_mysql_instance_index' %}">
+            <i class="fa fa-home"></i>
+            实例列表
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<input type="hidden" id="cmysql_instance_id" value="{{ dbmp_mysql_instance.mysql_instance_id }}" />
+<input type="hidden" id="chost" value="{{ dbmp_mysql_instance.host | f_num2ip }}" />
+<input type="hidden" id="cport" value="{{ dbmp_mysql_instance.port }}" />
+<input type="hidden" id="cusername" value="{{ dbmp_mysql_instance.username }}" />
+<input type="hidden" id="cpassword" value="{{ dbmp_mysql_instance.password }}" />
+<input type="hidden" id="dbase_dir" value="{{ dbmp_mysql_instance_info.base_dir }}" />
+<input type="hidden" id="cos_id" value="{{ cmdb_os.os_id }}">
+<!-- OS 信息 -->
+<section id="os_section">
+    <h2 class="page-header">操作系统信息</h2>
+    {% if cmdb_os %}
+    <div id="os_row" class="row">
+        <div class="col-md-4">
+            <strong>主机名：</strong> {{ cmdb_os.hostname }}
+        </div>
+        <div class="col-md-4">
+            <strong>IP地址：</strong> {{ cmdb_os.ip | f_num2ip }}
+        </div>
+        <div class="col-md-4">
+            <strong>别名：</strong> {{ cmdb_os.alias }}
+        </div>
+    </div>
+    {% endif %}
+<section>
+
+<section id="mysql_instance">
+    <h2 class="page-header">MySQL实例信息&nbsp;
+        <span class="label label-{{ dbmp_mysql_instance.run_status | f_run_status_color }}">
+            {{ dbmp_mysql_instance.run_status | f_run_status }}
+        </span>
+    </h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <strong>链接 IP：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance.host | f_num2ip }}</code>
+        </div>
+        <div class="col-md-3">
+            <strong>端口：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance.port }}</code>
+        </div>
+        <div class="col-md-3">
+            <strong>用户名：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance.username }}</code>
+        </div>
+        <div class="col-md-3">
+            <strong>密码：</strong> 
+            <a title="{{ dbmp_mysql_instance.password }}"
+                   data-toggle="password" data-placement="top">
+                <i class="fa fa-thumb-tack"></i>
+                悬停显示
+            </a>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <strong>配置文件路径：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance_info.my_cnf_path }}</code>
+        </div>
+    </div>
+        
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <strong>MySQL软件目录：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance_info.base_dir }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <strong>启动命令：</strong> 
+            <code class="text-primary">{{ dbmp_mysql_instance_info.start_cmd }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <strong>备注：</strong> {{ dbmp_mysql_instance.remark }}
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+
+    <div class="row">
+        <div class="col-sm-4 col-sm-offset-9">
+            <button id="test_mysql_alived" type="button" class="btn btn-success">
+                <i class="fa fa-link"></i>
+                链接测试
+            </button>
+            <a href="{% url 'dbmp_mysql_instance_edit' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}" 
+               type="button" class="btn btn-primary">
+                <i class="fa fa-edit"></i>
+                编辑
+            </a>
+        </div>
+    </div>
+<section>
+
+<!-- 数据库列表 -->
+<section id="databases_section">
+    <h2 class="page-header">
+        数据库列表
+        <button type="button" id="sync_database" class="more_btn btn btn-info btn-sm btn-outline">
+            <i id="refresh_database_icon" class="fa fa-refresh"></i>
+            同步
+        </button>
+    </h2>
+     
+    <div id="database_list">
+    </div>
+<section>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 显示密码
+            $("[data-toggle='password']").tooltip();
+
+            // 测试MySQL连接是否正常
+            $('#test_mysql_alived').on('click', function() {
+                test_mysql_alived();
+            });
+
+            // 同步实例数据库
+            $('#sync_database').on('click', function() {
+                sync_database(2000);
+            });
+
+            // 创建获得MysQL实例数据库列表
+            create_database_list({{ dbmp_mysql_instance.mysql_instance_id }});
+        });
+
+        // 同步实例数据库
+        function sync_database(delaye) {
+            mysql_instance_id = $('#cmysql_instance_id').val();
+
+            // 让 refresh icon 旋转
+            $("#refresh_database_icon").addClass("spin");
+
+            // 禁用同步按钮
+            $("#sync_database").attr({"disabled":"disabled"});
+            $("#sync_database").removeClass("btn-outline");
+
+            var interval = setTimeout(function(){
+                // 设置通知选项
+                toastr.options = {
+                    "closeButton": true,
+                    "debug": false,
+                    "progressBar": true,
+                    "positionClass": "toast-bottom-left",
+                    "onclick": null,
+                    "showDuration": "400",
+                    "hideDuration": "1000",
+                    "timeOut": "7000",
+                    "extendedTimeOut": "1000",
+                    "showEasing": "swing",
+                    "hideEasing": "linear",
+                    "showMethod": "fadeIn",
+                    "hideMethod": "fadeOut"
+                }
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_database_ajax_sync_database' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_instance_id: mysql_instance_id
+                    }
+                }).done(function(data) { 
+                    if(data == 1) {
+                        toastr.success("同步成功!");
+                        create_database_list(mysql_instance_id);
+                    } else if(data == 2) {
+                        toastr.warning("数据已经是最新，无需同步!");
+                    } else if(data == 0) {
+                        toastr.error("同步失败!");
+                    }
+                }).error(function(data) { 
+                    toastr.error("同步失败, 异步执行错误!!");
+                });
+
+                // 移除refresh_database_icon旋转
+                $("#refresh_database_icon").removeClass("spin");
+
+                // 恢复(启用)停止同步按钮
+                $("#sync_database").removeAttr("disabled");
+                $("#sync_database").addClass("btn-outline");
+            }, delaye);
+        }
+
+        function test_mysql_alived() {
+            mysql_host = $('#chost').val();
+            mysql_port = $('#cport').val();
+            mysql_user = $('#cusername').val();
+            mysql_password = $('#cpassword').val();
+            mysql_base_dir = $('#dbase_dir').val();
+            os_id = $('#cos_id').val();
+
+            text = '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;操作系统ID: <code class="text-primary">' + os_id + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 连接: <code class="text-primary">' + mysql_host + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 端口: <code class="text-primary">' + mysql_port + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 用户: <code class="text-primary">' + mysql_user + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 密码: <code class="text-primary">' + mysql_password + '</code>';
+            text += '</div>';
+
+            text += '<div class="row text-left">';
+            text += '&nbsp;&nbsp;&nbsp;&nbsp;MySQL 软件路径: <code class="text-primary">' + mysql_base_dir + '</code>';
+            text += '</div>';
+
+
+            swal({
+                title: "连接信息如下",
+                text: text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "测试",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_handler_ajax_mysql_is_alived' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_host: mysql_host,
+                        mysql_port: mysql_port,
+                        mysql_user: mysql_user,
+                        mysql_password: mysql_password,
+                        mysql_base_dir: mysql_base_dir,
+                        os_id: os_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        swal("连接成功!", "该链接可以使用！", "success");
+                    } else {
+                        swal("连接失败!", "请确认，连接参数是否正确!", "error");
+                    }
+                }).error(function(data) { 
+                    swal("连接失败!", "估计服务器内部出现了错误!", "error");
+                });
+            });
+        }
+
+        function create_database_list(mysql_instance_id) {
+            // 设置通知选项
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "progressBar": true,
+                "positionClass": "toast-bottom-left",
+                "onclick": null,
+                "showDuration": "400",
+                "hideDuration": "1000",
+                "timeOut": "7000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            }
+            $.ajax({
+                url: "{% url 'dbmp_mysql_database_ajax_search_database' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    mysql_instance_id: mysql_instance_id
+                }
+            }).done(function(data) { 
+                if (data.length != 0){
+                    database_list_html = render_database_list(data);
+                    $("#database_list").html(database_list_html);
+
+                    // 表格插件
+                    $(".footable").footable();
+                }
+            }).error(function(data) { 
+                toastr.warning("渲染数据失败");
+            });
+        }
+
+        function render_database_list(data) {
+            html = '';
+            html += '<table class="footable table table-stripped toggle-arrow-tiny table-hover" data-page-size="100">';
+            html += '    <thead>';
+            html += '        <tr>';
+            html += '            <th class="text-center">#</th>';
+            html += '            <th class="text-center">数据库名</th>';
+            html += '            <th class="text-center">同步时间</th>';
+            html += '            <th data-hide="all">操作</th>';
+            html += '        </tr>';
+            html += '    </thead>';
+            html += '    <tbody>';
+
+            for (var i=0; i < data.length; i++) {
+                html += '        <tr>';
+                html += '            <td class="text-center">' + i + '</td>';
+                html += '            <td class="text-center">' + data[i]["name"] + '</td>';
+                html += '            <td class="text-center">' + data[i]["update_time"] + '</td>';
+                html += '            <td class="text-center">';
+                html += '                <button type="button" id="" class="more_btn btn btn-info btn-xs btn-outline"';
+                html += '                        onclick="">';
+                html += '                    <i class="fa fa-table"></i>';
+                html += '                    表列表';
+                html += '                </button>';
+                html += '                <button type="button" id="" class="more_btn btn btn-info btn-xs btn-outline"';
+                html += '                        onclick="">';
+                html += '                    <i class="fa fa-refresh"></i>';
+                html += '                    同步';
+                html += '                </button>';
+                html += '            </td>';
+                html += '        </tr>';
+            }
+
+            html += '    </tbody>';
+            html += '</table>';
+
+            return html;
+        }
+
+        function delete_database_list() {
+
+        }
+    </script>
+{% endblock %}

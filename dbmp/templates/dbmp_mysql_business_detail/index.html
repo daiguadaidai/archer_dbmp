@@ -1,6 +1,7 @@
 {%extends 'dbmp_base.html' %}
 
 {% load staticfiles %}
+{% load ip_filters %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
@@ -17,7 +18,7 @@
 <!-- 业务组按钮 -->
 <div class="row fontawesome-icon-list">
     <div class="fa-hover col-md-2 col-sm-3">
-        <a href="{% url 'dbmp_mysql_business_add' %}">
+        <a id="instance_list">
             <i class="fa fa-plus-square"></i>
             添加业务数据库
         </a>
@@ -32,8 +33,9 @@
         <tr>
             <th class="text-center">#</th>
             <th class="text-center">组名称</th>
-            <th class="text-center">实例名</th>
             <th class="text-center">实例IP</th>
+            <th class="text-center">实例PORT</th>
+            <th class="text-center">实例备注</th>
             <th class="text-center">数据库名</th>
             <th class="text-center">备注</th>
             <th class="text-center col-xs-2">操作</th>
@@ -44,13 +46,14 @@
         {% for dbmp_mysql_business in pagination.objs %}
         <tr>
             <td class="text-center">{{ forloop.counter }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.remark }}</td>
+            <td class="text-center">{{ business_detail_index.business_name }}</td>
+            <td class="text-center">{{ business_detail_index.instance_host | f_num2ip }}</td>
+            <td class="text-center">{{ business_detail_index.instance_port }}</td>
+            <td class="text-center">{{ business_detail_index.instance_remark }}</td>
+            <td class="text-center">{{ business_detail_index.database_name }}</td>
+            <td class="text-center">{{ business_detail_index.business_remark }}</td>
             <td class="text-center">
-                <a onclick="dbmp_mysql_business_detail_delete({{ dbmp_mysql_business_detail.mysql_business_detail_id }}, {{ pagination.cur_page }})"
+                <a onclick="dbmp_mysql_business_detail_delete({{ business_detail_index.mysql_business_detail_id }}, {{ pagination.cur_page }})"
                    type="button" class="btn btn-danger">
                     <i class="fa fa-trash"></i>
                     删除
@@ -76,7 +79,24 @@
         $(document).ready(function(){
             // 表格插件
             $(".footable").footable();
+          
+            // 弹出Instance信息 iframe
+            instance_list();
         });
+
+        // 弹出Instance信息 iframe
+        function instance_list() {
+            $('#instance_list').on('click', function(){
+                layer.open({
+                    type: 2,
+                    title: '实例列表',
+                    maxmin: true,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ['80%' , '100%'],
+                    content: '{% url 'list_instance_use_business_detail' %}?mysql_business_id={{ mysql_business_id }}'
+                });
+            });
+        }
 
         //删除 dbmp_mysql_business
         function dbmp_mysql_business_detail_delete(mysql_business_detail_id, cur_page) {

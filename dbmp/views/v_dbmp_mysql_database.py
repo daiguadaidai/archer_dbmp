@@ -18,6 +18,24 @@ logger = logging.getLogger('default')
 
 # Create your views here.
 
+def list_database_use_business_detail(request):
+    """展现实例数据库列表"""
+    params = {}
+
+
+    try:
+        mysql_instance_id = int(request.GET.get('mysql_instance_id', '0'))
+        mysql_business_id = int(request.GET.get('mysql_business_id', '0'))
+    except ValueError:
+        cur_page = 1
+        mysql_business_id = 0
+
+    params['mysql_instance_id'] = mysql_instance_id
+    params['mysql_business_id'] = mysql_business_id
+
+    return render(request, 'dbmp_mysql_database/list_database_use_business_detail.html', params)
+    
+
 def ajax_sync_database(request):
     """ajax 同步更新当前实例最新数据库列表
     Return:

@@ -176,10 +176,10 @@
         }
 
         // 打开一个业务数据库列表标记页面
-        function business_detail(mysql_instance_id) {
+        function business_detail(mysql_business_id) {
             url = "";
             url += "{% url 'dbmp_mysql_business_detail_index' %}";
-            url += "?mysql_instance_id=" + mysql_instance_id;
+            url += "?mysql_business_id=" + mysql_business_id;
             open_iframe_window("业务数据库列表", url);
         }
 
