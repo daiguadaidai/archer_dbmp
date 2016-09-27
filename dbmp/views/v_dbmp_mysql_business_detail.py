@@ -42,10 +42,16 @@ def add(request):
     params = {}
     return render(request, 'dbmp_mysql_business_detail/add.html', params)
 
-@DecoratorTool.get_request_alert_message
 def ajax_delete(request):
 
     is_delete = False
 
     respons_data = json.dumps(is_delete)
+    return HttpResponse(respons_data, content_type='application/json')
+
+def ajax_update_database(request):
+    """更新选中数据库"""
+    is_ok = True
+
+    respons_data = json.dumps(is_ok)
     return HttpResponse(respons_data, content_type='application/json')

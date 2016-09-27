@@ -23,11 +23,10 @@
 <table class="footable table table-stripped toggle-arrow-tiny table-hover">
     <thead>
         <tr>
-            <th class="text-center">#</th>
+            <th class="text-center col-xs-1">#</th>
             <th class="text-center">Host</th>
             <th class="text-center">Port</th>
-            <th class="text-center">用户名</th>
-            <th class="text-center col-xs-1">密码</th>
+            <th class="text-center">备注</th>
             <th class="text-center col-xs-2">操作</th>
         </tr>
     </thead>
@@ -42,14 +41,7 @@
                 </a>
             </td>
             <td class="text-center">{{ dbmp_mysql_instance.port }}</td>
-            <td class="text-center">{{ dbmp_mysql_instance.username }}</td>
-            <td class="text-center">
-                <a title="{{ dbmp_mysql_instance.password }}"
-                       data-toggle="password" data-placement="top">
-                    <i class="fa fa-thumb-tack"></i>
-                    悬停显示
-                </a>
-            </td>
+            <td class="text-center">{{ dbmp_mysql_instance.remark }}</td>
             <td class="text-center">
                 <a href="{% url 'list_database_use_business_detail' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}&mysql_business_id={{ mysql_business_id }}" 
                    type="button" class="btn btn-info">
@@ -123,10 +115,6 @@
         $(document).ready(function(){
             // 表格插件
             $(".footable").footable();
-
-            // 显示密码
-            $("[data-toggle='password']").tooltip();
-
         });
 
     </script>

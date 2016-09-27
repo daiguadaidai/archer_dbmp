@@ -68,4 +68,5 @@ urlpatterns = [
     url(r'^dbmp_mysql_business_detail/index/$', dbmp_mysql_business_detail.index, name='dbmp_mysql_business_detail_index'),
     url(r'^dbmp_mysql_business_detail/add/$', dbmp_mysql_business_detail.add, name='dbmp_mysql_business_detail_add'),
     url(r'^dbmp_mysql_business_detail/ajax_delete/$', dbmp_mysql_business_detail.ajax_delete, name='dbmp_mysql_business_detail_ajax_delete'),
+    url(r'^dbmp_mysql_business_detail/ajax_update_database/$', dbmp_mysql_business_detail.ajax_update_database, name='dbmp_mysql_business_detail_ajax_update_database'),
 ]

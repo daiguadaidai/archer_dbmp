@@ -9,6 +9,7 @@ from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
 from dbmp.models.dbmp_mysql_database import DbmpMysqlDatabase
 from common.util.mysql_admin_tool import MysqlAdminTool
 from common.util.ip_tool import IpTool
+from common.util.decorator_tool import DecoratorTool
 
 import simplejson as json
 import traceback
@@ -18,6 +19,7 @@ logger = logging.getLogger('default')
 
 # Create your views here.
 
+@DecoratorTool.get_request_alert_message
 def list_database_use_business_detail(request):
     """展现实例数据库列表"""
     params = {}
@@ -32,6 +34,20 @@ def list_database_use_business_detail(request):
 
     params['mysql_instance_id'] = mysql_instance_id
     params['mysql_business_id'] = mysql_business_id
+
+    try:
+        dbmp_mysql_databases = DbmpMysqlDatabase.objects.values(
+                                               'mysql_database_id',
+                                               'name',
+                                               'update_time').filter(
+                            mysql_instance_id = mysql_instance_id)
+        params['dbmp_mysql_databases'] = dbmp_mysql_databases
+    except: # 没有获取到实例信息则转跳列表页面
+        logger.info(traceback.format_exc())
+        logger.info('获取DbmpMysqlDatabase失败')
+        request.session['alert_message_now']['danger_msg'].append(
+                                                '没有找到相关数据库，请同步完成再选择')
+        return HttpResponseRedirect(request.environ['HTTP_REFERER'])
 
     return render(request, 'dbmp_mysql_database/list_database_use_business_detail.html', params)
     
