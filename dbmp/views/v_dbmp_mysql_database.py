@@ -29,11 +29,13 @@ def list_database_use_business_detail(request):
         mysql_instance_id = int(request.GET.get('mysql_instance_id', '0'))
         mysql_business_id = int(request.GET.get('mysql_business_id', '0'))
     except ValueError:
-        cur_page = 1
+        mysql_instance_id = 0
         mysql_business_id = 0
 
     params['mysql_instance_id'] = mysql_instance_id
     params['mysql_business_id'] = mysql_business_id
+
+    print params
 
     try:
         dbmp_mysql_databases = DbmpMysqlDatabase.objects.values(

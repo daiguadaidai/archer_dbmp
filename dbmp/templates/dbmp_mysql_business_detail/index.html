@@ -11,7 +11,7 @@
 
 
 <!-- 显示该页面标题 -->
-{% block app_title %}业务组列表{% endblock %}
+{% block app_title %}业务组数据库列表{% endblock %}
 
 <!-- 其他元素模块 -->
 {% block top_element %}
@@ -43,17 +43,17 @@
     </thead>
 
     <tbody>
-        {% for dbmp_mysql_business in pagination.objs %}
-        <tr>
+        {% for mysql_business_detail in business_detail_index %}
+        <tr id="business_database_{{ mysql_business_detail.mysql_business_detail_id }}" class="business_database">
             <td class="text-center">{{ forloop.counter }}</td>
-            <td class="text-center">{{ business_detail_index.business_name }}</td>
-            <td class="text-center">{{ business_detail_index.instance_host | f_num2ip }}</td>
-            <td class="text-center">{{ business_detail_index.instance_port }}</td>
-            <td class="text-center">{{ business_detail_index.instance_remark }}</td>
-            <td class="text-center">{{ business_detail_index.database_name }}</td>
-            <td class="text-center">{{ business_detail_index.business_remark }}</td>
+            <td class="text-center">{{ mysql_business_detail.business_name }}</td>
+            <td class="text-center">{{ mysql_business_detail.instance_host | f_num2ip }}</td>
+            <td class="text-center">{{ mysql_business_detail.instance_port }}</td>
+            <td class="text-center">{{ mysql_business_detail.instance_remark }}</td>
+            <td class="text-center">{{ mysql_business_detail.database_name }}</td>
+            <td class="text-center">{{ mysql_business_detail.business_remark }}</td>
             <td class="text-center">
-                <a onclick="dbmp_mysql_business_detail_delete({{ business_detail_index.mysql_business_detail_id }}, {{ pagination.cur_page }})"
+                <a onclick="dbmp_mysql_business_detail_delete({{ mysql_business_detail.mysql_business_detail_id }}, {{ pagination.cur_page }})"
                    type="button" class="btn btn-danger">
                     <i class="fa fa-trash"></i>
                     删除

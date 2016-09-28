@@ -48,25 +48,13 @@
                                id="database_check_{{ dbmp_mysql_database.mysql_database_id }}" 
                                value="{{ dbmp_mysql_database.mysql_database_id }}" />
                     </td>
-                    <td class="text-center">{{ dbmp_mysql_database.name }}</td>
+                    <td class="text-center" id="database_name_{{ dbmp_mysql_database.mysql_database_id }}">{{ dbmp_mysql_database.name }}</td>
                     <td class="text-center">{{ dbmp_mysql_database.update_time | date:"Y-m-d H:i:s" }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
-
-    <h4>&nbsp;</h4>
-
-    <div class="row">
-        <div class="col-sm-4 col-sm-offset-9">
-            <button id="save_business_database" type="button" class="btn btn-info">
-                <i class="fa fa-save"></i>
-                保存
-            </button>
-        </div>
-    </div>
-<section>
 {% endblock %}
 
 <!-- 添加该页面自己需要的 js 模板 -->
@@ -80,51 +68,151 @@
         $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
 
         $(document).ready(function(){
+            // 打开页面判断每一个 checkbox是否需要选中
+            $(".database_check").each(function (index, obj){
+                check_has_database(obj, {{ mysql_business_id }});
+            });
+
             // 点击保存时添加数据
-            $("#save_business_database").click(function(){
-                // 禁用button
-                $(this).attr("disabled", true);
-                // 获取选中的 checkbox, 并保存
-                update_business_database({{ mysql_business_id }});
-                // 启用button
-                $(this).removeAttr("disabled");
+            $(".database_check").change(function(){
+                update_business_database(this, {{ mysql_business_id }})
             });
         });
 
+        // 检查数据库是否已经添加未业务数据库
+        function check_has_database(obj, mysql_business_id) {
+            // 获取点击的 checkbox 的 mysql_database_id
+            mysql_database_id = $(obj).val();
+
+            $.ajax({
+                url: "{% url 'dbmp_mysql_business_detail_ajax_has_database' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    mysql_database_id: mysql_database_id,
+                    mysql_business_id: mysql_business_id
+                }
+            }).done(function(data) {
+                if (data > 0){
+                    $(obj).prop("checked", true); // checkbox 选中
+                }
+            }).error(function(data) {
+                // 请求失败, 不做处理
+            });
+        }
+
         // 更新业务选取的数据库
-        function update_business_database(mysql_business_id) {
-            // 获取选中的 checkbox 数据库 id 使用逗号隔开
-            database_ids = get_check_database();
-            
+        function update_business_database(obj, mysql_business_id) {
+            // 获取点击的 checkbox 的 mysql_database_id
+            mysql_database_id = $(obj).val();
+            // 获取更新的数据库名称
+            database_name = $("#database_name_" + mysql_database_id).html();
+            // 标记更新动作是删除还是添加
+            update_tag = "";
+            update_message = "";
+            if($(obj).is(":checked")) {
+                update_message += "添加";
+                update_tag = "add";
+            } else {
+                update_message += "删除";
+                update_tag = "delete";
+            }
+
             $.ajax({
                 url: "{% url 'dbmp_mysql_business_detail_ajax_update_database' %}",
                 type: "POST",
                 dataType: "json",
                 data: {
-                    mysql_database_ids: database_ids,
-                    mysql_business_id: mysql_business_id
+                    mysql_database_id: mysql_database_id,
+                    mysql_business_id: mysql_business_id,
+                    update_tag: update_tag
                 }
             }).done(function(data) {
-                if (data == true){
-                    console.log('修改成功');
-                } else {
-                    console.log('修改失败');
+                if (data == false){
+                    toastr.error("数据库-" + database_name + "(" + update_message + ")失败");
+                    reverse_check_box_status(obj);
+                } else { // 修改成功会返回一个 ID 
+                    toastr.success("数据库-" + database_name + "(" + update_message + ")成功");
+                    if (update_tag == "delete") { // 删除记录到父窗口
+                        delete_database_to_parent_layer(data);
+                    } else if (update_tag == "add") { // 添加记录到父窗口
+                        add_database_to_parent_layer(data);
+                    }
                 }
             }).error(function(data) {
-                toastr.warning("渲染数据失败");
+                toastr.error("请求失败");
+                reverse_check_box_status(obj);
             });
         }
 
-        // 获取数据库id字符串
-        function get_check_database() {
-            var database_ids = [];  
-            var check_content = $("input[name='database_check']:checked")  
-            check_content.each(function () {  
-                database_ids.push(this.value);  
-            });
-
-            return database_ids;
+        // 改变 checkbox 状态, 和当前状态相反
+        function reverse_check_box_status(obj) {
+            if($(obj).is(":checked")) { // 如果选中还原成未选中
+                $(obj).removeAttr("checked");
+            } else { // 如果未选中还原成选中
+                $(obj).prop("checked", true);
+            }
         }
 
+        // 在父窗口添加一条记录
+        function add_database_to_parent_layer(mysql_business_detail_id) {
+            // 获得父元素的 html id
+            parent_ele_id = "business_database_" + mysql_business_detail_id;
+            // 获得父元素业务数据库个数
+            business_database_length = $(".business_database", window.parent.document).length;
+
+            // 获得表格花纹显示的 class 属性
+            new_business_database_length = business_database_length + 1;
+            speckle_class = "";
+            if(new_business_database_length % 2 == 0) {
+                speckle_class = "footable-odd";
+            } else {
+                speckle_class = "footable-even";
+            }
+
+            // 获得 需要添加的元素信息
+            business_detail_info = get_mysql_business_detail(mysql_business_detail_id);
+            // 获得 需要添加到父页面的HTML
+            if(business_detail_info != false) {
+                business_detail_info_row_html = get_mysql_business_detail(business_detail_info);
+            }
+        }
+
+        // 在父窗口删除一条记录
+        function delete_database_to_parent_layer(mysql_business_detail_id) {
+            // 获得父元素的 html id
+            parent_ele_id = "business_database_" + mysql_business_detail_id;
+            $("#" + parent_ele_id, window.parent.document).remove();
+        }
+
+
+        // 获得 需要添加的元素信息
+        function get_mysql_business_detail(mysql_business_detail_id) {
+            $.ajax({
+                url: "{% url 'dbmp_mysql_business_detail_ajax_get_detail_by_id' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    mysql_business_detail_id: mysql_business_detail_id,
+                }
+            }).done(function(data) {
+                if (data == false){
+                    toastr.waring("获取数据失败，导致数据无法添加到父页面。请刷新父页面!");
+                } else { // 修改成功会返回一个 ID 
+                    toastr.success("数据库-" + database_name + "(" + update_message + ")成功");
+                }
+
+                return data;
+            }).error(function(data) {
+                toastr.waring("请求数据失败，导致数据无法添加到父页面。请刷新父页面!");
+            });
+
+        }
+
+        // 获得 需要添加到父页面的HTML
+        get_mysql_business_detail(business_detail_info) {
+
+            return '';
+        }
     </script>
 {% endblock %}
