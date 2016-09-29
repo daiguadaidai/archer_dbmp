@@ -15,7 +15,7 @@ class SQLDbmpMysqlBusinessDetail(object):
                 dmb.name AS business_name,
                 dmb.remark AS business_remark,
                 dmd.name AS database_name,
-                dmi.host AS instance_host,
+                INET_NTOA(dmi.host) AS instance_host,
                 dmi.port AS instance_port,
                 dmi.remark AS instance_remark
             FROM dbmp_mysql_business AS dmb
@@ -36,7 +36,7 @@ class SQLDbmpMysqlBusinessDetail(object):
     def get_business_detail_by_id(self, mysql_business_detail_id):
         """通过mysql_business_detail_id(主键) 获得MysqlBusinessDetail数据"""
         
-        if not mysql_business_id:
+        if not mysql_business_detail_id:
             return None
 
         sql = """
@@ -45,7 +45,7 @@ class SQLDbmpMysqlBusinessDetail(object):
                 dmb.name AS business_name,
                 dmb.remark AS business_remark,
                 dmd.name AS database_name,
-                dmi.host AS instance_host,
+                INET_NTOA(dmi.host) AS instance_host,
                 dmi.port AS instance_port,
                 dmi.remark AS instance_remark
             FROM dbmp_mysql_business AS dmb
@@ -61,6 +61,7 @@ class SQLDbmpMysqlBusinessDetail(object):
         cursor = connection.cursor()
         cursor.execute(sql)
         results = self._dict_fetchone(cursor)
+        return results
 
     def _dict_fetchone(self, cursor):
         "转化所有的行为dict"
@@ -72,5 +73,5 @@ class SQLDbmpMysqlBusinessDetail(object):
         columns = [col[0] for col in cursor.description]
         return [
             dict(zip(columns, row))
-            for row in cursor.fetchone()
+            for row in cursor.fetchall()
         ]

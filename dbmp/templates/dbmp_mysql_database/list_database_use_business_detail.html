@@ -171,11 +171,8 @@
             }
 
             // 获得 需要添加的元素信息
-            business_detail_info = get_mysql_business_detail(mysql_business_detail_id);
-            // 获得 需要添加到父页面的HTML
-            if(business_detail_info != false) {
-                business_detail_info_row_html = get_mysql_business_detail(business_detail_info);
-            }
+            add_mysql_business_detail_to_parent_layer(mysql_business_detail_id,
+                                                      speckle_class);
         }
 
         // 在父窗口删除一条记录
@@ -187,7 +184,7 @@
 
 
         // 获得 需要添加的元素信息
-        function get_mysql_business_detail(mysql_business_detail_id) {
+        function add_mysql_business_detail_to_parent_layer(mysql_business_detail_id, speckle_class) {
             $.ajax({
                 url: "{% url 'dbmp_mysql_business_detail_ajax_get_detail_by_id' %}",
                 type: "POST",
@@ -196,23 +193,40 @@
                     mysql_business_detail_id: mysql_business_detail_id,
                 }
             }).done(function(data) {
-                if (data == false){
-                    toastr.waring("获取数据失败，导致数据无法添加到父页面。请刷新父页面!");
-                } else { // 修改成功会返回一个 ID 
-                    toastr.success("数据库-" + database_name + "(" + update_message + ")成功");
+                if (data == null){
+                    toastr.warning("获取数据失败，导致数据无法添加到父页面。请刷新父页面!");
+                } else {
+                    business_detail_info_row_html = get_mysql_business_detail_html(data, speckle_class);
+                    console.log(business_detail_info_row_html);
+                    // 添加一行数据html到父窗口
+                    $("#business_database_body", window.parent.document).append(business_detail_info_row_html);
                 }
-
-                return data;
             }).error(function(data) {
-                toastr.waring("请求数据失败，导致数据无法添加到父页面。请刷新父页面!");
+                toastr.warning("请求数据失败，导致数据无法添加到父页面。请刷新父页面!");
             });
 
         }
 
         // 获得 需要添加到父页面的HTML
-        get_mysql_business_detail(business_detail_info) {
-
-            return '';
+        function get_mysql_business_detail_html(business_detail_info, speckle_class) {
+            html_str = '';
+            html_str += '<tr id="business_database_' + business_detail_info.mysql_business_detail_id + '" class="business_database ' + speckle_class + '"'
+            html_str += 'style="display: table-row;">';
+            html_str += '    <td id="database_name_' + business_detail_info.mysql_business_detail_id + '" class="text-center">' + business_detail_info.database_name + '</td>';
+            html_str += '    <td id="business_name_' + business_detail_info.mysql_business_detail_id + '" class="text-center">' + business_detail_info.business_name + '</td>';
+            html_str += '    <td id="instance_host_' + business_detail_info.mysql_business_detail_id + '" class="text-center">' + business_detail_info.instance_host + '</td>';
+            html_str += '    <td id="instance_port_' + business_detail_info.mysql_business_detail_id + '" class="text-center">' + business_detail_info.instance_port + '</td>';
+            html_str += '    <td id="instance_remark_' + business_detail_info.mysql_business_detail_id + '" class="text-center">' + business_detail_info.instance_remark + '</td>';
+            html_str += '    <td id="business_remark_' + business_detail_info.mysql_business_detail_id + '" class="text-center">' + business_detail_info.business_remark + '</td>';
+            html_str += '    <td class="text-center">';
+            html_str += '        <a onclick="dbmp_mysql_business_detail_delete(' + business_detail_info.mysql_business_detail_id + ')"';
+            html_str += '           type="button" class="btn btn-danger btn-xs">';
+            html_str += '            <i class="fa fa-trash"></i>';
+            html_str += '            删除';
+            html_str += '        </a>';
+            html_str += '    </td>';
+            html_str += '</tr>';
+            return html_str;
         }
     </script>
 {% endblock %}

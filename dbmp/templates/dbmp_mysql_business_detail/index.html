@@ -1,7 +1,6 @@
 {%extends 'dbmp_base.html' %}
 
 {% load staticfiles %}
-{% load ip_filters %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
@@ -31,30 +30,28 @@
 <table class="footable table table-stripped toggle-arrow-tiny table-hover" data-page-size="100">
     <thead>
         <tr>
-            <th class="text-center">#</th>
+            <th class="text-center">数据库名</th>
             <th class="text-center">组名称</th>
             <th class="text-center">实例IP</th>
             <th class="text-center">实例PORT</th>
             <th class="text-center">实例备注</th>
-            <th class="text-center">数据库名</th>
             <th class="text-center">备注</th>
             <th class="text-center col-xs-2">操作</th>
         </tr>
     </thead>
 
-    <tbody>
+    <tbody id="business_database_body">
         {% for mysql_business_detail in business_detail_index %}
         <tr id="business_database_{{ mysql_business_detail.mysql_business_detail_id }}" class="business_database">
-            <td class="text-center">{{ forloop.counter }}</td>
-            <td class="text-center">{{ mysql_business_detail.business_name }}</td>
-            <td class="text-center">{{ mysql_business_detail.instance_host | f_num2ip }}</td>
-            <td class="text-center">{{ mysql_business_detail.instance_port }}</td>
-            <td class="text-center">{{ mysql_business_detail.instance_remark }}</td>
-            <td class="text-center">{{ mysql_business_detail.database_name }}</td>
-            <td class="text-center">{{ mysql_business_detail.business_remark }}</td>
+            <td id="database_name_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.database_name }}</td>
+            <td id="business_name_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.business_name }}</td>
+            <td id="instance_host_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.instance_host }}</td>
+            <td id="instance_port_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.instance_port }}</td>
+            <td id="instance_remark_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.instance_remark }}</td>
+            <td id="business_remark_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.business_remark }}</td>
             <td class="text-center">
-                <a onclick="dbmp_mysql_business_detail_delete({{ mysql_business_detail.mysql_business_detail_id }}, {{ pagination.cur_page }})"
-                   type="button" class="btn btn-danger">
+                <a onclick="dbmp_mysql_business_detail_delete({{ mysql_business_detail.mysql_business_detail_id }})"
+                   type="button" class="btn btn-danger btn-xs">
                     <i class="fa fa-trash"></i>
                     删除
                 </a>
@@ -99,11 +96,16 @@
         }
 
         //删除 dbmp_mysql_business
-        function dbmp_mysql_business_detail_delete(mysql_business_detail_id, cur_page) {
+        function dbmp_mysql_business_detail_delete(mysql_business_detail_id) {
+            // 拼凑要删除的业务数据库信息
+            instance_host = $("#instance_host_" + mysql_business_detail_id).html();
+            instance_port = $("#instance_port_" + mysql_business_detail_id).html();
+            database_name = $("#database_name_" + mysql_business_detail_id).html();
+            text = instance_host + ":" + instance_port + "@" + database_name;
             $(".confirm").unbind("click");
             swal({
-                title: "您确定要删除这条信息吗?",
-                text: "删除后将无法恢复，请谨慎操作！",
+                title: "您确定要从此业务组中移除么?",
+                text: text,
                 type: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#DD6B55",
@@ -119,15 +121,14 @@
                     }
                 }).done(function(data) { 
                     if(data == true) {
-                        swal("删除成功!", "已成功删除数据！", "success");
-                        $(".confirm").click(function(){
-                            setTimeout("location.reload()", 500);
-                        });
+                        swal("移除成功!", "已成功移除数据库！", "success");
+                        // 删除行
+                        $("#business_database_" + mysql_business_detail_id).remove();
                     } else {
-                        swal("对不起!", "删除数据失败了!", "error");
+                        swal("对不起!", "移除数据库败了!", "error");
                     }
                 }).error(function(data) { 
-                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
+                    swal("对不起!", "移除操作失败了(调用调用方法失败)!", "error");
                 });
             });
         }

@@ -50,17 +50,17 @@
             <td class="text-center">{{ dbmp_mysql_business.update_time | date:"Y-m-d H:i:s" }}</td>
             <td class="text-center">
                 <a onclick="dbmp_mysql_business_delete({{ dbmp_mysql_business.mysql_business_id }}, {{ pagination.cur_page }})"
-                   type="button" class="btn btn-danger">
+                   type="button" class="btn btn-danger btn-xs">
                     <i class="fa fa-trash"></i>
                     删除
                 </a>
                 <a href="{% url 'dbmp_mysql_business_edit' %}?mysql_business_id={{ dbmp_mysql_business.mysql_business_id }}" 
-                   type="button" class="btn btn-primary">
+                   type="button" class="btn btn-primary btn-xs">
                     <i class="fa fa-edit"></i>
                     编辑
                 </a>
                 <a href="{% url 'dbmp_mysql_business_view' %}?mysql_business_id={{ dbmp_mysql_business.mysql_business_id }}" 
-                   type="button" class="btn btn-info">
+                   type="button" class="btn btn-info btn-xs">
                     <i class="fa fa-eye"></i>
                     查看
                 </a>

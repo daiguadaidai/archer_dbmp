@@ -38,17 +38,12 @@ def index(request):
         params['business_detail_index'] = business_detail_index
         return render(request, 'dbmp_mysql_business_detail/index.html', params)
 
-@DecoratorTool.get_request_alert_message
-def add(request):
-    params = {}
-    return render(request, 'dbmp_mysql_business_detail/add.html', params)
-
 def ajax_get_detail_by_id(request):
     """获得业务数据库详细信息通过 mysql_business_detail_id"""
 
     mysql_business_detail = None
     if request.method == 'POST':
-        mysql_business_id = int(request.POST.get('mysql_business_detail_id', '0'))
+        mysql_business_detail_id = int(request.POST.get('mysql_business_detail_id', '0'))
         sql_business_detail_handler = SQLDbmpMysqlBusinessDetail()
         # 通过 mysql_business_detail_id 获得详细数据
         mysql_business_detail = sql_business_detail_handler.get_business_detail_by_id(
@@ -57,8 +52,21 @@ def ajax_get_detail_by_id(request):
     return HttpResponse(respons_data, content_type='application/json')
 
 def ajax_delete(request):
+    """ajax 的方式删除业务数据库实例"""
 
     is_delete = False
+    if request.method == 'POST':
+        mysql_business_detail_id = int(request.POST.get('mysql_business_detail_id', '0'))  
+        if mysql_business_detail_id:
+            try:
+                with transaction.atomic():
+                    DbmpMysqlBusinessDetail.objects.filter(
+                           mysql_business_detail_id = mysql_business_detail_id).delete()
+                    logger.info('delete DbmpMysqlBusinessDetail')
+
+                is_delete = True
+            except Exception, e:
+                logger.error(traceback.format_exc())
 
     respons_data = json.dumps(is_delete)
     return HttpResponse(respons_data, content_type='application/json')
