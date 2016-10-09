@@ -19,6 +19,8 @@ from dbmp.views import v_dbmp_mysql_backup_instance as dbmp_mysql_backup_instanc
 from dbmp.views import v_dbmp_mysql_database as dbmp_mysql_database
 from dbmp.views import v_dbmp_mysql_business as dbmp_mysql_business
 from dbmp.views import v_dbmp_mysql_business_detail as dbmp_mysql_business_detail
+from dbmp.views import v_dbmp_inception_instance as dbmp_inception_instance
+from dbmp.views import v_dbmp_inception_record as dbmp_inception_record
 
 urlpatterns = [
     # dbmp_mysql_instance
@@ -36,6 +38,7 @@ urlpatterns = [
     url(r'^dbmp_mysql_instance/restart_instance_terminal/$', dbmp_mysql_instance.restart_instance_terminal, name='dbmp_mysql_instance_restart_instance_terminal'),
     url(r'^dbmp_mysql_instance/terminal_sql_console/$', dbmp_mysql_instance.terminal_sql_console, name='dbmp_mysql_instance_terminal_sql_console'),
     url(r'^dbmp_mysql_instance/list_instance_use_business_detail/$', dbmp_mysql_instance.list_instance_use_business_detail, name='list_instance_use_business_detail'),
+    url(r'^dbmp_mysql_instance/list_instance_use_inception_record_check/$', dbmp_mysql_instance.list_instance_use_inception_record_check, name='list_instance_use_inception_record_check'),
 
     # dbmp_mysql_handler
     url(r'^dbmp_mysql_handler/ajax_mysql_is_alived/$', dbmp_mysql_handler.ajax_mysql_is_alived, name='dbmp_mysql_handler_ajax_mysql_is_alived'),
@@ -53,6 +56,7 @@ urlpatterns = [
 
     # dbmp_mysql_database
     url(r'^dbmp_mysql_database/list_database_use_business_detail/$', dbmp_mysql_database.list_database_use_business_detail, name='list_database_use_business_detail'),
+    url(r'^dbmp_mysql_database/list_database_use_inception_record_check/$', dbmp_mysql_database.list_database_use_inception_record_check, name='list_database_use_inception_record_check'),
     url(r'^dbmp_mysql_database/ajax_sync_database/$', dbmp_mysql_database.ajax_sync_database, name='dbmp_mysql_database_ajax_sync_database'),
     url(r'^dbmp_mysql_database/ajax_search_database/$', dbmp_mysql_database.ajax_search_database, name='dbmp_mysql_database_ajax_search_database'),
 
@@ -70,4 +74,11 @@ urlpatterns = [
     url(r'^dbmp_mysql_business_detail/ajax_update_database/$', dbmp_mysql_business_detail.ajax_update_database, name='dbmp_mysql_business_detail_ajax_update_database'),
     url(r'^dbmp_mysql_business_detail/ajax_has_database/$', dbmp_mysql_business_detail.ajax_has_database, name='dbmp_mysql_business_detail_ajax_has_database'),
     url(r'^dbmp_mysql_business_detail/ajax_get_detail_by_id/$', dbmp_mysql_business_detail.ajax_get_detail_by_id, name='dbmp_mysql_business_detail_ajax_get_detail_by_id'),
+
+    # dbmp_inception_instance
+    url(r'^dbmp_inception_instance/ajax_get_all/$', dbmp_inception_instance.ajax_get_all, name='dbmp_inception_instance_ajax_get_all'),
+
+    # dbmp_inception_record
+    url(r'^dbmp_inception_record/check/$', dbmp_inception_record.check, name='dbmp_inception_record_check'),
+    url(r'^dbmp_inception_record/ajax_check/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_check'),
 ]

@@ -151,6 +151,46 @@ CREATE TABLE `cmdb_os` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `dbmp_inception_instance`
+--
+
+DROP TABLE IF EXISTS `dbmp_inception_instance`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `dbmp_inception_instance` (
+  `inception_instance_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `host` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '链接Inception HOST',
+  `port` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '链接Inception PORT',
+  `alias` varchar(50) NOT NULL DEFAULT '' COMMENT '别名',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`inception_instance_id`),
+  UNIQUE KEY `udx$host_port` (`host`,`port`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Inception实例';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `dbmp_inception_record`
+--
+
+DROP TABLE IF EXISTS `dbmp_inception_record`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `dbmp_inception_record` (
+  `inception_record_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `inception_instance_id` int(10) unsigned NOT NULL COMMENT 'Inception 实例ID',
+  `is_remote_backup` tinyint(4) NOT NULL DEFAULT '0' COMMENT '执行前是否进行备份:0否 1是',
+  `tag` varchar(20) NOT NULL DEFAULT '' COMMENT '用于标记该审核语句的特点',
+  `remark` varchar(200) NOT NULL DEFAULT '' COMMENT '该语句的备注说明',
+  `sql_text` text COMMENT '审核是SQL语句',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`inception_record_id`),
+  KEY `idx$inception_instance_id` (`inception_instance_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='需要审核的记录';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `dbmp_mysql_backup_info`
 --
 
@@ -209,7 +249,7 @@ CREATE TABLE `dbmp_mysql_backup_instance` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_backup_instance_id`),
   UNIQUE KEY `udx$mysql_instance_id` (`mysql_instance_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='MySQL需要备份的实例信息';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='MySQL需要备份的实例信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -231,7 +271,7 @@ CREATE TABLE `dbmp_mysql_backup_remote` (
   UNIQUE KEY `udx$mysql_instance_id` (`mysql_instance_id`),
   UNIQUE KEY `udx$mysql_backup_instance_id` (`mysql_backup_instance_id`),
   KEY `idx$os_id` (`os_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='备份传输到远程机器';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='备份传输到远程机器';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -249,7 +289,7 @@ CREATE TABLE `dbmp_mysql_business` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_business_id`),
   UNIQUE KEY `udx$name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='MySQL业务库，主要记录表结构相同的数据库';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COMMENT='MySQL业务库，主要记录表结构相同的数据库';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -266,9 +306,8 @@ CREATE TABLE `dbmp_mysql_business_detail` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_business_detail_id`),
-  KEY `idx$mysql_business_id` (`mysql_business_id`),
-  KEY `idx$mysql_database_id` (`mysql_database_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='记录着业务相关表结构相同的数据库';
+  UNIQUE KEY `udx$mysql_business_database_id` (`mysql_business_id`,`mysql_database_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8 COMMENT='记录着业务相关表结构相同的数据库';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -286,7 +325,7 @@ CREATE TABLE `dbmp_mysql_database` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_database_id`),
   UNIQUE KEY `udx$mysql_instance_id_name` (`mysql_instance_id`,`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8 COMMENT='MySQL实例数据库';
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8 COMMENT='MySQL实例数据库';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -348,7 +387,7 @@ CREATE TABLE `dbmp_mysql_instance` (
   PRIMARY KEY (`mysql_instance_id`),
   UNIQUE KEY `udx$os_id_port` (`os_id`,`port`),
   KEY `idx$os_id` (`os_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=297 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
+) ENGINE=InnoDB AUTO_INCREMENT=298 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -368,7 +407,7 @@ CREATE TABLE `dbmp_mysql_instance_info` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_instance_info_id`),
   UNIQUE KEY `udx$mysql_instance_id` (`mysql_instance_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COMMENT='MySQL实例信息';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -452,4 +491,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-09-21 11:15:01
+-- Dump completed on 2016-10-08 11:01:44

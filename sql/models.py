@@ -94,6 +94,35 @@ class CmdbOs(models.Model):
         db_table = 'cmdb_os'
 
 
+class DbmpInceptionInstance(models.Model):
+    inception_instance_id = models.AutoField(primary_key=True)
+    host = models.IntegerField()
+    port = models.IntegerField()
+    alias = models.CharField(max_length=50)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_instance'
+        unique_together = (('host', 'port'),)
+
+
+class DbmpInceptionRecord(models.Model):
+    inception_record_id = models.AutoField(primary_key=True)
+    inception_instance_id = models.IntegerField()
+    is_remote_backup = models.IntegerField()
+    tag = models.CharField(max_length=20)
+    remark = models.CharField(max_length=200)
+    sql_text = models.TextField(blank=True, null=True)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_record'
+
+
 class DbmpMysqlBackupInfo(models.Model):
     mysql_backup_info_id = models.AutoField(primary_key=True)
     mysql_instance_id = models.IntegerField()
@@ -180,6 +209,7 @@ class DbmpMysqlBusinessDetail(models.Model):
     class Meta:
         managed = False
         db_table = 'dbmp_mysql_business_detail'
+        unique_together = (('mysql_business_id', 'mysql_database_id'),)
 
 
 class DbmpMysqlDatabase(models.Model):

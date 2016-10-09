@@ -53,6 +53,49 @@ def list_database_use_business_detail(request):
 
     return render(request, 'dbmp_mysql_database/list_database_use_business_detail.html', params)
     
+@DecoratorTool.get_request_alert_message
+def list_database_use_inception_record_check(request):
+    """展现实例数据库列表"""
+    params = {}
+
+    try:
+        mysql_instance_id = int(request.GET.get('mysql_instance_id', '0'))
+    except ValueError:
+        mysql_instance_id = 0
+
+    params['mysql_instance_id'] = mysql_instance_id
+
+    print params
+
+    try:
+        # 获取实例
+        dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
+                                               'mysql_instance_id',
+                                               'username',
+                                               'host',
+                                               'port').get(
+                            mysql_instance_id = mysql_instance_id)
+        params['dbmp_mysql_instance'] = dbmp_mysql_instance
+        # 获取数据库
+        dbmp_mysql_databases = DbmpMysqlDatabase.objects.values(
+                                               'mysql_database_id',
+                                               'name',
+                                               'update_time').filter(
+                            mysql_instance_id = mysql_instance_id)
+        params['dbmp_mysql_databases'] = dbmp_mysql_databases
+    except DbmpMysqlInstance.DoesNotExist:
+        logger.info(traceback.format_exc())
+        # 返回点击编辑页面
+        request.session['danger_msg'].append('对不起! 找不到指定的MySQL实例')
+        return HttpResponseRedirect(request.environ['HTTP_REFERER'])
+    except: # 没有获取到实例信息则转跳列表页面
+        logger.info(traceback.format_exc())
+        logger.info('获取DbmpMysqlDatabase失败')
+        request.session['alert_message_now']['danger_msg'].append(
+                                                '没有找到相关数据库，请同步完成再选择')
+        return HttpResponseRedirect(request.environ['HTTP_REFERER'])
+
+    return render(request, 'dbmp_mysql_database/list_database_use_inception_record_check.html', params)
 
 def ajax_sync_database(request):
     """ajax 同步更新当前实例最新数据库列表
