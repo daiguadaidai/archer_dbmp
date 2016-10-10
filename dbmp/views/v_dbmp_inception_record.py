@@ -34,77 +34,94 @@ def check(request):
 
     return render(request, 'dbmp_inception_record/check.html', params)
 
+@DecoratorTool.get_request_alert_message
+def add(request):
+    """添加需要审核的SQL记录"""
+    params = {}
+
+    ####################################################################
+    # GET 请求
+    ####################################################################
+    if request.method == 'GET':
+        check_iframe_name = request.GET.get('check_iframe_name', '')
+        params['check_iframe_name'] = check_iframe_name
+        return render(request, 'dbmp_inception_record/add.html', params)
+
 def ajax_check(request):
     """对SQL进行审核"""
     params = {}
     params['is_ok'] = False
-    # if request.method == 'POST':
-    try:    
-        mysql_database_id = int(request.POST.get('mysql_database_id', '0'))
-        inception_instance_id = int(request.POST.get('inception_instance_id', '0'))
-        sql_text = request.POST.get('sql_text', '')
-        charset = request.POST.get('charset', 'utf8mb4')
-        
-        # 如果获取的数据有问题直接返回失败
-        if not mysql_database_id or not inception_instance_id or not sql_text:
-            logger.error('SQL审核传入参数不全')
-            respons_data = json.dumps(params)
-            return HttpResponse(respons_data, content_type='application/json')
+    if request.method == 'POST':
+        try:    
+            mysql_database_id = int(request.POST.get('mysql_database_id', '0'))
+            inception_instance_id = int(request.POST.get('inception_instance_id', '0'))
+            sql_text = request.POST.get('sql_text', '')
+            charset = request.POST.get('charset', 'utf8mb4')
+            
+            # 如果获取的数据有问题直接返回失败
+            if not mysql_database_id or not inception_instance_id or not sql_text:
+                logger.error('SQL审核传入参数不全')
+                respons_data = json.dumps(params)
+                return HttpResponse(respons_data, content_type='application/json')
 
-        try:
-            # 获取数据库信息
-            dbmp_mysql_database = DbmpMysqlDatabase.objects.values(
-                                           'mysql_database_id',
-                                           'mysql_instance_id',
-                                           'name').get(
-                                      mysql_database_id = mysql_database_id)
-        except DbmpMysqlDatabase.DoesNotExist:
+            try:
+                # 获取数据库信息
+                dbmp_mysql_database = DbmpMysqlDatabase.objects.values(
+                                               'mysql_database_id',
+                                               'mysql_instance_id',
+                                               'name').get(
+                                          mysql_database_id = mysql_database_id)
+            except DbmpMysqlDatabase.DoesNotExist:
+                logger.error(traceback.format_exc())
+                logger.error('对不起! 找不到相关数据库')
+                params['inception_info'] =  '对不起! 找不到相关数据库'
+                respons_data = json.dumps(params)
+                return HttpResponse(respons_data, content_type='application/json')
+
+            try:
+                # 数据库实例信息
+                dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
+                                               'username',
+                                               'password',
+                                               'host',
+                                               'port').get(
+                                      mysql_instance_id = dbmp_mysql_database.get('mysql_instance_id', 0))
+            except DbmpMysqlInstance.DoesNotExist:
+                logger.error(traceback.format_exc())
+                logger.error('对不起! 找不到相关实例信息')
+                params['inception_info'] =  '对不起! 找不到相关实例信息'
+                respons_data = json.dumps(params)
+                return HttpResponse(respons_data, content_type='application/json')
+
+            try:
+                # Inception实例信息
+                dbmp_inception_instance = DbmpInceptionInstance.objects.values(
+                                               'host',
+                                               'port').get(
+                                     inception_instance_id = inception_instance_id)
+            except DbmpInceptionInstance.DoesNotExist:
+                logger.error(traceback.format_exc())
+                logger.error('对不起! 找不到相关Inception实例')
+                params['inception_info'] =  '对不起! 找不到相关Inception实例'
+                respons_data = json.dumps(params)
+                return HttpResponse(respons_data, content_type='application/json')
+
+            # 对SQL进行审核
+            is_ok, inception_info = InceptionTool.inception_check_only(
+                                        inception_host = IpTool.num2ip(dbmp_inception_instance.get('host', 0)),
+                                        inception_port = dbmp_inception_instance.get('port', 0),
+                                        mysql_user = dbmp_mysql_instance.get('username', ''),
+                                        mysql_password = dbmp_mysql_instance.get('password', ''),
+                                        mysql_host = IpTool.num2ip(dbmp_mysql_instance.get('host', 0)),
+                                        mysql_port = dbmp_mysql_instance.get('port', 0),
+                                        db_name = dbmp_mysql_database.get('name', ''),
+                                        sql_text = sql_text,
+                                        charset = charset)
+
+            params['is_ok'] = is_ok
+            params['inception_info'] = inception_info
+        except:
             logger.error(traceback.format_exc())
-            logger.error('对不起! 找不到相关数据库')
-            respons_data = json.dumps(params)
-            return HttpResponse(respons_data, content_type='application/json')
-
-        try:
-            # 数据库实例信息
-            dbmp_mysql_instance = DbmpMysqlInstance.objects.values(
-                                           'username',
-                                           'password',
-                                           'host',
-                                           'port').get(
-                                  mysql_instance_id = dbmp_mysql_database.get('mysql_instance_id', 0))
-        except DbmpMysqlInstance.DoesNotExist:
-            logger.error(traceback.format_exc())
-            logger.error('对不起! 找不到相关实例信息')
-            respons_data = json.dumps(params)
-            return HttpResponse(respons_data, content_type='application/json')
-
-        try:
-            # Inception实例信息
-            dbmp_inception_instance = DbmpInceptionInstance.objects.values(
-                                           'host',
-                                           'port').get(
-                                 inception_instance_id = inception_instance_id)
-        except DbmpInceptionInstance.DoesNotExist:
-            logger.error(traceback.format_exc())
-            logger.error('对不起! 找不到相关Inception实例')
-            respons_data = json.dumps(params)
-            return HttpResponse(respons_data, content_type='application/json')
-
-        is_ok, inception_info = InceptionTool.inception_check_only(
-                                    inception_host = IpTool.num2ip(dbmp_inception_instance.get('host', 0)),
-                                    inception_port = dbmp_inception_instance.get('port', 0),
-                                    mysql_user = dbmp_mysql_instance.get('username', ''),
-                                    mysql_password = dbmp_mysql_instance.get('password', ''),
-                                    mysql_host = IpTool.num2ip(dbmp_mysql_instance.get('host', 0)),
-                                    mysql_port = dbmp_mysql_instance.get('port', 0),
-                                    db_name = dbmp_mysql_database.get('name', ''),
-                                    sql_text = sql_text,
-                                    charset = charset)
-        print is_ok, inception_info
-        params['is_ok'] = is_ok
-        params['inception_info'] = inception_info
-    except:
-        logger.error(traceback.format_exc())
      
 
     respons_data = json.dumps(params)

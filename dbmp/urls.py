@@ -80,5 +80,6 @@ urlpatterns = [
 
     # dbmp_inception_record
     url(r'^dbmp_inception_record/check/$', dbmp_inception_record.check, name='dbmp_inception_record_check'),
+    url(r'^dbmp_inception_record/add/$', dbmp_inception_record.add, name='dbmp_inception_record_add'),
     url(r'^dbmp_inception_record/ajax_check/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_check'),
 ]

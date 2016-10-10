@@ -4,32 +4,20 @@
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
-    <link href="{% static 'css/plugins/bootstrapvalidator/bootstrapValidator.min.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block app_title %}业务组添加{% endblock %}
+{% block app_title %}上线SQL(添加){% endblock %}
 
 <!-- 其他元素模块 -->
 {% block top_element %}
 <div class="row">
     <div class="col-md-5">
         <div class="row fontawesome-icon-list">
-            <!-- 添加返回首页按钮 -->
-            <div class="fa-hover col-md-4">
-                <a href="{{ request.environ.HTTP_REFERER }}">
-                    <i class="fa fa-reply"></i>
-                    返回
-                </a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-5">
-        <div class="row fontawesome-icon-list">
-            <!-- 添加返回MySQL实例列表按钮 -->
-            <div class="fa-hover  col-md-4">
+            <!-- 添加返回需要上线列表 -->
+            <div class="fa-hover  col-md-5">
                 <a href="{% url 'dbmp_mysql_business_index' %}">
                     <i class="fa fa-list"></i>
-                    业务组列表
+                    上线SQL列表
                 </a>
             </div>
         </div>
@@ -41,53 +29,147 @@
 <!-- 显示该页面主要展示的内容 -->
 {% block content %}
 <!-- 业务组信息 -->
-<section id="mysql_instance">
-    <h2 class="page-header">业务组信息</h2>
+<section id="inception_info">
+    <h2 class="page-header">上线SQL信息</h2>
 
-    <form method="post" action="{% url 'dbmp_mysql_business_add' %}" class="form-horizontal m-t" id="default_form">
+    <form method="post" action="{% url 'dbmp_inception_record_add' %}" class="form-horizontal m-t" id="default_form">
         {% csrf_token %}
+        <input id="inception_instance_id" name="inception_instance_id" type="hidden">
+        <input id="sql_text" name="sql_text" type="hidden">
+        <input id="charset" name="charset" type="hidden">
         <div class="form-group">
             <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                业务组名称：
+                Inception实例：
             </label>
-            <div class="col-sm-8">
-                <input id="cname" name="name" 
-                       type="text" class="form-control" maxlength="50"
-                       value="{% if form.name.value %}{{ form.name.value }}{% endif %}">
+            <div id="inception_instance_name_div" class="col-sm-8">
             </div>
         </div>
         <div class="form-group">
             <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                备注：
+                执行的SQL：
             </label>
             <div class="col-sm-8">
-                <textarea id="cremark" name="remark" type="text" class="form-control">{% if form.remark.value %}{{ form.remark.value }}{% endif %}</textarea>
+                <pre id="sql_text_pre"></pre>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                字符集：
+            </label>
+            <div id="charset_div" class="col-sm-8">
             </div>
         </div>
         <div class="form-group">
             <div class="col-sm-4 col-sm-offset-3">
-                <a href="{{ request.environ.HTTP_REFERER }}" 
-                   type="button" class="btn btn-default">
-                    <i class="fa fa-times"></i>
-                    取消
-                </a>
-                <button type="submit" class="btn btn-primary">
+                <button id="test_mysql_alived" type="button" class="btn btn-primary">
                     <i class="fa fa-save"></i>
-                    保存
+                    添加上线
                 </button>
             </div>
         </div>
     </form>
 <section>
+
+{% endblock %}
+
+<!-- 扩展元素模块 -->
+{% block extend_element %}
+<div class="row">
+    <div class="col-sm-6 col-xs-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>添加需要上线的(数据库)</h5>
+                <div class="ibox-tools">
+                    <a class="collapse-link">
+                        <i class="fa fa-chevron-up"></i>
+                    </a>
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="table_basic.html#">选项1</a>
+                        </li>
+                        <li><a href="table_basic.html#">选项2</a>
+                        </li>
+                    </ul>
+                    <a class="close-link">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="ibox-content">
+
+                <div>
+                    <button id="test_mysql_alived" type="button" class="btn btn-xs btn-primary btn-outline">
+                        <i class="fa fa-plus-square"></i>
+                        添加数据库
+                    </button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>数据库名</th>
+                            <th>实例Host</th>
+                            <th>端口</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xs-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>添加需要上线的(业务组)</h5>
+                <div class="ibox-tools">
+                    <a class="collapse-link">
+                        <i class="fa fa-chevron-up"></i>
+                    </a>
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="table_basic.html#">选项1</a>
+                        </li>
+                        <li><a href="table_basic.html#">选项2</a>
+                        </li>
+                    </ul>
+                    <a class="close-link">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="ibox-content">
+                <div>
+                    <button id="test_mysql_alived" type="button" class="btn btn-xs btn-primary btn-outline">
+                        <i class="fa fa-plus-square"></i>
+                        添加业务组
+                    </button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>业务名称</th>
+                            <th>备注</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 <!-- 添加该页面自己需要的 js 模板 -->
 {% block js %}
     <script src="{% static 'js/content.min.js' %}"></script>
-    <script src="{% static 'js/plugins/bootstrapvalidator/bootstrapValidator.min.js' %}"></script>
-    <script src="{% static 'js/plugins/bootstrapvalidator/language/zh_CN.js' %}"></script>
     <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
 
     <script>
@@ -95,44 +177,30 @@
         $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
 
         $(document).ready(function(){
-            // 表单验证
-            $('#default_form').bootstrapValidator({
-                message: 'This value is not valid',
-                feedbackIcons: {
-                    valid: 'glyphicon glyphicon-ok',
-                    invalid: 'glyphicon glyphicon-remove',
-                    validating: 'glyphicon glyphicon-refresh'
-                },
-                fields: {
-                    name: {
-                        message: '用户名验证失败',
-                        validators: {
-                            notEmpty: {
-                                message: '用户名不能为空'
-                            },
-                            stringLength: {
-                                min: 1,
-                                max: 50,
-                                message: '用户名长度必须在1到50位之间'
-                            }
-                        }
-                    },
-                    remark: {
-                        message: '备注验证失败',
-                        validators: {
-                            notEmpty: {
-                                message: '备注不能为空, 主要是为了减少今后误操作'
-                            },
-                            stringLength: {
-                                max: 200,
-                                message: '备注长度必须在0到200位之间'
-                            }
-                        }
-                    }
-                }
-            }); //结束表单验证
-
+            // 从父页面获取 sql_text, inception_instance_id, charset
+            show_inception_info();
         });
         
+        // 从父页面获取 sql_text, inception_instance_id, charset
+        function show_inception_info() {
+            check_iframe = $("iframe[name={{ check_iframe_name }}]", parent.document);
+            check_iframe_content = check_iframe.contents();
+
+            // 获取审核信息
+            inception_instance_id = $("#fact_inception_instance_id", check_iframe_content).val();
+            inception_instance_name = $("#fact_inception_instance_name", check_iframe_content).val();
+            sql_text = $("#fact_sql_text", check_iframe_content).val();
+            charset = $("#fact_charset", check_iframe_content).val();
+
+            // 显示审核信息
+            $("#inception_instance_name_div").html("<code>" + inception_instance_name + "</code>");
+            $("#sql_text_pre").html("<code>" + sql_text + "</code>");
+            $("#charset_div").html("<code>" + charset + "</code>");
+
+            // 设置审核信息值
+            $("#inception_instance_id").val(inception_instance_id);
+            $("#sql_text").val(sql_text);
+            $("#charset").val(charset);
+        }
     </script>
 {% endblock %}
