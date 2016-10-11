@@ -1,0 +1,168 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+
+<!-- 显示该页面标题 -->
+{% block app_title %}业务组列表{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<table class="footable table table-stripped toggle-arrow-tiny table-hover">
+    <thead>
+        <tr>
+            <th class="text-center">选择</th>
+            <th class="text-center">组名称</th>
+            <th class="text-center">备注</th>
+            <th class="text-center">创建时间</th>
+            <th class="text-center">更新时间</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for dbmp_mysql_business in pagination.objs %}
+        <tr>
+            <input type="hidden" id="business_name_{{ dbmp_mysql_business.mysql_business_id }}"
+                   value="{{ dbmp_mysql_business.name }}" />
+            <input type="hidden" id="business_remark_{{ dbmp_mysql_business.mysql_business_id }}"
+                   value="{{ dbmp_mysql_business.remark }}" />
+            <td class="text-center">
+                <input class="business_box" type="checkbox" id="business_name_{{ dbmp_mysql_business.mysql_business_id }}"
+                       value="{{ dbmp_mysql_business.mysql_business_id }}" />
+            </td>
+            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
+            <td class="text-center">{{ dbmp_mysql_business.remark }}</td>
+            <td class="text-center">{{ dbmp_mysql_business.create_time | date:"Y-m-d H:i:s" }}</td>
+            <td class="text-center">{{ dbmp_mysql_business.update_time | date:"Y-m-d H:i:s" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 这里是分页页码 -->
+<div class="btn-group">
+    <!-- 第一页, 上一页 -->
+    {% if pagination.cur_page != 1 and pagination %}
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page=1">
+            <i class="fa fa-angle-double-left"></i>
+        </a>
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.pre_page }}">
+            <i class="fa fa-angle-left"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 省略号 -->
+    {% if pagination.start_page_omit_symbol %}
+        <a type="button" class="btn btn-write btn-outline">
+            <i class="fa fa-ellipsis-h"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 能点击的页码 -->
+    {% for page_item in pagination.page_items %}
+        {% if page_item == pagination.cur_page %}
+            <a type="button" class="btn btn-primary">{{ page_item }}</a>
+        {% else %}
+            <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ page_item }}">{{ page_item }}</a>
+        {% endif %}
+    {% endfor%}
+    
+    <!-- 省略号 -->
+    {% if pagination.end_page_omit_symbol %}
+        <a type="button" class="btn btn-write btn-outline">
+            <i class="fa fa-ellipsis-h"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 下一页, 最后一页 -->
+    {% if pagination.cur_page != pagination.all_page and pagination %}
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.next_page }}">
+            <i class="fa fa-angle-right"></i>
+        </a>
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.all_page }}">
+            <i class="fa fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 表格插件
+            $(".footable").footable();
+
+            // 注册 checkbox 状态改变事件
+            $(".business_box").change(function() { 
+                business_id = $(this).val();
+                if($(this).is(':checked')) {
+                    add_parent_page_row(business_id);
+                } else {
+                    delete_parent_page_row(business_id);
+                }
+            });
+        });
+
+        // 删除父页面数据库一行
+        function delete_parent_page_row(business_id) {
+            parant_row_id = "business_row_" + business_id; // 拼凑父页面 行ID
+            mysql_business_name = $("#business_name_" + business_id).val(); // 业务组名称名称
+
+            // 判断父元素是否存在
+            if($("#" + parant_row_id, window.parent.document).length > 0) {
+                $("#" + parant_row_id, window.parent.document).remove(); // 删除父页面数据库一行
+                toastr.success("数据库(" + mysql_business_name + ")删除成功!");
+            } else {
+                toastr.warning("数据库(" + mysql_business_name + "), 不需要(删除)!");
+            }
+        }
+
+        // 添加父页面数据库一行
+        function add_parent_page_row(business_id) {
+            parant_row_id = "business_row_" + business_id; // 拼凑父页面 行ID
+            mysql_business_name = $("#business_name_" + business_id).val(); // 业务组名称名称
+            mysql_business_remark = $("#business_name_" + business_id).val(); // 数据库名称
+
+            // 判断父元素是否存在
+            if($("#" + parant_row_id, window.parent.document).length > 0) {
+                toastr.warning("数据库(" + mysql_business_name + ")已经存在, 不需要(添加)!");
+            } else {
+                html_str = '';
+                html_str += '<tr id="' + parant_row_id + '">';
+                html_str += '    <input type="hidden" class="business_id" value="' + business_id + '" />';
+                html_str += '    <td>' + mysql_business_name + '</td>';
+                html_str += '    <td>' + mysql_business_remark + '</td>';
+                html_str += '    <td>';
+                html_str += '        <button type="button" class="btn btn-xs btn-danger btn-block btn-outline"';
+                html_str += '                onclick="row_delete(\'' + parant_row_id + '\')">';
+                html_str += '            <i class="fa fa-trash"></i>';
+                html_str += '            删除';
+                html_str += '        </button>';
+                html_str += '    </td>';
+                html_str += '</tr>';
+
+                $("#business_tbody", window.parent.document).append(html_str);
+                toastr.success("数据库(" + mysql_business_remark + "), (添加)成功!");
+            }
+        }
+
+    </script>
+{% endblock %}

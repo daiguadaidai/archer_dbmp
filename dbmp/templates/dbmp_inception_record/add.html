@@ -4,6 +4,7 @@
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block app_title %}上线SQL(添加){% endblock %}
@@ -61,7 +62,8 @@
         </div>
         <div class="form-group">
             <div class="col-sm-4 col-sm-offset-3">
-                <button id="test_mysql_alived" type="button" class="btn btn-primary">
+                <button id="add_to_inception" type="button" class="btn btn-primary"
+                        onclick="add_to_inception_record()">
                     <i class="fa fa-save"></i>
                     添加上线
                 </button>
@@ -100,7 +102,7 @@
             <div class="ibox-content">
 
                 <div>
-                    <button id="test_mysql_alived" type="button" class="btn btn-xs btn-primary btn-outline">
+                    <button id="add_database_btn" type="button" class="btn btn-xs btn-primary btn-outline">
                         <i class="fa fa-plus-square"></i>
                         添加数据库
                     </button>
@@ -111,10 +113,10 @@
                             <th>数据库名</th>
                             <th>实例Host</th>
                             <th>端口</th>
-                            <th>操作</th>
+                            <th class="col-sm-2 col-xs-2">操作</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="database_tbody">
                     </tbody>
                 </table>
             </div>
@@ -144,7 +146,7 @@
             </div>
             <div class="ibox-content">
                 <div>
-                    <button id="test_mysql_alived" type="button" class="btn btn-xs btn-primary btn-outline">
+                    <button id="add_business_btn" type="button" class="btn btn-xs btn-primary btn-outline">
                         <i class="fa fa-plus-square"></i>
                         添加业务组
                     </button>
@@ -154,10 +156,10 @@
                         <tr>
                             <th>业务名称</th>
                             <th>备注</th>
-                            <th>操作</th>
+                            <th class="col-sm-2 col-xs-2">操作</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="business_tbody">
                     </tbody>
                 </table>
 
@@ -171,6 +173,7 @@
 {% block js %}
     <script src="{% static 'js/content.min.js' %}"></script>
     <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
 
     <script>
         // 使用 Django csrf 功能
@@ -179,6 +182,30 @@
         $(document).ready(function(){
             // 从父页面获取 sql_text, inception_instance_id, charset
             show_inception_info();
+
+            // 激活添加数据库按钮
+            $("#add_database_btn").click(function(){ 
+                layer.open({
+                    type: 2,
+                    title: '选择需要 审核/执行 的(数据库)',
+                    maxmin: true,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ['70%' , '80%'],
+                    content: '{% url 'list_instance_use_inception_record_add' %}'
+                });
+            });
+
+            // 激活添加业务组按钮
+            $("#add_business_btn").click(function(){ 
+                layer.open({
+                    type: 2,
+                    title: '选择需要 审核/执行 的(业务组)',
+                    maxmin: true,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ['70%' , '80%'],
+                    content: '{% url 'list_business_use_inception_record_add' %}'
+                });
+            });
         });
         
         // 从父页面获取 sql_text, inception_instance_id, charset
@@ -201,6 +228,75 @@
             $("#inception_instance_id").val(inception_instance_id);
             $("#sql_text").val(sql_text);
             $("#charset").val(charset);
+        }
+
+        // 删除一行元素
+        function row_delete(element_id) {
+            $("#" + element_id).remove();
+        }
+
+        function add_to_inception_record() {
+            inception_instance_id = $("#inception_instance_id").val();
+            sql_text = $("#sql_text").val();
+            charset = $("#charset").val();
+            // 获得数据库id字符串由 逗号(,) 隔开
+            database_ids = get_database_ids();
+            // 获得业务组id字符串由 逗号(,) 隔开
+            business_ids = get_business_ids();
+
+            console.log(inception_instance_id);
+            console.log(sql_text);
+            console.log(charset);
+            console.log(database_ids);
+            console.log(business_ids);
+
+            // 如果没有选择 数据库/业务组 不给添加
+            if((database_ids == null || database_ids == '' || database_ids.length == 0) &&
+               (business_ids == null || business_ids == '' || business_ids.length == 0)) {
+                toastr.error("您还没有添加任何 数据库/业务组, 请添加");
+                return false;
+            }
+
+            $.ajax({
+                url: "{% url 'dbmp_inception_record_ajax_add' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    inception_instance_id: inception_instance_id,
+                    sql_text: sql_text,
+                    charset: charset,
+                    database_ids: database_ids,
+                    business_ids: business_ids
+                }
+            }).done(function(data) { 
+                
+            }).error(function(data) { 
+                toastr.error("请求添加错误");
+            });
+        }
+
+        // 获得数据库id字符串由 逗号(,) 隔开
+        function get_database_ids() {
+            database_ids = "";
+            if($(".database_id").length > 0) {
+                // 遍历 数据库 id
+                $(".database_id").each(function(){
+                    database_ids += $(this).val() + ",";
+                });
+            }
+            return database_ids;
+        }
+
+        // 获得业务组id字符串由 逗号(,) 隔开
+        function get_business_ids() {
+            business_ids = "";
+            if($(".business_id").length > 0) {
+                // 遍历 数据库 id
+                $(".business_id").each(function(){
+                    business_ids += $(this).val() + ",";
+                });
+            }
+            return business_ids;
         }
     </script>
 {% endblock %}

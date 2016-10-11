@@ -39,6 +39,7 @@ urlpatterns = [
     url(r'^dbmp_mysql_instance/terminal_sql_console/$', dbmp_mysql_instance.terminal_sql_console, name='dbmp_mysql_instance_terminal_sql_console'),
     url(r'^dbmp_mysql_instance/list_instance_use_business_detail/$', dbmp_mysql_instance.list_instance_use_business_detail, name='list_instance_use_business_detail'),
     url(r'^dbmp_mysql_instance/list_instance_use_inception_record_check/$', dbmp_mysql_instance.list_instance_use_inception_record_check, name='list_instance_use_inception_record_check'),
+    url(r'^dbmp_mysql_instance/list_instance_use_inception_record_add/$', dbmp_mysql_instance.list_instance_use_inception_record_add, name='list_instance_use_inception_record_add'),
 
     # dbmp_mysql_handler
     url(r'^dbmp_mysql_handler/ajax_mysql_is_alived/$', dbmp_mysql_handler.ajax_mysql_is_alived, name='dbmp_mysql_handler_ajax_mysql_is_alived'),
@@ -57,11 +58,13 @@ urlpatterns = [
     # dbmp_mysql_database
     url(r'^dbmp_mysql_database/list_database_use_business_detail/$', dbmp_mysql_database.list_database_use_business_detail, name='list_database_use_business_detail'),
     url(r'^dbmp_mysql_database/list_database_use_inception_record_check/$', dbmp_mysql_database.list_database_use_inception_record_check, name='list_database_use_inception_record_check'),
+    url(r'^dbmp_mysql_database/list_database_use_inception_record_add/$', dbmp_mysql_database.list_database_use_inception_record_add, name='list_database_use_inception_record_add'),
     url(r'^dbmp_mysql_database/ajax_sync_database/$', dbmp_mysql_database.ajax_sync_database, name='dbmp_mysql_database_ajax_sync_database'),
     url(r'^dbmp_mysql_database/ajax_search_database/$', dbmp_mysql_database.ajax_search_database, name='dbmp_mysql_database_ajax_search_database'),
 
     # dbmp_mysql_business
     url(r'^dbmp_mysql_business/index/$', dbmp_mysql_business.index, name='dbmp_mysql_business_index'),
+    url(r'^dbmp_mysql_business/list_business_use_inception_record_add/$', dbmp_mysql_business.list_business_use_inception_record_add, name='list_business_use_inception_record_add'),
     url(r'^dbmp_mysql_business/add/$', dbmp_mysql_business.add, name='dbmp_mysql_business_add'),
     url(r'^dbmp_mysql_business/edit/$', dbmp_mysql_business.edit, name='dbmp_mysql_business_edit'),
     url(r'^dbmp_mysql_business/view/$', dbmp_mysql_business.view, name='dbmp_mysql_business_view'),
@@ -82,4 +85,5 @@ urlpatterns = [
     url(r'^dbmp_inception_record/check/$', dbmp_inception_record.check, name='dbmp_inception_record_check'),
     url(r'^dbmp_inception_record/add/$', dbmp_inception_record.add, name='dbmp_inception_record_add'),
     url(r'^dbmp_inception_record/ajax_check/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_check'),
+    url(r'^dbmp_inception_record/ajax_add/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_add'),
 ]

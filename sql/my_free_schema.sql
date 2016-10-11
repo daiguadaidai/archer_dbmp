@@ -151,6 +151,25 @@ CREATE TABLE `cmdb_os` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `dbmp_inception_database`
+--
+
+DROP TABLE IF EXISTS `dbmp_inception_database`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `dbmp_inception_database` (
+  `inception_database_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '需要执行审核的SQL ID',
+  `inception_record_id` int(10) unsigned NOT NULL COMMENT 'MySQL数据库ID',
+  `mysql_database_id` int(10) unsigned NOT NULL COMMENT 'MySQL实例ID',
+  `execute_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '执行状态: 1未执行 2执行成功 3执行失败',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`inception_database_id`),
+  UNIQUE KEY `udx$record_database` (`inception_record_id`,`mysql_database_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='需要执行审核的SQL';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `dbmp_inception_instance`
 --
 
@@ -166,7 +185,7 @@ CREATE TABLE `dbmp_inception_instance` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`inception_instance_id`),
   UNIQUE KEY `udx$host_port` (`host`,`port`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Inception实例';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='Inception实例';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -179,12 +198,15 @@ DROP TABLE IF EXISTS `dbmp_inception_record`;
 CREATE TABLE `dbmp_inception_record` (
   `inception_record_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
   `inception_instance_id` int(10) unsigned NOT NULL COMMENT 'Inception 实例ID',
-  `is_remote_backup` tinyint(4) NOT NULL DEFAULT '0' COMMENT '执行前是否进行备份:0否 1是',
+  `is_remote_backup` tinyint(4) NOT NULL DEFAULT '1' COMMENT '执行前是否进行备份:0否 1是',
+  `inception_target` tinyint(4) NOT NULL DEFAULT '1' COMMENT 'SQL审核对象:1仅数据库 2仅业务组 3混合',
   `tag` varchar(20) NOT NULL DEFAULT '' COMMENT '用于标记该审核语句的特点',
   `remark` varchar(200) NOT NULL DEFAULT '' COMMENT '该语句的备注说明',
   `sql_text` text COMMENT '审核是SQL语句',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `charset` varchar(20) NOT NULL DEFAULT '' COMMENT '字符集',
+  `execute_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '执行状态: 1未执行 2执行成功 3执行失败 4部分失败',
   PRIMARY KEY (`inception_record_id`),
   KEY `idx$inception_instance_id` (`inception_instance_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='需要审核的记录';
@@ -325,7 +347,7 @@ CREATE TABLE `dbmp_mysql_database` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`mysql_database_id`),
   UNIQUE KEY `udx$mysql_instance_id_name` (`mysql_instance_id`,`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8 COMMENT='MySQL实例数据库';
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8 COMMENT='MySQL实例数据库';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -491,4 +513,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-10-08 11:01:44
+-- Dump completed on 2016-10-11 15:36:29

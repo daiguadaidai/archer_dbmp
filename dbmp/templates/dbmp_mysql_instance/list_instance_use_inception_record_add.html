@@ -2,6 +2,7 @@
 
 {% load staticfiles %}
 {% load ip_filters %}
+{% load filters_dbmp_mysql_instance %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
@@ -10,38 +11,42 @@
 
 
 <!-- 显示该页面标题 -->
-{% block app_title %}操作系(OS)统选择列表{% endblock %}
+{% block app_title %}需要SQL审核(实例)列表{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+{% endblock %}
 
 <!-- 显示该页面主要展示的内容 -->
 {% block content %}
 <table class="footable table table-stripped toggle-arrow-tiny table-hover">
     <thead>
         <tr>
-            <th class="text-center">#</th>
-            <th class="text-center">主机名</th>
-            <th class="text-center">IP地址</th>
-            <th class="text-center">别名</th>
-            <th class="text-center col-xs-3">操作</th>
+            <th class="text-center col-xs-1">#</th>
+            <th class="text-center">Host</th>
+            <th class="text-center">Port</th>
+            <th class="text-center">备注</th>
+            <th class="text-center col-xs-2">操作</th>
         </tr>
     </thead>
 
     <tbody>
-        {% for cmdb_os in pagination.objs %}
+        {% for dbmp_mysql_instance in pagination.objs %}
         <tr>
             <td class="text-center">{{ forloop.counter }}</td>
             <td class="text-center">
-                <a onclick="os_info_to_parent({{ cmdb_os.os_id }}, '{{ cmdb_os.hostname }}', '{{ cmdb_os.ip | f_num2ip }}', '{{ cmdb_os.alias }}')">
-                    {{ cmdb_os.hostname }}
+                <a href="{% url 'list_database_use_inception_record_add' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}">
+                    {{ dbmp_mysql_instance.host | f_num2ip }}
                 </a>
             </td>
-            <td class="text-center">{{ cmdb_os.ip | f_num2ip }}</td>
-            <td class="text-center">{{ cmdb_os.alias }}</td>
+            <td class="text-center">{{ dbmp_mysql_instance.port }}</td>
+            <td class="text-center">{{ dbmp_mysql_instance.remark }}</td>
             <td class="text-center">
-                <button type="button" class="btn btn-info" 
-                        onclick="os_info_to_parent({{ cmdb_os.os_id }}, '{{ cmdb_os.hostname }}', '{{ cmdb_os.ip | f_num2ip }}', '{{ cmdb_os.alias }}')">
-                    <i class="fa fa-check-square-o"></i>
-                    选择
-                </button>
+                <a href="{% url 'list_database_use_inception_record_add' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}" 
+                   type="button" class="btn btn-info btn-xs">
+                    <i class="fa fa-database"></i>
+                    数据库列表
+                </a>
             </td>
         </tr>
         {% endfor %}
@@ -99,24 +104,16 @@
 {% block js %}
     <script src="{% static 'js/content.min.js' %}"></script>
     <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
 
     <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
         $(document).ready(function(){
-            // 表个插件
+            // 表格插件
             $(".footable").footable();
         });
 
-        // 传值给父窗口属性
-        var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
-        function os_info_to_parent(os_id, hostname, ip, alias) {
-            parent.$('#cos_id').val(os_id);
-            parent.$('#chost').val(ip);
-            parent.$('#chostname').html(' <strong>主机名：</strong> ' + hostname);
-            parent.$('#cip').html('<strong>IP地址：</strong> ' + ip);
-            parent.$('#calias').html('<strong>别名：</strong> ' + alias);
-            parent.layer.msg('选择成功', {time: 2000, icon: 1});
-            parent.layer.tips('同时发生改变', '#chost', {time: 5000});
-            parent.layer.close(index);
-        }
     </script>
 {% endblock %}

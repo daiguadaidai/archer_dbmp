@@ -13,6 +13,8 @@ from dbmp.models.dbmp_mysql_instance import DbmpMysqlInstance
 from dbmp.models.dbmp_mysql_business import DbmpMysqlBusiness
 from dbmp.models.dbmp_mysql_database import DbmpMysqlDatabase
 from dbmp.models.dbmp_inception_instance import DbmpInceptionInstance
+from dbmp.models.dbmp_inception_record import DbmpInceptionRecord
+from dbmp.models.dbmp_inception_database import DbmpInceptionDatabase
 
 import simplejson as json
 import traceback
@@ -125,6 +127,79 @@ def ajax_check(request):
      
 
     respons_data = json.dumps(params)
+    return HttpResponse(respons_data, content_type='application/json')
+
+def ajax_add(request):
+    """Ajax添加审核记录"""
+    is_ok = False
+    if request.method == 'POST':
+        inception_instance_id = int(request.POST.get('inception_instance_id', '0'))
+        sql_text = request.POST.get('sql_text', '') 
+        charset = request.POST.get('charset', 'utf8mb4')
+        database_ids_str = request.POST.get('database_ids_str', '')
+        business_ids_str = request.POST.get('business_ids_str', '')
+
+        # 过滤前后 逗号(,)
+        database_ids_str = database_ids_str.strip(',')
+        business_ids_str = business_ids_str.strip(',')
+
+        # 获得 数据库id列表 和 业务id列表
+        database_ids = list(set(database_ids_str.split(',')))
+        business_ids = list(set(business_ids_str.split(',')))
+
+        inception_target = 3 # 默认审核未混合型(数据库/业务组)
+       
+        # 判断是哪种审核模式
+        if database_ids and not business_ids: # 只有数据库
+            inception_target = 1
+        elif not database_ids and business_ids: # 只有业务组
+            inception_target = 2
+        elif database_ids and business_ids: # 混合型
+            inception_target = 3
+        else:
+            logger.error("没有需要审核的数据库ID 和 业务组ID")
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+        try: # 添加审核记录
+            with transaction.atomic():
+                # 添加DbmpInceptionRecord
+                dbmp_inception_record = DbmpInceptionRecord(
+                                        inception_instance_id = inception_instance_id,
+                                        is_remote_backup = 1,
+                                        inception_target = inception_target,
+                                        tag = tag,
+                                        remark = remark,
+                                        sql_text = sql_text,
+                                        charset = charset,
+                                        execute_status = 1)
+                dbmp_mysql_business.save()
+
+                if inception_target in [1, 3]: # 添加审核数据库
+                    pass
+
+                if inception_target in [2, 3]: # 添加审核业务组
+                    pass
+                
+
+        except IntegrityError, e:
+            logger.error("审核SQL添加(失败)")
+            logger.error(traceback.format_exc())
+            if e.args[0] == 1062:
+                logger.error('需要添加的相关信息重复')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+        except Exception, e:
+            logger.info(traceback.format_exc())
+            logger.info('添加失败, 保存数据库错误')
+            respons_data = json.dumps(is_ok)
+            return HttpResponse(respons_data, content_type='application/json')
+
+ 
+        
+        
+
+    respons_data = json.dumps(is_ok)
     return HttpResponse(respons_data, content_type='application/json')
 
 '''

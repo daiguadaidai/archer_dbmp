@@ -13,25 +13,24 @@ from __future__ import unicode_literals
 
 from django.db import models
 
-class DbmpInceptionRecord(models.Model):
-    inception_record_id = models.AutoField(primary_key=True)
-    inception_instance_id = models.IntegerField()
-    is_remote_backup = models.IntegerField()
-    inception_target = models.IntegerField()
-    tag = models.CharField(max_length=20)
-    remark = models.CharField(max_length=200)
-    sql_text = models.TextField(blank=True, null=True)
+class DbmpInceptionDatabase(models.Model):
+    inception_database_id = models.AutoField(primary_key=True)
+    inception_record_id = models.IntegerField()
+    mysql_database_id = models.IntegerField()
+    execute_status = models.IntegerField()
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
-    charset = models.CharField(max_length=20)
-    execute_status = models.IntegerField()
 
     def __unicode__(self):
         """Java toString 方法"""
-        print_str = 'DbmpInceptionRecord({inception_record_id})'.format(
-                     inception_record_id = self.inception_record_id)
+        print_str = ('DbmpInceptionDatabase({inception_database_id}, '
+                      '{inception_record_id}, {mysql_database_id})'.format(
+                     inception_database_id = self.inception_database_id,
+                     inception_record_id = self.inception_record_id,
+                     mysql_database_id = self.mysql_database_id))
         return print_str
 
     class Meta:
         managed = False
-        db_table = 'dbmp_inception_record'
+        db_table = 'dbmp_inception_database'
+        unique_together = (('inception_record_id', 'mysql_database_id'),)
