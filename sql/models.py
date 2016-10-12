@@ -94,6 +94,36 @@ class CmdbOs(models.Model):
         db_table = 'cmdb_os'
 
 
+class DbmpInceptionBusiness(models.Model):
+    inception_business_id = models.AutoField(primary_key=True)
+    inception_record_id = models.IntegerField()
+    mysql_business_id = models.IntegerField()
+    execute_status = models.IntegerField()
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_business'
+        unique_together = (('inception_record_id', 'mysql_business_id'),)
+
+
+class DbmpInceptionBusinessDetail(models.Model):
+    inception_business_detail_id = models.AutoField(primary_key=True)
+    inception_business_id = models.IntegerField()
+    inception_record_id = models.IntegerField()
+    mysql_business_id = models.IntegerField()
+    mysql_database_id = models.IntegerField()
+    execute_status = models.IntegerField()
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_business_detail'
+        unique_together = (('inception_record_id', 'mysql_database_id'),)
+
+
 class DbmpInceptionDatabase(models.Model):
     inception_database_id = models.AutoField(primary_key=True)
     inception_record_id = models.IntegerField()

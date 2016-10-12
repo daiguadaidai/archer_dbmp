@@ -151,6 +151,50 @@ CREATE TABLE `cmdb_os` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `dbmp_inception_business`
+--
+
+DROP TABLE IF EXISTS `dbmp_inception_business`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `dbmp_inception_business` (
+  `inception_business_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'SQL审核业务组ID',
+  `inception_record_id` int(10) unsigned NOT NULL COMMENT '审核记录ID',
+  `mysql_business_id` int(10) unsigned NOT NULL COMMENT '业务组ID',
+  `execute_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '执行状态: 1未执行 2执行成功 3执行失败 4部分执行失败',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`inception_business_id`),
+  UNIQUE KEY `udx$record_business_id` (`inception_record_id`,`mysql_business_id`),
+  KEY `idx$mysql_business_id` (`mysql_business_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='SQL审核业务组';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `dbmp_inception_business_detail`
+--
+
+DROP TABLE IF EXISTS `dbmp_inception_business_detail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `dbmp_inception_business_detail` (
+  `inception_business_detail_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'SQL审核业务组ID',
+  `inception_business_id` int(10) unsigned NOT NULL COMMENT 'SQL审核业务组ID',
+  `inception_record_id` int(10) unsigned NOT NULL COMMENT '审核记录ID',
+  `mysql_business_id` int(10) unsigned NOT NULL COMMENT '业务组ID',
+  `mysql_database_id` int(10) unsigned NOT NULL COMMENT '数据库ID',
+  `execute_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '执行状态: 1未执行 2执行成功 3执行失败 4部分执行失败',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`inception_business_detail_id`),
+  UNIQUE KEY `udx$record_business_id` (`inception_record_id`,`mysql_database_id`),
+  KEY `idx$inception_business_id` (`inception_business_id`),
+  KEY `idx$mysql_business_id` (`mysql_business_id`),
+  KEY `idx$mysql_database_id` (`mysql_database_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='SQL审核业务组明细';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `dbmp_inception_database`
 --
 
@@ -159,8 +203,8 @@ DROP TABLE IF EXISTS `dbmp_inception_database`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `dbmp_inception_database` (
   `inception_database_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '需要执行审核的SQL ID',
-  `inception_record_id` int(10) unsigned NOT NULL COMMENT 'MySQL数据库ID',
-  `mysql_database_id` int(10) unsigned NOT NULL COMMENT 'MySQL实例ID',
+  `inception_record_id` int(10) unsigned NOT NULL COMMENT '审核记录ID',
+  `mysql_database_id` int(10) unsigned NOT NULL COMMENT '数据库ID',
   `execute_status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '执行状态: 1未执行 2执行成功 3执行失败',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -513,4 +557,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-10-11 15:36:29
+-- Dump completed on 2016-10-12 14:51:22

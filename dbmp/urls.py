@@ -84,6 +84,7 @@ urlpatterns = [
     # dbmp_inception_record
     url(r'^dbmp_inception_record/check/$', dbmp_inception_record.check, name='dbmp_inception_record_check'),
     url(r'^dbmp_inception_record/add/$', dbmp_inception_record.add, name='dbmp_inception_record_add'),
+    url(r'^dbmp_inception_record/view/$', dbmp_inception_record.view, name='dbmp_inception_record_view'),
     url(r'^dbmp_inception_record/ajax_check/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_check'),
-    url(r'^dbmp_inception_record/ajax_add/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_add'),
+    url(r'^dbmp_inception_record/ajax_add/$', dbmp_inception_record.ajax_add, name='dbmp_inception_record_ajax_add'),
 ]
