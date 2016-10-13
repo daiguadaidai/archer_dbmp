@@ -7,7 +7,7 @@ class FieldDbmpInceptionBusiness(object):
         pass
 
     @classmethod
-    def execute_status(self):
+    def inc_bus_execute_status(self):
         """数据库执行SQL审核状态"""
         value = (
             (1, '未执行'),
@@ -18,11 +18,11 @@ class FieldDbmpInceptionBusiness(object):
         return value
 
     @classmethod
-    def execute_status_color(self):
+    def inc_bus_execute_status_color(self):
         """MySQL实例正在运行状态 对应显示的颜色"""
         value = (
-            (1, 'info'),
-            (2, 'success'),
+            (1, 'success'),
+            (2, 'primary'),
             (3, 'danger'),
             (4, 'warning'),
         )

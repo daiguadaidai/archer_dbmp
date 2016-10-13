@@ -1,6 +1,8 @@
 {%extends 'dbmp_base.html' %}
 
 {% load staticfiles %}
+{% load ip_filters %}
+{% load filters_dbmp_inception_record %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
@@ -31,61 +33,54 @@
 {% block content %}
 <!-- 业务组信息 -->
 <section id="inception_info">
-    <h2 class="page-header">上线SQL信息</h2>
+    <h2 class="page-header">上线SQL信息&nbsp;
+        <span class="label label-{{ dbmp_inception_record.execute_status | f_inc_rec_execute_status_color }}">
+            {{ dbmp_inception_record.execute_status | f_inc_rec_execute_status }}
+        </span>
+    </h2>
 
-    <form method="post" action="{% url 'dbmp_inception_record_add' %}" class="form-horizontal m-t" id="default_form">
-        {% csrf_token %}
-        <input id="inception_instance_id" name="inception_instance_id" type="hidden">
-        <input id="sql_text" name="sql_text" type="hidden">
-        <input id="charset" name="charset" type="hidden">
-        <div class="form-group">
-            <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                Inception实例：
-            </label>
-            <div id="inception_instance_name_div" class="col-sm-8">
-            </div>
+    <div class="row">
+        <input type="hidden" id="inception_record_id"
+               value="{{ dbmp_inception_record.inception_record_id }}">
+        <input type="hidden" id="inception_instance_id"
+               value="{{ dbmp_inception_incestance.inception_instance_id }}">
+        <input type="hidden" id="inception_instance_host"
+               value="{{ dbmp_inception_incestance.host | f_num2ip }}">
+        <input type="hidden" id="inception_instance_port"
+               value="{{ dbmp_inception_incestance.port }}">
+
+        <div class="col-md-4">
+            <strong>Inception实例：</strong>
+                <code>{{ dbmp_inception_instance.alias }}</code>
         </div>
-        <div class="form-group">
-            <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                执行的SQL：
-            </label>
-            <div class="col-sm-8">
-                <pre id="sql_text_pre"></pre>
-            </div>
+        <div class="col-md-4">
+            <strong>创建时间：</strong>
+                <code>{{ dbmp_inception_record.create_time | date:'Y-m-d H:i:s' }}</code>
         </div>
-        <div class="form-group">
-            <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                标签：
-            </label>
-            <div class="col-sm-8">
-                <input type="text" id="tag" class="form-control">
-                <span class="help-block m-b-none">
-                     <i class="fa fa-info-circle text-success"></i> 
-                     <标签>一般填写的是项目上线(版本信息)，如：v1.1.0
-                </span>
-            </div>
+        <div class="col-md-4">
+            <strong>更新时间：</strong>
+                <code>{{ dbmp_inception_record.update_time | date:'Y-m-d H:i:s' }}</code>
         </div>
-        <div class="form-group">
-            <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                备注：
-            </label>
-            <div class="col-sm-8">
-                <textarea id="remark" class="form-control"></textarea>
-            </div>
+    </div>
+
+    <h4>&nbsp;<h4>
+
+    <div class="row">
+        <div class="col-md-4">
+            <strong>标签：</strong>
+            <code>{{ dbmp_inception_record.tag }}</code>
         </div>
-        <div class="form-group">
-            <label class="col-sm-3 control-label">
-                <span class="text-danger">*</span>
-                字符集：
-            </label>
-            <div id="charset_div" class="col-sm-8">
-            </div>
+        <div class="col-md-8">
+            <strong>备注：</strong>
+            {{ dbmp_inception_record.remark }}
         </div>
-    </form>
+    </div>
+
+    <h4>&nbsp;<h4>
+
+    <div class="row">
+        <pre>{{ dbmp_inception_record.sql_text }}</pre>
+    </div>
 <section>
 
 {% endblock %}
@@ -183,6 +178,119 @@
         $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
 
         $(document).ready(function(){
+            // 获得 数据库/业务组
+            show_database_and_business();
         });
+
+        // 显示数据库和业务组
+        function show_database_and_business() {
+            // 获得审核目标 1数据库 2业务组 3混合
+            inception_target = {{ dbmp_inception_record.inception_target }};
+            // 获得 inception_record_id
+            inception_record_id = $("#inception_record_id").val();
+            // 显示数据库
+            if (inception_target == 1 || inception_target == 3) {
+                show_database(inception_record_id);
+            }
+            // 显示业务组
+            if (inception_target == 2 || inception_target == 3) {
+                show_business(inception_record_id);
+            }
+        }
+
+        // 显示数据库
+        function show_database(inception_record_id) {
+            $.ajax({
+                url: "{% url 'dbmp_inception_database_ajax_find_by_inception_record_id' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    inception_record_id: inception_record_id
+                }
+            }).done(function(data) { 
+                if(data.is_ok == false){
+                    toastr.error(data.err_msg);
+                } else if(data.is_ok = true) {
+                    if(data.databases != null && data.databases.length > 0) {
+                        add_database_html(data.databases);
+                    }
+                } else {
+                    toastr.warning("返回数据错误, 未能正确获取审核数据库信息");
+                }
+            }).error(function(data) { 
+                toastr.error("请求获取审核数据库失败");
+            });
+        }
+
+        // 显示业务组
+        function show_business(inception_record_id) {
+            $.ajax({
+                url: "{% url 'dbmp_inception_business_ajax_find_by_inception_record_id' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    inception_record_id: inception_record_id
+                }
+            }).done(function(data) { 
+                if(data.is_ok == false){
+                    toastr.error(data.err_msg);
+                } else if(data.is_ok = true) {
+                    if(data.databases != null && data.databases.length > 0) {
+                        add_database_html(data.databases);
+                    }
+                } else {
+                    toastr.warning("返回数据错误, 未能正确获取审核业务组信息");
+                }
+            }).error(function(data) { 
+                toastr.error("请求获取审核业务组失败");
+            });
+        }
+        
+        // 添加审核数据库信息HTML
+        function add_database_html(databases) {
+            html_str = "";
+            tr_color_class = "";
+            botton_html = "";
+
+            for(i=0; i<databases.length; i++) {
+                // 通过不同状态获取不同的 按钮 和每行颜色
+                if(databases[i].execute_status == 1) { // 未运行
+                    botton_html += '<button type="button" class="btn btn-xs btn-primary btn-outline"';
+                    botton_html += '        onclick="execute_database_inception()">';
+                    botton_html += '    <i class="fa fa-chevron-circle-right"></i>';
+                    botton_html += '    执行';
+                    botton_html += '</button>';
+                } else if(databases[i].execute_status == 2) { // 运行成功
+                    tr_color_class += "success";
+                    botton_html += '<a>';
+                    botton_html += '    <i class="fa fa-check text-navy"></i>';
+                    botton_html += '    成功';
+                    botton_html += '</a>';
+
+                } else if(databases[i].execute_status == 3) { // 运行失败
+                    tr_color_class += "danger";
+                    botton_html += '<button type="button" class="btn btn-xs btn-primary btn-outline"';
+                    botton_html += '        onclick="execute_database_inception()">';
+                    botton_html += '    <i class="fa fa-chevron-circle-right"></i>';
+                    botton_html += '    执行';
+                    botton_html += '</button>';
+                }
+                html_str += '<tr class="' + tr_color_class + '">';
+                html_str += '    <td><code>' + databases[i].name + '</code></td>';
+                html_str += '    <td><code>' + databases[i].host + '</code></td>';
+                html_str += '    <td><code>' + databases[i].port + '</code></td>';
+                html_str += '    <td>';
+                html_str +=          botton_html;
+                html_str += '    </td>';
+                html_str += '</tr>';
+            }
+
+            $("#database_tbody").html(html_str);
+        }
+
+        // 添加审核数据库信息HTML
+        function add_business_html(data) {
+
+        }
     </script>
 {% endblock %}

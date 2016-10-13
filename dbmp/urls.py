@@ -21,6 +21,8 @@ from dbmp.views import v_dbmp_mysql_business as dbmp_mysql_business
 from dbmp.views import v_dbmp_mysql_business_detail as dbmp_mysql_business_detail
 from dbmp.views import v_dbmp_inception_instance as dbmp_inception_instance
 from dbmp.views import v_dbmp_inception_record as dbmp_inception_record
+from dbmp.views import v_dbmp_inception_database as dbmp_inception_database
+from dbmp.views import v_dbmp_inception_business as dbmp_inception_business
 
 urlpatterns = [
     # dbmp_mysql_instance
@@ -87,4 +89,10 @@ urlpatterns = [
     url(r'^dbmp_inception_record/view/$', dbmp_inception_record.view, name='dbmp_inception_record_view'),
     url(r'^dbmp_inception_record/ajax_check/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_check'),
     url(r'^dbmp_inception_record/ajax_add/$', dbmp_inception_record.ajax_add, name='dbmp_inception_record_ajax_add'),
+
+    # dbmp_inception_database
+    url(r'^dbmp_inception_database/ajax_find_by_inception_record_id/$', dbmp_inception_database.ajax_find_by_inception_record_id, name='dbmp_inception_database_ajax_find_by_inception_record_id'),
+
+    # dbmp_inception_business
+    url(r'^dbmp_inception_business/ajax_find_by_inception_record_id/$', dbmp_inception_business.ajax_find_by_inception_record_id, name='dbmp_inception_business_ajax_find_by_inception_record_id'),
 ]
