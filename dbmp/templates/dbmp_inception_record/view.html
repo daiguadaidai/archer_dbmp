@@ -7,6 +7,7 @@
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
     <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block app_title %}上线SQL(明细){% endblock %}
@@ -184,6 +185,7 @@
     <script src="{% static 'js/content.min.js' %}"></script>
     <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
     <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
 
     <script>
         // 使用 Django csrf 功能
@@ -286,10 +288,10 @@
                 }
                 html_str += '<tr id="inception_database_' + databases[i].inception_database_id + '"';
                 html_str += '    class="' + tr_color_class + '">';
-                html_str += '    <td><code>' + databases[i].name + '</code></td>';
-                html_str += '    <td><code>' + databases[i].host + '</code></td>';
-                html_str += '    <td><code>' + databases[i].port + '</code></td>';
-                html_str += '    <td>';
+                html_str += '    <td><code id="inception_database_name_' + databases[i].inception_database_id + '">' + databases[i].name + '</code></td>';
+                html_str += '    <td><code id="inception_database_host_' + databases[i].inception_database_id + '">' + databases[i].host + '</code></td>';
+                html_str += '    <td><code id="inception_database_port_' + databases[i].inception_database_id + '">' + databases[i].port + '</code></td>';
+                html_str += '    <td id="inception_database_button_td_' + databases[i].inception_database_id + '">';
                 html_str +=          button_html;
                 html_str += '    </td>';
                 html_str += '</tr>';
@@ -329,9 +331,9 @@
                 }
                 html_str += '<tr id="inception_business_' + businesses[i].inception_business_id + '"';
                 html_str += '    class="' + tr_color_class + '">';
-                html_str += '    <td><code>' + businesses[i].name + '</code></td>';
+                html_str += '    <td><code id="inception_business_name_' + businesses[i].inception_business_id + '">' + businesses[i].name + '</code></td>';
                 html_str += '    <td><code>' + businesses[i].remark + '</code></td>';
-                html_str += '    <td>';
+                html_str += '    <td id="inception_business_button_td_' + businesses[i].inception_business_id + '">';
                 html_str += '        <button type="button" class="btn btn-xs btn-primary btn-outline"';
                 html_str += '                onclick="inception_business_detail_list(' + inception_record_id + ', ' + businesses[i].inception_business_id + ')">';
                 html_str += '            <i class="fa fa-list"></i>';
@@ -357,8 +359,46 @@
 
         // 执行数据库审核
         function execute_database_inception(inception_record_id, inception_database_id) {
-            console.log(inception_record_id);
-            console.log(inception_database_id);
+            alert_title = "你确定要执行SQL?";
+            alert_text = "数据库名: <code>" + $("#inception_database_name_" + inception_database_id).text() + "</code>";
+            alert_text += "IP地址: <code>" + $("#inception_database_host_" + inception_database_id).text() + "</code>";
+            alert_text += "端口: <code>" + $("#inception_database_port_" + inception_database_id).text() + "</code>";
+            window_title = "数据库执行SQL";
+            url = "{% url 'dbmp_inception_database_run_inception' %}";
+            url += "?inception_record_id=" + inception_record_id;
+            url += "&inception_database_id=" + inception_database_id;
+            swal({
+                title: alert_title,
+                text: alert_text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: window_title,
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "0px", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: url
+                });
+            });
         }
 
         // 执行业务组审核

@@ -92,6 +92,8 @@ urlpatterns = [
 
     # dbmp_inception_database
     url(r'^dbmp_inception_database/ajax_find_by_inception_record_id/$', dbmp_inception_database.ajax_find_by_inception_record_id, name='dbmp_inception_database_ajax_find_by_inception_record_id'),
+    url(r'^dbmp_inception_database/run_inception/$', dbmp_inception_database.run_inception, name='dbmp_inception_database_run_inception'),
+    url(r'^dbmp_inception_database/ajax_run_inception/$', dbmp_inception_database.ajax_run_inception, name='dbmp_inception_database_ajax_run_inception'),
 
     # dbmp_inception_business
     url(r'^dbmp_inception_business/ajax_find_by_inception_record_id/$', dbmp_inception_business.ajax_find_by_inception_record_id, name='dbmp_inception_business_ajax_find_by_inception_record_id'),
