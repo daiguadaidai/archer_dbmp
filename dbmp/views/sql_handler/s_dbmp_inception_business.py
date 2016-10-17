@@ -13,19 +13,16 @@ class SQLDbmpInceptionBusiness(object):
             return None
 
         sql = """
-            SELECT did.inception_database_id,
-                did.inception_record_id,
-                did.mysql_database_id,
-                did.execute_status,
-                dmd.name,
-                dmi.host,
-                dmi.port
-            FROM dbmp_inception_database AS did
-            INNER JOIN dbmp_mysql_database AS dmd
-                ON did.mysql_database_id = dmd.mysql_database_id
-                AND did.inception_record_id = {inception_record_id}
-            INNER JOIN dbmp_mysql_instance AS dmi
-                ON dmd.mysql_instance_id = dmi.mysql_instance_id
+            SELECT dib.inception_business_id,
+                dib.inception_record_id,
+                dib.mysql_business_id,
+                dib.execute_status,
+                dmb.name,
+                dmb.remark
+            FROM dbmp_inception_business AS dib
+            INNER JOIN dbmp_mysql_business AS dmb
+                ON dib.mysql_business_id = dmb.mysql_business_id
+                AND dib.inception_record_id = {inception_record_id}
         """.format(inception_record_id = inception_record_id)
 
         cursor = connection.cursor()

@@ -41,7 +41,7 @@ def ajax_find_by_inception_record_id(request):
             dbmp_inception_businesses = s_dbmp_inception_business.find_businesses_by_inception_record_id(
                                                                      inception_record_id)
             params['is_ok'] = True
-            params['databases'] = dbmp_inception_databases
+            params['businesses'] = dbmp_inception_businesses
         except:
             logger.error(traceback.format_exc())
             params['err_msg'] = traceback.format_exc()

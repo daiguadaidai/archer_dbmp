@@ -111,7 +111,13 @@
                 </div>
             </div>
             <div class="ibox-content">
-                <table class="table">
+                <div class="row center-block">
+                    <span class="label">未执行</span>
+                    <span class="label label-primary">执行成功</span>
+                    <span class="label label-danger">执行失败</span>
+                    <span class="label label-warning">部分失败</span>
+                </div>
+                <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>数据库名</th>
@@ -149,12 +155,18 @@
                 </div>
             </div>
             <div class="ibox-content">
-                <table class="table">
+                <div class="row center-block">
+                    <span class="label">未执行</span>
+                    <span class="label label-primary">执行成功</span>
+                    <span class="label label-danger">执行失败</span>
+                    <span class="label label-warning">部分失败</span>
+                </div>
+                <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>业务名称</th>
                             <th>备注</th>
-                            <th class="col-sm-2 col-xs-2">操作</th>
+                            <th class="col-sm-3 col-xs-3">操作</th>
                         </tr>
                     </thead>
                     <tbody id="business_tbody">
@@ -212,7 +224,7 @@
                     toastr.error(data.err_msg);
                 } else if(data.is_ok = true) {
                     if(data.databases != null && data.databases.length > 0) {
-                        add_database_html(data.databases);
+                        add_database_html(data.databases, inception_record_id);
                     }
                 } else {
                     toastr.warning("返回数据错误, 未能正确获取审核数据库信息");
@@ -235,8 +247,8 @@
                 if(data.is_ok == false){
                     toastr.error(data.err_msg);
                 } else if(data.is_ok = true) {
-                    if(data.databases != null && data.databases.length > 0) {
-                        add_database_html(data.databases);
+                    if(data.businesses != null && data.businesses.length > 0) {
+                        add_business_html(data.businesses);
                     }
                 } else {
                     toastr.warning("返回数据错误, 未能正确获取审核业务组信息");
@@ -247,40 +259,38 @@
         }
         
         // 添加审核数据库信息HTML
-        function add_database_html(databases) {
+        function add_database_html(databases, inception_record_id) {
             html_str = "";
             tr_color_class = "";
-            botton_html = "";
+            button_html = "";
 
             for(i=0; i<databases.length; i++) {
+                // 拼凑执行审核数据库方法
+                func_str = "execute_database_inception";
+                func_str += "(";
+                func_str += inception_record_id + ", " +  databases[i].inception_database_id;
+                func_str += ")";
                 // 通过不同状态获取不同的 按钮 和每行颜色
                 if(databases[i].execute_status == 1) { // 未运行
-                    botton_html += '<button type="button" class="btn btn-xs btn-primary btn-outline"';
-                    botton_html += '        onclick="execute_database_inception()">';
-                    botton_html += '    <i class="fa fa-chevron-circle-right"></i>';
-                    botton_html += '    执行';
-                    botton_html += '</button>';
+                    button_html = get_button_html(func_str);
                 } else if(databases[i].execute_status == 2) { // 运行成功
                     tr_color_class += "success";
-                    botton_html += '<a>';
-                    botton_html += '    <i class="fa fa-check text-navy"></i>';
-                    botton_html += '    成功';
-                    botton_html += '</a>';
+                    button_html += '<a>';
+                    button_html += '    <i class="fa fa-check text-navy"></i>';
+                    button_html += '    成功';
+                    button_html += '</a>';
 
                 } else if(databases[i].execute_status == 3) { // 运行失败
                     tr_color_class += "danger";
-                    botton_html += '<button type="button" class="btn btn-xs btn-primary btn-outline"';
-                    botton_html += '        onclick="execute_database_inception()">';
-                    botton_html += '    <i class="fa fa-chevron-circle-right"></i>';
-                    botton_html += '    执行';
-                    botton_html += '</button>';
+                    button_html = get_button_html(func_str);
                 }
-                html_str += '<tr class="' + tr_color_class + '">';
+                html_str += '<tr id="inception_database_' + databases[i].inception_database_id + '"';
+                html_str += '    class="' + tr_color_class + '">';
                 html_str += '    <td><code>' + databases[i].name + '</code></td>';
                 html_str += '    <td><code>' + databases[i].host + '</code></td>';
                 html_str += '    <td><code>' + databases[i].port + '</code></td>';
                 html_str += '    <td>';
-                html_str +=          botton_html;
+                html_str +=          button_html;
                 html_str += '    </td>';
                 html_str += '</tr>';
             }
@@ -289,8 +299,78 @@
         }
 
         // 添加审核数据库信息HTML
-        function add_business_html(data) {
+        function add_business_html(businesses) {
+            html_str = "";
+            tr_color_class = "";
+            button_html = "";
 
+            for(i=0; i<businesses.length; i++) {
+                // 拼凑执行审核数据库方法
+                func_str = "execute_business_inception";
+                func_str += "(";
+                func_str += inception_record_id + ", " +  businesses[i].inception_business_id;
+                func_str += ")";
+                // 通过不同状态获取不同的 按钮 和每行颜色
+                if(businesses[i].execute_status == 1) { // 未运行
+                    button_html = get_button_html(func_str);
+                } else if(businesses[i].execute_status == 2) { // 运行成功
+                    tr_color_class += "success";
+                    button_html += '<a>';
+                    button_html += '    <i class="fa fa-check text-navy"></i>';
+                    button_html += '    成功';
+                    button_html += '</a>';
+
+                } else if(businesses[i].execute_status == 3) { // 运行失败
+                    tr_color_class += "danger";
+                    button_html = get_button_html(func_str);
+                } else if(businesses[i].execute_status == 4) { // 部分运行失败
+                    tr_color_class += "warning";
+                    button_html = get_button_html(func_str);
+                }
+                html_str += '<tr id="inception_business_' + businesses[i].inception_business_id + '"';
+                html_str += '    class="' + tr_color_class + '">';
+                html_str += '    <td><code>' + businesses[i].name + '</code></td>';
+                html_str += '    <td><code>' + businesses[i].remark + '</code></td>';
+                html_str += '    <td>';
+                html_str += '        <button type="button" class="btn btn-xs btn-primary btn-outline"';
+                html_str += '                onclick="inception_business_detail_list(' + inception_record_id + ', ' + businesses[i].inception_business_id + ')">';
+                html_str += '            <i class="fa fa-list"></i>';
+                html_str += '            详情';
+                html_str += '        </button>';
+                html_str +=          button_html;
+                html_str += '    </td>';
+                html_str += '</tr>';
+            }
+
+            $("#business_tbody").html(html_str);
+        }
+
+        // 获得按钮html代码
+        function get_button_html(click_func) {
+            button_html += '<button type="button" class="btn btn-xs btn-primary btn-outline"';
+            button_html += '        onclick="' + click_func + '">';
+            button_html += '    <i class="fa fa-chevron-circle-right"></i>';
+            button_html += '    执行';
+            button_html += '</button>';
+            return button_html;
+        }
+
+        // 执行数据库审核
+        function execute_database_inception(inception_record_id, inception_database_id) {
+            console.log(inception_record_id);
+            console.log(inception_database_id);
+        }
+
+        // 执行业务组审核
+        function execute_business_inception(inception_record_id, inception_business_id) {
+            console.log(inception_record_id);
+            console.log(inception_business_id);
+        }
+
+        // 查看审核业务组详情
+        function inception_business_detail_list(inception_record_id, inception_business_id) {
+            console.log(inception_record_id);
+            console.log(inception_business_id);
         }
     </script>
 {% endblock %}
