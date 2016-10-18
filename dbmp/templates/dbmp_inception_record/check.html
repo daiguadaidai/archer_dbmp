@@ -244,7 +244,7 @@
                     show_color = "success";
                 } else if(data[i].errlevel == 1) {
                     show_color = "warning";
-                    err_level = 1; // SQL不符合要求, 但不影响执行
+                    err_level = 1; // SQL语法没错, 但不符合审核要求, 请修改!
                 } else if(data[i].errlevel == 2) {
                     show_color = "danger";
                     err_level = 2; // SQL不能执行
@@ -274,24 +274,18 @@
 
             // 显示按钮
             if(err_level == 0 && data.length > 0) {
-                html_str += '<div class="col-sm-4">';
+                html_str += '<div class="btn-group">';
                 html_str += '    <button type="button" id="inception-btn" class="btn btn-primary"';
                 html_str += '            onclick="add_to_execute()">';
                 html_str += '        <i class="fa fa-external-link-square"></i>';
                 html_str += '        添加上线';
                 html_str += '    </button>';
                 html_str += '</div>'; 
+                toastr.success("SQL审核成功!");
             } else if(err_level == 1) {
-                toastr.warning("SQL不符合要求, 但不影响执行!");
-                html_str += '<div class="col-sm-4">';
-                html_str += '    <button type="button" id="inception-btn" class="btn btn-primary"';
-                html_str += '            onclick="add_to_execute()">';
-                html_str += '        <i class="fa fa-external-link-square"></i>';
-                html_str += '        添加上线';
-                html_str += '    </button>';
-                html_str += '</div>'; 
+                toastr.warning("SQL语法没错, 但不符合审核要求, 请修改!");
             } else if(err_level == 2) {
-                toastr.warning("SQL不符合要求，请修改!");
+                toastr.error("SQL不符合要求，请修改!");
             }            
             // 显示 inception 信息
             $("#inception_info").html(html_str);

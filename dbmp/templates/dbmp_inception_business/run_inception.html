@@ -82,6 +82,22 @@
             // 使用 Django csrf 功能
             $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
 
+            // 初始化全局 业务组明细状态数组
+            inception_business_detail_status = new Array();
+            // 初始化全局 业务组明细数组
+            inception_business_details = new Array();
+            {% for dbmp_inception_business_detail in dbmp_inception_business_details %}
+                inception_business_detail = new Object();
+                inception_business_detail.inception_business_detail_id = {{ dbmp_inception_business_detail.inception_business_detail_id }};
+                inception_business_detail.mysql_business_id = {{ dbmp_inception_business_detail.mysql_business_id }};
+                inception_business_detail.execute_status = {{ dbmp_inception_business_detail.execute_status }};
+                inception_business_detail.db_name = "{{ dbmp_inception_business_detail.db_name }}";
+                inception_business_detail.host = "{{ dbmp_inception_business_detail.host }}";
+                inception_business_detail.port = {{ dbmp_inception_business_detail.port }};
+                inception_business_detail.business_name = "{{ dbmp_inception_business_detail.business_name }}";
+                inception_business_details.push(inception_business_detail);
+            {% endfor %}
+
             $(function() {
                 // Creating the console.
                 var header = "";
@@ -90,10 +106,8 @@
                         header += "{{ msg }} \n";
                     {% endfor %}
                 {% endif %}
-                    header += "执行SQL数据库信息: \n";
-                    header += "  数据库名: {{ dbmp_inception_database.name }}" + "\n";
-                    header += "    IP地址: {{ dbmp_inception_database.host }}" + "\n";
-                    header += "      端口: {{ dbmp_inception_database.port }}" + "\n";
+                    header += "执行SQL业务组信息: \n";
+                    header += "  业务组名: {{ dbmp_inception_business.name }}" + "\n";
                     header += " \n";
                 window.jqconsole = $("#console").jqconsole(header, "> ");
                 
@@ -116,23 +130,56 @@
                 
                 // Initiate the first prompt.
                 handler();
+                window.jqconsole.Write("====================== 正在执行... ========================= \n", "jqconsole-output-warning");
 
                 // 执行SQL
-                var execute_status = {{ dbmp_inception_database.execute_status }};
-                if (execute_status == 1 || execute_status == 3) {
-                    run_inception({{ dbmp_inception_database.inception_database_id }});
+                var execute_status = {{ dbmp_inception_business.execute_status }};
+                if (execute_status == 1 || execute_status == 3 || execute_status == 4) {
+                    // 执行业务组SQL审核
+                    run_inception({{ dbmp_inception_business.inception_business_id }});
                 }
             });
 
-            // 后台调用启动MySQL
-            function run_inception(inception_database_id) {
-                window.jqconsole.Write("====================== 正在执行... ========================= \n", "jqconsole-output-warning");
+            // 后台调用对业务组执行SQL
+            function run_inception(inception_business_id) {
+                // 如果数组中没有数据返回
+                if(inception_business_details.length < 1) {
+                    // 改变业务组状态和父窗口页面信息
+                    status = 1;
+                    if($.inArray(2, inception_business_detail_status) != -1 && $.inArray(3, inception_business_detail_status) == -1) { // SQL都执行成功
+                        status = 2;
+                        window.jqconsole.Write("SQL全部执行成功 \n", "jqconsole-output-success");
+                        change_parent_business_tr(inception_business_id, "success");
+                    } else if($.inArray(2, inception_business_detail_status) != -1 && $.inArray(3, inception_business_detail_status) != -1) { // 部分SQL执行失败
+                        status = 4;
+                        window.jqconsole.Write("SQL部分执行失败(有执行失败的请查看执行记录确认) \n", "jqconsole-output-warning");
+                        change_parent_business_tr(inception_business_id, "warning");
+                    } else if($.inArray(2, inception_business_detail_status) == -1 && $.inArray(3, inception_business_detail_status) != -1) { // SQL都执行失败
+                        status = 3;
+                        window.jqconsole.Write("SQL执行全部失败(具体请查看执行记录) \n", "jqconsole-output-error");
+                        change_parent_business_tr(inception_business_id, "danger");
+                    }
+                    window.jqconsole.Write("================ 正在修改业务组状态... ================= \n", "jqconsole-output-warning");
+                    change_execute_status(inception_business_id, status); // 修改业务组执行状态
+
+                    return false; 退出递归函数
+                }
+                // 获得业务明细信息 构造成字符串然后显示
+                inception_business_detail = inception_business_details.shift();
+                detail_info = "";
+                detail_info += "执行SQL业务组明细信息: \n";
+                detail_info += "  业务组名: " + inception_business_detail.business_name + "\n";
+                detail_info += "  数据库名: " + inception_business_detail.db_name + "\n";
+                detail_info += "  IP地址: " + inception_business_detail.host + "\n";
+                detail_info += "  端口: " + inception_business_detail.port + "\n";
+                window.jqconsole.Write(detail_info);
+                
                 $.ajax({
-                    url: "{% url 'dbmp_inception_database_ajax_run_inception' %}",
+                    url: "{% url 'dbmp_inception_business_detail_ajax_run_inception' %}",
                     type: "POST",
                     dataType: "json",
                     data: {
-                        inception_database_id: inception_database_id
+                        inception_business_detail_id: inception_business_detail.inception_business_detail_id
                     }
                 }).done(function(data) { 
                     if(data.is_ok == true) {
@@ -160,19 +207,16 @@
                                 window.jqconsole.Write(inception_body, "jqconsole-output-error");
                             }
                         }
-                        console.log(data.execute_status);
-                        if(data.execute_status == 2) { // 执行成功
-                            change_parent_database_tr({{ dbmp_inception_database.inception_database_id }}, 'success');
-                            change_parent_database_button_ok({{ dbmp_inception_database.inception_database_id }});
-                        } else if(data.execute_status == 3) { // 执行失败
-                            change_parent_database_tr({{ dbmp_inception_database.inception_database_id }}, 'danger');
-                        }
+                      
+                        inception_business_detail_status.push(data.execute_status); // 添加业务组明细执行SQL状态
                     } else {
                         window.jqconsole.Write("  执行SQL失败" + "\n", "jqconsole-output-error");
                     }
                     window.jqconsole.Write(data.err_msg + "\n", "jqconsole-output-error");
                     window.jqconsole.Write("-----------------------------------------");
                     window.jqconsole.Write("-----------------------------------------\n");
+
+                    run_inception(inception_business_id); // 递归执行 SQL执行
                 }).error(function(data) { 
                     window.jqconsole.Write("  请求执行SQL失败" + "\n", "jqconsole-output-error");
                 }); 
@@ -180,21 +224,44 @@
             }
 
             // 修改父窗口数据库 tr 为成功样式
-            function change_parent_database_tr(inception_database_id, class_color) {
-                attr = $("#inception_database_" + inception_database_id, window.parent.document).attr("class");
-                $("#inception_database_" + inception_database_id, window.parent.document).removeClass(attr);
-                $("#inception_database_" + inception_database_id, window.parent.document).addClass(class_color);
+            function change_parent_business_tr(inception_business_id, class_color) {
+                attr = $("#inception_business_" + inception_business_id, window.parent.document).attr("class");
+                $("#inception_business_" + inception_business_id, window.parent.document).removeClass(attr);
+                $("#inception_business_" + inception_business_id, window.parent.document).addClass(class_color);
             }
 
             // 修改父窗口数据库 按钮 为成功样式
-            function change_parent_database_button_ok(inception_database_id) {
+            function change_parent_business_button_ok(inception_business_id) {
                 // 构造成功显示标签
                 html_str = "";
                 html_str += '<a>';
                 html_str += '    <i class="fa fa-check text-navy"></i>';
                 html_str += '    成功';
                 html_str += '</a>';
-                $("#inception_database_button_td_" + inception_database_id, window.parent.document).html(html_str);
+                $("#inception_business_button_td_" + inception_business_id, window.parent.document).html(html_str);
+            }
+
+            // 修改业务组执行状态
+            function change_execute_status(inception_business_id, execute_status) {
+                $.ajax({
+                    url: "{% url 'dbmp_inception_business_ajax_change_execute_status' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        inception_business_id: inception_business_id,
+                        execute_status: execute_status
+                    }
+                }).done(function(data) { 
+                    if(data.is_ok == true) {
+                        window.jqconsole.Write("业务组状态修改成功 \n", "jqconsole-output-success");
+                    } else {
+                        window.jqconsole.Write("业务组状态修改失败 \n", "jqconsole-output-error");
+                        window.jqconsole.Write(data.err_msg + "\n", "jqconsole-output-error");
+                    }
+                }).error(function(data) { 
+                    window.jqconsole.Write("请求修改业务业务组状态失败", "jqconsole-output-success");
+                    window.jqconsole.Write(data.err_msg + "\n", "jqconsole-output-error");
+                }); 
             }
 
         </script>

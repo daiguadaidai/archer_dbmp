@@ -7,6 +7,28 @@ class SQLDbmpInceptionBusiness(object):
     def __ini__(self):
         pass
 
+    def get_business_by_id(self, inception_business_id):
+        """获得审核业务组信息"""
+        if not inception_business_id:
+            return None
+
+        sql = """
+            SELECT dib.inception_business_id,
+                dib.inception_record_id,
+                dib.mysql_business_id,
+                dib.execute_status,
+                dmb.name
+            FROM dbmp_inception_business AS dib
+            INNER JOIN dbmp_mysql_business AS dmb
+                ON dib.mysql_business_id = dmb.mysql_business_id
+                AND dib.inception_business_id = {inception_business_id}
+        """.format(inception_business_id = inception_business_id)
+
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = self._dict_fetchone(cursor)
+        return results
+
     def find_businesses_by_inception_record_id(self, inception_record_id):
         """获得审核数据库信息"""
         if not inception_record_id:

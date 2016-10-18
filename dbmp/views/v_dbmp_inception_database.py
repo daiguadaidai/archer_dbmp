@@ -26,7 +26,7 @@ import logging
 logger = logging.getLogger('default')
 
 # Create your views here.
-
+@DecoratorTool.clean_alert_message
 def run_inception(request):
     """转调到执行SQL窗口"""
     params = {}
@@ -51,7 +51,6 @@ def run_inception(request):
             # DbmpInceptionDatabase, DbmpMysqlDatabase, DbmpMysqlInstance 信息
             dbmp_inception_database = s_dbmp_inception_database.get_database_by_id_1(
                                                                      inception_database_id)
-            print dbmp_inception_database
             params['dbmp_inception_database'] = dbmp_inception_database
 
             if not dbmp_inception_database:
@@ -92,6 +91,7 @@ def ajax_run_inception(request):
     params = {}
     params['is_ok'] = False
     params['inception_info'] = ''
+    params['err_msg'] = ''
 
     if request.method == 'POST':
         try:
@@ -103,13 +103,13 @@ def ajax_run_inception(request):
                                                                      inception_database_id)
             if not dbmp_inception_database:
                 logger.error('没有获取到执行SQL的数据库信息')
-                params['inception_info'] = '没有获取到执行SQL的数据库信息'
+                params['err_msg'] = '没有获取到执行SQL的数据库信息'
                 respons_data = json.dumps(params)
                 return HttpResponse(respons_data, content_type='application/json')
         except:
             logger.error(traceback.format_exc())
-            params['inception_info'] = '(获取执行SQL的数据库信息错误)'
-            params['inception_info'] += traceback.format_exc()
+            params['err_msg'] = '(获取执行SQL的数据库信息错误)'
+            params['err_msg'] += traceback.format_exc()
             respons_data = json.dumps(params)
             return HttpResponse(respons_data, content_type='application/json')
 
@@ -124,7 +124,31 @@ def ajax_run_inception(request):
                                     db_name = dbmp_inception_database.get('db_name', ''),
                                     sql_text = dbmp_inception_database.get('sql_text', ''),
                                     charset = dbmp_inception_database.get('charset', 'utf8'))
+        # 更新执行数据库状态
+        execute_status = 0
+        if is_ok:
+            errlevel = max([item.get('errlevel') for item in inception_info])
+            # 获取执行状态
+            if errlevel == 0:
+                execute_status = 2 # 成功
+            elif errlevel == 1 or errlevel == 2 or not inception_info:
+                execute_status = 3 # 失败
+        else:
+            execute_status = 3 # 失败
+            params['err_msg'] = inception_info
+
+        try:
+            # 更新 dbmp_inception_database 状态
+            DbmpInceptionDatabase.objects.filter(
+                inception_database_id = inception_database_id).update(
+                                            execute_status = execute_status)
+        except Exception, e:
+            logger.info(traceback.format_exc())
+            logger.info('执行SQL成功, 但是更新失败执行sql数据库状态失败')
+            params['err_msg'].append('执行SQL成功, 但是更新失败执行sql数据库状态失败')
+
         params['is_ok'] = is_ok
+        params['execute_status'] = execute_status
         params['inception_info'] = inception_info
 
     respons_data = json.dumps(params)
