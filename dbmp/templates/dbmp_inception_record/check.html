@@ -12,7 +12,21 @@
 <!-- 显示该页面标题 -->
 {% block app_title %}SQL审核(check){% endblock %}
 
+<!-- 其他元素模块 -->
 {% block top_element %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="row fontawesome-icon-list">
+            <!-- 添加返回需要上线列表 -->
+            <div class="fa-hover  col-md-5">
+                <a href="{% url 'dbmp_inception_record_index' %}">
+                    <i class="fa fa-list"></i>
+                    上线SQL列表
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 <!-- 显示该页面主要展示的内容 -->

@@ -30,9 +30,19 @@ class FieldDbmpInceptionRecord(object):
     def inc_rec_execute_status_color(self):
         """MySQL实例正在运行状态 对应显示的颜色"""
         value = (
-            (1, 'success'),
-            (2, 'primary'),
+            (1, ''),
+            (2, 'success'),
             (3, 'danger'),
             (4, 'warning'),
+        )
+        return value
+
+    @classmethod
+    def inc_rec_inception_target(self):
+        """MySQL实例正在运行状态 对应显示的颜色"""
+        value = (
+            (1, '仅数据库'),
+            (2, '仅业务组'),
+            (3, '混合(数据库/业务组)'),
         )
         return value

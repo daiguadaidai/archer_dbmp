@@ -19,7 +19,7 @@
         <div class="row fontawesome-icon-list">
             <!-- 添加返回需要上线列表 -->
             <div class="fa-hover  col-md-5">
-                <a href="{% url 'dbmp_mysql_business_index' %}">
+                <a href="{% url 'dbmp_inception_record_index' %}">
                     <i class="fa fa-list"></i>
                     上线SQL列表
                 </a>
@@ -27,7 +27,6 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 <!-- 显示该页面主要展示的内容 -->
@@ -445,8 +444,36 @@
 
         // 查看审核业务组详情
         function inception_business_detail_list(inception_record_id, inception_business_id) {
-            console.log(inception_record_id);
-            console.log(inception_business_id);
+            check_iframe_name = window.name; // 获得当前 iframe name
+            url = "{% url 'dbmp_inception_business_detail_index' %}";
+            url += "?inception_business_id=" + inception_business_id;
+            open_iframe_window("业务组明细", url);
+        }
+
+        // 打开一个 iframe 窗口
+        function open_iframe_window(tab_name, url) {
+            var timestamp = (new Date()).valueOf(); 
+            iframe_name = "name" + timestamp;
+        
+            // iframe 菜单 标签
+            iframe_tab = '';
+            iframe_tab += '<a href="javascript:;" class="active J_menuTab" ';
+            iframe_tab += 'data-id="'+ timestamp +'">' + tab_name;
+            iframe_tab += '<i class="fa fa-times-circle"></i>';
+            iframe_tab += '</a>';
+        
+            // iframe 内容
+            iframe_content = '';
+            iframe_content += '<iframe class="J_iframe" name="'+ iframe_name +'" width="100%" height="100%" ';
+            iframe_content += 'src="' + url + '" frameborder="0" ';
+            iframe_content += 'data-id="'+ timestamp +'" seamless style="display: inline;">';
+            iframe_content += '</iframe>';
+        
+            // 打开标签和 iframe
+            $(".page-tabs .page-tabs-content .J_menuTab", parent.document).removeClass('active');
+            $(".page-tabs .page-tabs-content", parent.document).append(iframe_tab);
+            $("#content-main .J_iframe", parent.document).css('display','none'); 
+            $("#content-main", parent.document).append(iframe_content);
         }
     </script>
 {% endblock %}

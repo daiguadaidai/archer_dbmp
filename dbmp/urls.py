@@ -85,11 +85,13 @@ urlpatterns = [
     url(r'^dbmp_inception_instance/ajax_get_all/$', dbmp_inception_instance.ajax_get_all, name='dbmp_inception_instance_ajax_get_all'),
 
     # dbmp_inception_record
+    url(r'^dbmp_inception_record/index/$', dbmp_inception_record.index, name='dbmp_inception_record_index'),
     url(r'^dbmp_inception_record/check/$', dbmp_inception_record.check, name='dbmp_inception_record_check'),
     url(r'^dbmp_inception_record/add/$', dbmp_inception_record.add, name='dbmp_inception_record_add'),
     url(r'^dbmp_inception_record/view/$', dbmp_inception_record.view, name='dbmp_inception_record_view'),
     url(r'^dbmp_inception_record/ajax_check/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_check'),
     url(r'^dbmp_inception_record/ajax_add/$', dbmp_inception_record.ajax_add, name='dbmp_inception_record_ajax_add'),
+    url(r'^dbmp_inception_record/ajax_check_status/$', dbmp_inception_record.ajax_check_status, name='dbmp_inception_record_ajax_check_status'),
 
     # dbmp_inception_database
     url(r'^dbmp_inception_database/ajax_find_by_inception_record_id/$', dbmp_inception_database.ajax_find_by_inception_record_id, name='dbmp_inception_database_ajax_find_by_inception_record_id'),
@@ -102,5 +104,7 @@ urlpatterns = [
     url(r'^dbmp_inception_business/ajax_change_execute_status/$', dbmp_inception_business.ajax_change_execute_status, name='dbmp_inception_business_ajax_change_execute_status'),
 
     # dbmp_inception_business_detail
+    url(r'^dbmp_inception_business_detail/index/$', dbmp_inception_business_detail.index, name='dbmp_inception_business_detail_index'),
     url(r'^dbmp_inception_business_detail/ajax_run_inception/$', dbmp_inception_business_detail.ajax_run_inception, name='dbmp_inception_business_detail_ajax_run_inception'),
+    url(r'^dbmp_inception_business_detail/run_inception/$', dbmp_inception_business_detail.run_inception, name='dbmp_inception_business_detail_run_inception'),
 ]

@@ -18,3 +18,10 @@ def f_inc_rec_execute_status_color(num):
     execute_status_color = dict(FieldDbmpInceptionRecord.inc_rec_execute_status_color())
  
     return execute_status_color.get(num, 'default')
+
+@register.filter(name='f_inc_rec_inception_target') 
+def f_inc_rec_inception_target(num):
+    """通过数字获得Model的状态值"""
+    inception_target = dict(FieldDbmpInceptionRecord.inc_rec_inception_target())
+
+    return inception_target.get(num, '未知')

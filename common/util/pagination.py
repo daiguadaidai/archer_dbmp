@@ -10,7 +10,7 @@ class Pagination(object):
     def create_pagination(self, from_name='', model_name='',
                           cur_page=1, start_page_omit_symbol = '...',
                           end_page_omit_symbol = '...', one_page_data_size=10,
-                          show_page_item_len=9, where_dict={}):
+                          show_page_item_len=9, where_dict={}, order_by=[]):
         """通过给的model和分页参数对相关model进行分页
         Args: 
             from_name: 导入模块的 from后面的参数
@@ -98,6 +98,13 @@ class Pagination(object):
             start_pos = (cur_page - 1) * one_page_data_size  
             end_pos = start_pos + one_page_data_size  
 
+            # 判断是否需要排序
+            if order_by:
+                order_by_str = '.order_by({order}){op}'.format(
+                                                order = ','.join(order_by),
+                                                op = '{op}')
+                find_objs_filter_str = find_objs_filter_str.format(
+                                              op = order_by_str)
             # 查找需要的model数据
             find_objs_page_str = find_objs_filter_str.format(
                              op = '.all()[{start_pos}:{end_pos}]')

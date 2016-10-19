@@ -7,7 +7,35 @@ class SQLDbmpInceptionBusinessDetail(object):
     def __ini__(self):
         pass
 
-    def get_business_detail_by_id(self, inception_business_detail_id):
+    def get_business_detail_by_id_1(self, inception_business_detail_id):
+        """获得审核数据库信息
+        DbmpInceptionBusinessDetail, DbmpMysqlDatabase, DbmpMysqlInstance 信息
+        """
+        if not inception_business_detail_id:
+            return None
+
+        sql = """
+            SELECT dibd.inception_business_detail_id,
+                dibd.inception_record_id,
+                dibd.mysql_database_id,
+                dibd.execute_status,
+                dmd.name AS name,
+                INET_NTOA(dmi.host) AS host,
+                dmi.port AS port
+            FROM dbmp_inception_business_detail AS dibd
+            INNER JOIN dbmp_mysql_database AS dmd
+                ON dibd.mysql_database_id = dmd.mysql_database_id
+                AND dibd.inception_business_detail_id = {inception_business_detail_id}
+            INNER JOIN dbmp_mysql_instance AS dmi
+                ON dmd.mysql_instance_id = dmi.mysql_instance_id
+        """.format(inception_business_detail_id = inception_business_detail_id)
+
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = self._dict_fetchone(cursor)
+        return results
+
+    def get_business_detail_by_id_2(self, inception_business_detail_id):
         """获得审核数据库信息
         DbmpInceptionDatabase, DbmpInceptionRecord, DbmpInceptionIncetance
         DbmpMysqlDatabase, DbmpMysqlInstance 信息
@@ -47,7 +75,7 @@ class SQLDbmpInceptionBusinessDetail(object):
         return results
 
     def find_need_inception_detail_by_business_id(self, inception_business_id):
-        """获得审核业务组明细信息"""
+        """获得需要审核业务组明细信息"""
         if not inception_business_id:
             return None
 
@@ -62,8 +90,37 @@ class SQLDbmpInceptionBusinessDetail(object):
             FROM dbmp_inception_business_detail AS dibd
             INNER JOIN dbmp_mysql_business AS dmb
                 ON dibd.mysql_business_id = dmb.mysql_business_id
-                AND dibd.inception_business_id = 1
+                AND dibd.inception_business_id = {inception_business_id}
                 AND dibd.execute_status <> 2
+            INNER JOIN dbmp_mysql_database AS dmd
+                ON dibd.mysql_database_id = dmd.mysql_database_id
+            INNER JOIN dbmp_mysql_instance AS dmi
+                ON dmd.mysql_instance_id = dmi.mysql_instance_id
+        """.format(inception_business_id = inception_business_id)
+
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = self._dict_fetchall(cursor)
+        return results
+
+
+    def find_business_detail_by_business_id(self, inception_business_id):
+        """获得所有审核业务组明细信息"""
+        if not inception_business_id:
+            return None
+
+        sql = """
+            SELECT dibd.inception_business_detail_id,
+                dibd.mysql_business_id,
+                dibd.execute_status,
+                dmd.name AS db_name,
+                INET_NTOA(dmi.host) AS host,
+                dmi.port,
+                dmb.name AS business_name
+            FROM dbmp_inception_business_detail AS dibd
+            INNER JOIN dbmp_mysql_business AS dmb
+                ON dibd.mysql_business_id = dmb.mysql_business_id
+                AND dibd.inception_business_id = {inception_business_id}
             INNER JOIN dbmp_mysql_database AS dmd
                 ON dibd.mysql_database_id = dmd.mysql_database_id
             INNER JOIN dbmp_mysql_instance AS dmi

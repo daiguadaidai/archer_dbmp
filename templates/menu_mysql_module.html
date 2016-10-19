@@ -16,7 +16,14 @@
         </li>
         <li><a class="J_menuItem" href="{% url 'dbmp_mysql_business_index' %}">业务组</a>
         </li>
-        <li><a class="J_menuItem" href="{% url 'dbmp_inception_record_check' %}">审核上线</a>
+        <li>
+            <a href="#">SQL审核<span class="fa arrow"></span></a>
+            <ul class="nav nav-third-level">
+                <li><a class="J_menuItem" href="{% url 'dbmp_inception_record_index' %}">SQL列表</a>
+                </li>
+                <li><a class="J_menuItem" href="{% url 'dbmp_inception_record_check' %}">添加SQL</a>
+                </li>
+            </ul>
         </li>
         <li>
             <a href="#">运维工具<span class="fa arrow"></span></a>

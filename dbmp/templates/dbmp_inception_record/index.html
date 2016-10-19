@@ -1,10 +1,12 @@
 {%extends 'dbmp_base.html' %}
 
 {% load staticfiles %}
+{% load filters_dbmp_inception_record %}
 
 <!-- 添加该页面自己需要的 css 模板 -->
 {% block css %}
     <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
     <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
 {% endblock %}
 
@@ -16,10 +18,10 @@
 {% block top_element %}
 <!-- 业务组按钮 -->
 <div class="row fontawesome-icon-list">
-    <div class="fa-hover col-md-2 col-sm-3 pull-right">
-        <a href="{% url 'dbmp_mysql_business_add' %}">
+    <div class="fa-hover col-md-2 col-sm-3">
+        <a href="{% url 'dbmp_inception_record_check' %}">
             <i class="fa fa-plus-square"></i>
-            添加业务组
+            添加审核SQL
         </a>
     </div>
 </div>
@@ -31,47 +33,53 @@
     <thead>
         <tr>
             <th class="text-center">#</th>
-            <th class="text-center">组名称</th>
+            <th class="text-center">标签</th>
             <th class="text-center">备注</th>
-            <th class="text-center">创建时间</th>
-            <th class="text-center">更新时间</th>
+            <th class="text-center">审核对象</th>
+            <th class="col-xs-2" data-hide="all">审核SQL</th>
+            <th class="col-xs-2" data-hide="all">字符集</th>
+            <th class="col-xs-2" data-hide="all">创建时间</th>
+            <th class="col-xs-2" data-hide="all">更新时间</th>
             <th class="text-center col-xs-3">操作</th>
-            <th data-hide="all">更多操作</th>
         </tr>
     </thead>
 
     <tbody>
-        {% for dbmp_mysql_business in pagination.objs %}
-        <tr>
-            <td class="text-center">{{ forloop.counter }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.name }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.remark }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.create_time | date:"Y-m-d H:i:s" }}</td>
-            <td class="text-center">{{ dbmp_mysql_business.update_time | date:"Y-m-d H:i:s" }}</td>
+        {% for dbmp_inception_record in pagination.objs %}
+        <tr class="{{ dbmp_inception_record.execute_status | f_inc_rec_execute_status_color }}"
+            id="inception_record_tr_{{ dbmp_inception_record.inception_record_id }}">
             <td class="text-center">
-                <a onclick="dbmp_mysql_business_delete({{ dbmp_mysql_business.mysql_business_id }}, {{ pagination.cur_page }})"
-                   type="button" class="btn btn-danger btn-xs">
-                    <i class="fa fa-trash"></i>
-                    删除
-                </a>
-                <a href="{% url 'dbmp_mysql_business_edit' %}?mysql_business_id={{ dbmp_mysql_business.mysql_business_id }}" 
-                   type="button" class="btn btn-primary btn-xs">
-                    <i class="fa fa-edit"></i>
-                    编辑
-                </a>
-                <a href="{% url 'dbmp_mysql_business_view' %}?mysql_business_id={{ dbmp_mysql_business.mysql_business_id }}" 
-                   type="button" class="btn btn-info btn-xs">
+                {{ forloop.counter }}
+                <input class="check_status" type="hidden" value="{{ dbmp_inception_record.inception_record_id }}">
+                <input id="execute_status_{{ dbmp_inception_record.inception_record_id }}" type="hidden"
+                       value="{{ dbmp_inception_record.execute_status }}" />
+            </td>
+            <td class="text-center">{{ dbmp_inception_record.tag }}</td>
+            <td class="text-center">{{ dbmp_inception_record.remark }}</td>
+            <td class="text-center">{{ dbmp_inception_record.inception_target | f_inc_rec_inception_target }}</td>
+            <td class="text-center"><pre>{{ dbmp_inception_record.sql_text }}</pre></td>
+            <td class="text-center"><code>{{ dbmp_inception_record.charset }}</code></td>
+            <td class="text-center"><code>{{ dbmp_inception_record.create_time | date:"Y-m-d H:i:s" }}</code></td>
+            <td class="text-center"><code>{{ dbmp_inception_record.update_time | date:"Y-m-d H:i:s" }}</code></td>
+            <td class="text-center" id="inception_record_button_td_{{ dbmp_inception_record.inception_record_id }}">
+                <a type="button" class="btn btn-info btn-xs btn-outline"
+                   href="{% url 'dbmp_inception_record_view' %}?inception_record_id={{ dbmp_inception_record.inception_record_id }}">
                     <i class="fa fa-eye"></i>
                     查看
                 </a>
-            </td>
-            <td class="text-center">
-                <button type="button" id="business_detail_{{ dbmp_mysql_business.mysql_business_id }}"
-                        class="more_btn btn btn-success btn-xs btn-outline"
-                        onclick="business_detail({{ dbmp_mysql_business.mysql_business_id }})">
-                    <i class="fa fa-cubes"></i>
-                    业务组数据库列表
-                </button>
+                {% if dbmp_inception_record.execute_status == 2 %}
+                    <a id="execute_button_{{ dbmp_inception_record.inception_record_id }}">
+                        <i class="fa fa-check text-navy"></i>
+                        成功
+                    </a>
+                {% else %}
+                    <button type="button" class="btn btn-primary btn-xs btn-outline"
+                        onclick="run_inception({{ dbmp_inception_record.inception_record_id }})"
+                        id="execute_button_{{ dbmp_inception_record.inception_record_id }}"
+                        <i class="fa fa-chevron-circle-right"></i>
+                        执行
+                    </button>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
@@ -129,6 +137,7 @@
 {% block js %}
     <script src="{% static 'js/content.min.js' %}"></script>
     <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
     <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
     <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
 
@@ -139,74 +148,90 @@
         $(document).ready(function(){
             // 表格插件
             $(".footable").footable();
+
+            // 检查审核记录的状态并改变
+            $(".check_status").each(function(){
+                check_status(this);
+            });
         });
 
-        //删除 dbmp_mysql_business
-        function dbmp_mysql_business_delete(mysql_business_id, cur_page) {
-            $(".confirm").unbind("click");
-            swal({
-                title: "您确定要删除这条信息吗?",
-                text: "删除后将无法恢复，请谨慎操作！",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "删除",
-                closeOnConfirm: false
-            }, function () {
-                $.ajax({
-                    url: "{% url 'dbmp_mysql_business_ajax_delete' %}",
-                    type: "POST",
-                    dataType: "json",
-                    data: {
-                        mysql_business_id: mysql_business_id
+        // 检查审核记录状态并改变
+        function check_status(obj) {
+            inception_record_id = $(obj).val();
+            inception_record_tr_id = "inception_record_tr_" + inception_record_id; // 行id
+            inception_record_button_td_id = "inception_record_button_td_" + inception_record_id; // 操作按钮td 的id
+            execute_button_id = "execute_button_" + inception_record_id; // 执行按钮ID
+            // 获得执行状态
+            execute_status = $("#execute_status_" + inception_record_id).val();
+            $.ajax({
+                url: "{% url 'dbmp_inception_record_ajax_check_status' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    inception_record_id: inception_record_id
+                }
+            }).done(function(data) { 
+                if(data.is_ok == 1){
+                    toastr.error('没有记录');
+                } else if(data.is_ok = 2) {
+                    $("#execute_status_" + inception_record_id).val(data.execute_status);
+                    if(data.execute_status == execute_status) { // 执行状态不变什么都不操作
+                    } else if(data.execute_status == 1) { // 没有执行
+                        change_tr_color(inception_record_tr_id, "");
+                        change_button(inception_record_button_td_id, execute_button_id,
+                                      inception_record_id, '')
+                    } else if(data.execute_status == 2) { // 全部执行成功
+                        change_tr_color(inception_record_tr_id, "success");
+                        change_button(inception_record_button_td_id, execute_button_id,
+                                      inception_record_id, 'success')
+                    } else if(data.execute_status == 3) { // 全部执行失败
+                        change_tr_color(inception_record_tr_id, "danger");
+                        change_button(inception_record_button_td_id, execute_button_id,
+                                      inception_record_id, '')
+                    } else if(data.execute_status == 4) { // 只执行了部分
+                        change_tr_color(inception_record_tr_id, "warning");
+                        change_button(inception_record_button_td_id, execute_button_id,
+                                      inception_record_id, '')
                     }
-                }).done(function(data) { 
-                    if(data == true) {
-                        swal("删除成功!", "已成功删除数据！", "success");
-                        $(".confirm").click(function(){
-                            setTimeout("location.reload()", 500);
-                        });
-                    } else {
-                        swal("对不起!", "删除数据失败了!", "error");
-                    }
-                }).error(function(data) { 
-                    swal("对不起!", "删除操作失败了(调用删除方法失败)!", "error");
-                });
+                } else if(data.is_ok = 3) {
+                    toastr.error("程序错误");
+                }
+            }).error(function(data) { 
+                toastr.error("请求获取审核数据库失败");
             });
         }
 
-        // 打开一个业务数据库列表标记页面
-        function business_detail(mysql_business_id) {
-            url = "";
-            url += "{% url 'dbmp_mysql_business_detail_index' %}";
-            url += "?mysql_business_id=" + mysql_business_id;
-            open_iframe_window("业务数据库列表", url);
+        // 修改表格行颜色
+        function change_tr_color(id, class_color) {
+            attr = $("#" + id).attr("class");
+            $("#" + id).removeClass(attr);
+            $("#" + id).addClass(class_color);
         }
 
-        // 打开一个 iframe 窗口
-        function open_iframe_window(tab_name, url) {
-            var timestamp = (new Date()).valueOf(); 
-            iframe_name = "name" + timestamp;
+        function change_button(td_id, button_id, inception_record_id, type) {
+            button_html_str = "";
+            if (type == "success") {
+                button_html_str += '<a id="execute_button_' + inception_record_id + '">';
+                button_html_str += '    <i class="fa fa-check text-navy"></i>';
+                button_html_str += '    成功';
+                button_html_str += '</a>';
+            } else {
+                button_html_str += '<button type="button" class="btn btn-primary btn-xs btn-outline"';
+                button_html_str += '        onclick="run_inception(' + inception_record_id + ')"';
+                button_html_str += '        id="execute_button_' + inception_record_id + '">';
+                button_html_str += '    <i class="fa fa-chevron-circle-right"></i>';
+                button_html_str += '    执行';
+                button_html_str += '</button>';
+            }
+            // 删除原有按钮
+            $("#" + button_id).remove();
+            // 添加新按钮
+            $("#" + td_id).append(button_html_str);
+        }
 
-            // iframe 菜单 标签
-            iframe_tab = '';
-            iframe_tab += '<a href="javascript:;" class="active J_menuTab" ';
-            iframe_tab += 'data-id="'+ timestamp +'">' + tab_name;
-            iframe_tab += '<i class="fa fa-times-circle"></i>';
-            iframe_tab += '</a>';
+        // 执行审核
+        function run_inception() {
 
-            // iframe 内容
-            iframe_content = '';
-            iframe_content += '<iframe class="J_iframe" name="'+ iframe_name +'" width="100%" height="100%" ';
-            iframe_content += 'src="' + url + '" frameborder="0" ';
-            iframe_content += 'data-id="'+ timestamp +'" seamless style="display: inline;">';
-            iframe_content += '</iframe>';
-
-            // 打开标签和 iframe
-            $(".page-tabs .page-tabs-content .J_menuTab", parent.document).removeClass('active');
-            $(".page-tabs .page-tabs-content", parent.document).append(iframe_tab);
-            $("#content-main .J_iframe", parent.document).css('display','none'); 
-            $("#content-main", parent.document).append(iframe_content);
         }
     </script>
 {% endblock %}

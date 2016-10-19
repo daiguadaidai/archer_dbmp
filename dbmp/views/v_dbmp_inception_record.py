@@ -27,6 +27,29 @@ import logging
 logger = logging.getLogger('default')
 
 # Create your views here.
+@DecoratorTool.get_request_alert_message
+def index(request):
+    params = {}
+
+    try:  
+        cur_page = int(request.GET.get('cur_page', '1'))  
+    except ValueError:  
+        cur_page = 1
+
+    # 创建分页数据
+    pagination = Pagination.create_pagination(
+                             from_name='dbmp.models.dbmp_inception_record', 
+                             model_name='DbmpInceptionRecord',
+                             cur_page=cur_page,
+                             start_page_omit_symbol = '...',
+                             end_page_omit_symbol = '...',
+                             one_page_data_size = 10,
+                             show_page_item_len = 9,
+                             order_by = ['"-create_time"'])
+    # 获得MySQL实例列表
+    params['pagination'] = pagination
+    
+    return render(request, 'dbmp_inception_record/index.html', params)
 
 @DecoratorTool.get_request_alert_message
 def view(request):
@@ -312,5 +335,103 @@ def ajax_add(request):
         except:
             logger.info(traceback.format_exc())
 
+    respons_data = json.dumps(params)
+    return HttpResponse(respons_data, content_type='application/json')
+
+def ajax_check_status(request):
+    """检查并改变SQL记录状态
+    Return:
+        params['is_ok']: 1记录不存在, 2成功, 3错误
+    """
+    params = {}
+    params['is_ok'] = 1
+    params['error_msg'] = ''
+    execute_status = 1
+
+    if request.method == 'POST':
+        try:    
+            inception_record_id = int(request.POST.get('inception_record_id', '0'))
+
+            try:
+                # 获取数据库信息
+                dbmp_inception_record = DbmpInceptionRecord.objects.values(
+                                               'inception_target').get(
+                                          inception_record_id = inception_record_id)
+            except DbmpInceptionRecord.DoesNotExist:
+                logger.error(traceback.format_exc())
+                error_msg = '对不起! 找不到相关审核数据 inception_record_id={inception_record_id}'.format(
+                                                            id = inception_record_id)
+                logger.error(error_msg)
+                params['error_msg'] = error_msg
+                respons_data = json.dumps(params)
+                return HttpResponse(respons_data, content_type='application/json')
+
+            # 所有审核数据库的状态(dbmp_inception_database)
+            database_execute_status = []
+            # 审核业务组的所有状态(dbmp_inception_business)
+            business_execute_status = []
+            if dbmp_inception_record.get('inception_target') in [1, 3]: # 数据库和混合类型
+                try:
+                    dbmp_inception_databases = DbmpInceptionDatabase.objects.values(
+                                                    'execute_status').filter(
+                                        inception_record_id = inception_record_id)
+                    database_execute_status = [database.get('execute_status') for database in dbmp_inception_databases]
+                except:
+                    logger.error(traceback.format_exc())
+                    params['error_msg'] = '查找审核数据库(DbmpInceptionDatabase)发生错误'
+            if dbmp_inception_record.get('inception_target') in [2, 3]: # 业务组和混合类型
+                try:
+                    dbmp_inception_businesses = DbmpInceptionBusiness.objects.values(
+                                                     'execute_status').filter(
+                                        inception_record_id = inception_record_id)
+                    business_execute_status = [business.get('execute_status') for business in dbmp_inception_businesses]
+                except:
+                    logger.error(traceback.format_exc())
+                    params['error_msg'] = '查找审核数据库(DbmpInceptionBusiness)发生错误'
+            # 合并数据库和业务组的状态, 并且判断最终状态 
+            combination_execute_status = set(database_execute_status) | set(business_execute_status)
+
+            if len(combination_execute_status) > 1: # 如果数组中有两种值说明, 未全部执行
+                execute_status = 4
+            elif len(combination_execute_status) == 1:# 只有一种值再判断全成还是全失败 
+                if 1 in combination_execute_status: # 没执行过
+                    execute_status = 1
+                elif 2 in combination_execute_status:
+                    execute_status = 2
+                elif 3 in combination_execute_status:
+                    execute_status = 3
+                elif 4 in combination_execute_status:
+                    execute_status = 4
+            else:
+                error_msg = '没有找到相关SQL审核状态, 可能该审核记录不存在'
+                params['error_msg'] = error_msg
+                logger.error(error_msg)
+                respons_data = json.dumps(params)
+                return HttpResponse(respons_data, content_type='application/json')
+
+            # 更新审核记录状态dbmp_inception_record
+            try:
+                DbmpInceptionRecord.objects.filter(
+                    inception_record_id = inception_record_id).update(
+                                                 execute_status = execute_status)
+            except Exception, e:
+                params['is_ok'] = 3
+                logger.info(traceback.format_exc())
+                # 保存失败转跳会原页面
+                params['error_msg'] = '状态保存数据库失败({execute_status})'.format(
+                                                      execute_status = execute_status)
+                logger.error(error_msg)
+                respons_data = json.dumps(params)
+                return HttpResponse(respons_data, content_type='application/json')
+            params['execute_status'] = execute_status
+            params['is_ok'] = 2
+        except:
+            params['is_ok'] = 3
+            logger.error(traceback.format_exc())
+            error_msg = '程序出错, 请查看日志'
+            logger.error(error_msg)
+            respons_data = json.dumps(params)
+            return HttpResponse(respons_data, content_type='application/json')
+     
     respons_data = json.dumps(params)
     return HttpResponse(respons_data, content_type='application/json')
