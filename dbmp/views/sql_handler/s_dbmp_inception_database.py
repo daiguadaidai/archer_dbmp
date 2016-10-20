@@ -33,6 +33,33 @@ class SQLDbmpInceptionDatabase(object):
         results = self._dict_fetchall(cursor)
         return results
 
+    def find_need_inception_database_record_id(self, inception_record_id):
+        """获取需要审核的数据库"""
+        if not inception_record_id:
+            return None
+
+        sql = """
+            SELECT did.inception_database_id,
+                did.inception_record_id,
+                did.mysql_database_id,
+                did.execute_status,
+                dmd.name,
+                INET_NTOA(dmi.host) AS host,
+                dmi.port
+            FROM dbmp_inception_database AS did
+            INNER JOIN dbmp_mysql_database AS dmd
+                ON did.mysql_database_id = dmd.mysql_database_id
+                AND did.inception_record_id = {inception_record_id}
+                AND did.execute_status <> 2
+            INNER JOIN dbmp_mysql_instance AS dmi
+                ON dmd.mysql_instance_id = dmi.mysql_instance_id
+        """.format(inception_record_id = inception_record_id)
+
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = self._dict_fetchall(cursor)
+        return results
+
     def get_database_by_id_1(self, inception_database_id):
         """获得审核数据库信息
         DbmpInceptionDatabase, DbmpMysqlDatabase, DbmpMysqlInstance       

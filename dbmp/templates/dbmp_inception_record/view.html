@@ -81,6 +81,17 @@
     <div class="row">
         <pre>{{ dbmp_inception_record.sql_text }}</pre>
     </div>
+
+    {% if dbmp_inception_record.execute_status != 2 %}
+    
+    <div class="row">
+        <button id="run_inception_button_all" type="button" class="btn btn-primary btn-outline"
+                onclick="run_inception({{ dbmp_inception_record.inception_record_id }})">
+            <i class="fa fa-chevron-circle-right"></i>
+            执行
+        </button>
+    </div>
+    {% endif %}
 <section>
 
 {% endblock %}
@@ -354,6 +365,49 @@
             button_html += '    执行';
             button_html += '</button>';
             return button_html;
+        }
+
+        // 执行所有SQL(数据库/业务组)
+        function run_inception() {
+            alert_title = "你确定要执行SQL?";
+            alert_text = "";
+            alert_text += "标签: <code>{{ dbmp_inception_record.tag }}</code> <br/>";
+            alert_text += "备注: {{ dbmp_inception_record.remark }}";
+            window_title = "(数据库/业务组)执行SQL";
+            url = "{% url 'dbmp_inception_record_run_inception_in_view' %}";
+            url += "?inception_record_id=" + inception_record_id;
+            swal({
+                title: alert_title,
+                text: alert_text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: window_title,
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "0px", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: url
+                });
+            });
         }
 
         // 执行数据库审核

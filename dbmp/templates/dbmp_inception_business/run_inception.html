@@ -106,9 +106,9 @@
                         header += "{{ msg }} \n";
                     {% endfor %}
                 {% endif %}
-                    header += "执行SQL业务组信息: \n";
-                    header += "  业务组名: {{ dbmp_inception_business.name }}" + "\n";
-                    header += " \n";
+                header += "执行SQL业务组信息: \n";
+                header += "  业务组名: {{ dbmp_inception_business.name }}" + "\n";
+                header += " \n";
                 window.jqconsole = $("#console").jqconsole(header, "> ");
                 
                 // Handle a command.

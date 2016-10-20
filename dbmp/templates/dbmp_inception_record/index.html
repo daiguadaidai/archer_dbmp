@@ -36,9 +36,9 @@
             <th class="text-center">标签</th>
             <th class="text-center">备注</th>
             <th class="text-center">审核对象</th>
+            <th class="text-center">创建时间</th>
             <th class="col-xs-2" data-hide="all">审核SQL</th>
             <th class="col-xs-2" data-hide="all">字符集</th>
-            <th class="col-xs-2" data-hide="all">创建时间</th>
             <th class="col-xs-2" data-hide="all">更新时间</th>
             <th class="text-center col-xs-3">操作</th>
         </tr>
@@ -54,12 +54,12 @@
                 <input id="execute_status_{{ dbmp_inception_record.inception_record_id }}" type="hidden"
                        value="{{ dbmp_inception_record.execute_status }}" />
             </td>
-            <td class="text-center">{{ dbmp_inception_record.tag }}</td>
-            <td class="text-center">{{ dbmp_inception_record.remark }}</td>
-            <td class="text-center">{{ dbmp_inception_record.inception_target | f_inc_rec_inception_target }}</td>
+            <td class="text-center" id="inception_record_tag_{{ dbmp_inception_record.inception_record_id }}">{{ dbmp_inception_record.tag }}</td>
+            <td class="text-center" id="inception_record_remark_{{ dbmp_inception_record.inception_record_id }}">{{ dbmp_inception_record.remark }}</td>
+            <td class="text-center" id="inception_record_target_{{ dbmp_inception_record.inception_record_id }}">{{ dbmp_inception_record.inception_target | f_inc_rec_inception_target }}</td>
+            <td class="text-center"><code>{{ dbmp_inception_record.create_time | date:"Y-m-d H:i:s" }}</code></td>
             <td class="text-center"><pre>{{ dbmp_inception_record.sql_text }}</pre></td>
             <td class="text-center"><code>{{ dbmp_inception_record.charset }}</code></td>
-            <td class="text-center"><code>{{ dbmp_inception_record.create_time | date:"Y-m-d H:i:s" }}</code></td>
             <td class="text-center"><code>{{ dbmp_inception_record.update_time | date:"Y-m-d H:i:s" }}</code></td>
             <td class="text-center" id="inception_record_button_td_{{ dbmp_inception_record.inception_record_id }}">
                 <a type="button" class="btn btn-info btn-xs btn-outline"
@@ -75,7 +75,7 @@
                 {% else %}
                     <button type="button" class="btn btn-primary btn-xs btn-outline"
                         onclick="run_inception({{ dbmp_inception_record.inception_record_id }})"
-                        id="execute_button_{{ dbmp_inception_record.inception_record_id }}"
+                        id="execute_button_{{ dbmp_inception_record.inception_record_id }}">
                         <i class="fa fa-chevron-circle-right"></i>
                         执行
                     </button>
@@ -144,6 +144,10 @@
     <script>
         // 使用 Django csrf 功能
         $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        // 初始化需要审核的 数据库 和 业务组明细对象
+        inception_databases = new Array();
+        inception_business_details = new Array();
 
         $(document).ready(function(){
             // 表格插件
@@ -230,8 +234,48 @@
         }
 
         // 执行审核
-        function run_inception() {
+        function run_inception(inception_record_id) {
+            alert_title = "你确定要执行SQL?";
+            alert_text = "";
+            alert_text += "标签: <code>" + $("#inception_record_tag_" + inception_record_id).text() + "</code> <br/>";
+            alert_text += "审核对象: <code>" + $("#inception_record_target_" + inception_record_id).text() + "</code> <br/>";
+            alert_text += "备注: " + $("#inception_record_remark_" + inception_record_id).text();
+            window_title = "(数据库/业务组)执行SQL";
+            url = "{% url 'dbmp_inception_record_run_inception' %}";
+            url += "?inception_record_id=" + inception_record_id;
+            swal({
+                title: alert_title,
+                text: alert_text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
 
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: window_title,
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "0px", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: url
+                });
+            });
         }
+
     </script>
 {% endblock %}

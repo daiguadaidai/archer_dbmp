@@ -132,6 +132,35 @@ class SQLDbmpInceptionBusinessDetail(object):
         results = self._dict_fetchall(cursor)
         return results
 
+    def find_need_inception_detail_by_inception_record_id(self, inception_record_id):
+        """获得需要审核业务组明细信息"""
+        if not inception_record_id:
+            return None
+
+        sql = """
+            SELECT dibd.inception_business_detail_id,
+                dibd.mysql_business_id,
+                dibd.execute_status,
+                dmd.name AS db_name,
+                INET_NTOA(dmi.host) AS host,
+                dmi.port,
+                dmb.name AS business_name
+            FROM dbmp_inception_business_detail AS dibd
+            INNER JOIN dbmp_mysql_business AS dmb
+                ON dibd.mysql_business_id = dmb.mysql_business_id
+                AND dibd.inception_record_id = {inception_record_id}
+                AND dibd.execute_status <> 2
+            INNER JOIN dbmp_mysql_database AS dmd
+                ON dibd.mysql_database_id = dmd.mysql_database_id
+            INNER JOIN dbmp_mysql_instance AS dmi
+                ON dmd.mysql_instance_id = dmi.mysql_instance_id
+        """.format(inception_record_id = inception_record_id)
+
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = self._dict_fetchall(cursor)
+        return results
+
     def _dict_fetchone(self, cursor):
         "转化所有的行为dict"
         columns = [col[0] for col in cursor.description]

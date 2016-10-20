@@ -19,6 +19,8 @@ from dbmp.models.dbmp_inception_database import DbmpInceptionDatabase
 from dbmp.models.dbmp_inception_business import DbmpInceptionBusiness
 from dbmp.models.dbmp_inception_business_detail import DbmpInceptionBusinessDetail
 from dbmp.views.sql_handler.s_dbmp_inception_record import SQLDbmpInceptionRecord
+from dbmp.views.sql_handler.s_dbmp_inception_database import SQLDbmpInceptionDatabase
+from dbmp.views.sql_handler.s_dbmp_inception_business_detail import SQLDbmpInceptionBusinessDetail
 
 import simplejson as json
 import traceback
@@ -126,6 +128,136 @@ def add(request):
         check_iframe_name = request.GET.get('check_iframe_name', '')
         params['check_iframe_name'] = check_iframe_name
         return render(request, 'dbmp_inception_record/add.html', params)
+
+@DecoratorTool.clean_alert_message
+def run_inception(request):
+    """获取所有需要进行审核的database 和 business_detail"""
+    params = {}
+    params['error_msg'] = []
+
+    if request.method == 'GET':
+        try:  
+            # 获得传入的MySQL实例ID
+            inception_record_id = int(request.GET.get('inception_record_id', '0'))
+        except ValueError:  
+            logger.info(traceback.format_exc())
+            inception_record_id = 0
+
+        # 如果获取的数据有问题直接返回失败
+        if not inception_record_id:
+            params['error_msg'].append('传入的inception_record_id有错') 
+
+        try:
+            # SQL审核对象信息
+            dbmp_inception_record = DbmpInceptionRecord.objects.values(
+                                           'inception_record_id',
+                                           'tag',
+                                           'remark',
+                                           'charset',
+                                           'inception_target',
+                                           'execute_status').get(
+                                      inception_record_id = inception_record_id)
+            params['dbmp_inception_record'] = dbmp_inception_record
+        except DbmpInceptionRecord.DoesNotExist:
+            logger.error(traceback.format_exc())
+            error_msg = '对不起! 找不到相关审核数据 inception_record_id={inception_record_id}'.format(
+                                                        id = inception_record_id)
+            logger.error(error_msg)
+            params['error_msg'].append(error_msg) 
+            return render(request, 'dbmp_inception_record/run_inception.html', params)
+
+        if dbmp_inception_record.get('inception_target') in [1, 3]: # 数据库和混合类型
+            try:
+                s_dbmp_inception_database = SQLDbmpInceptionDatabase()
+                # 获得 DbmpInceptionDatabase, DbmpMysqlDatabase, DbmpMysqlInstance 信息
+                dbmp_inception_databases = s_dbmp_inception_database.find_need_inception_database_record_id(
+                                                                         inception_record_id)
+                params['dbmp_inception_databases'] = dbmp_inception_databases
+            except:
+                logger.error(traceback.format_exc())
+                error_msg = '查找审核数据库(DbmpInceptionDatabase)发生错误'
+                logger.error(error_msg)
+                params['error_msg'].append(error_msg) 
+        if dbmp_inception_record.get('inception_target') in [2, 3]: # 业务组和混合类型
+            try:
+                s_dbmp_inception_business_detail = SQLDbmpInceptionBusinessDetail()
+                # 获得 DbmpInceptionBusinessDetail, DbmpMysqlBusiness,
+                #      DbmpMysqlDatabase, DbmpMysqlInstance 信息
+                dbmp_inception_business_details = s_dbmp_inception_business_detail.find_need_inception_detail_by_inception_record_id(
+                                                                         inception_record_id)
+                params['dbmp_inception_business_details'] = dbmp_inception_business_details
+            except:
+                logger.error(traceback.format_exc())
+                error_msg = '查找审核业务组(DbmpInceptionBusinessDetail)发生错误'
+                logger.error(error_msg)
+                params['error_msg'].append(error_msg) 
+
+        return render(request, 'dbmp_inception_record/run_inception.html', params)
+
+@DecoratorTool.clean_alert_message
+def run_inception_in_view(request):
+    """获取所有需要进行审核的database 和 business_detail"""
+    params = {}
+    params['error_msg'] = []
+
+    if request.method == 'GET':
+        try:  
+            # 获得传入的MySQL实例ID
+            inception_record_id = int(request.GET.get('inception_record_id', '0'))
+        except ValueError:  
+            logger.info(traceback.format_exc())
+            inception_record_id = 0
+
+        # 如果获取的数据有问题直接返回失败
+        if not inception_record_id:
+            params['error_msg'].append('传入的inception_record_id有错') 
+
+        try:
+            # SQL审核对象信息
+            dbmp_inception_record = DbmpInceptionRecord.objects.values(
+                                           'inception_record_id',
+                                           'tag',
+                                           'remark',
+                                           'charset',
+                                           'inception_target',
+                                           'execute_status').get(
+                                      inception_record_id = inception_record_id)
+            params['dbmp_inception_record'] = dbmp_inception_record
+        except DbmpInceptionRecord.DoesNotExist:
+            logger.error(traceback.format_exc())
+            error_msg = '对不起! 找不到相关审核数据 inception_record_id={inception_record_id}'.format(
+                                                        id = inception_record_id)
+            logger.error(error_msg)
+            params['error_msg'].append(error_msg) 
+            return render(request, 'dbmp_inception_record/run_inception.html', params)
+
+        if dbmp_inception_record.get('inception_target') in [1, 3]: # 数据库和混合类型
+            try:
+                s_dbmp_inception_database = SQLDbmpInceptionDatabase()
+                # 获得 DbmpInceptionDatabase, DbmpMysqlDatabase, DbmpMysqlInstance 信息
+                dbmp_inception_databases = s_dbmp_inception_database.find_need_inception_database_record_id(
+                                                                         inception_record_id)
+                params['dbmp_inception_databases'] = dbmp_inception_databases
+            except:
+                logger.error(traceback.format_exc())
+                error_msg = '查找审核数据库(DbmpInceptionDatabase)发生错误'
+                logger.error(error_msg)
+                params['error_msg'].append(error_msg) 
+        if dbmp_inception_record.get('inception_target') in [2, 3]: # 业务组和混合类型
+            try:
+                s_dbmp_inception_business_detail = SQLDbmpInceptionBusinessDetail()
+                # 获得 DbmpInceptionBusinessDetail, DbmpMysqlBusiness,
+                #      DbmpMysqlDatabase, DbmpMysqlInstance 信息
+                dbmp_inception_business_details = s_dbmp_inception_business_detail.find_need_inception_detail_by_inception_record_id(
+                                                                         inception_record_id)
+                params['dbmp_inception_business_details'] = dbmp_inception_business_details
+            except:
+                logger.error(traceback.format_exc())
+                error_msg = '查找审核业务组(DbmpInceptionBusinessDetail)发生错误'
+                logger.error(error_msg)
+                params['error_msg'].append(error_msg) 
+
+        return render(request, 'dbmp_inception_record/run_inception_in_view.html', params)
 
 def ajax_check(request):
     """对SQL进行审核"""

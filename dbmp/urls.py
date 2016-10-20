@@ -92,6 +92,8 @@ urlpatterns = [
     url(r'^dbmp_inception_record/ajax_check/$', dbmp_inception_record.ajax_check, name='dbmp_inception_record_ajax_check'),
     url(r'^dbmp_inception_record/ajax_add/$', dbmp_inception_record.ajax_add, name='dbmp_inception_record_ajax_add'),
     url(r'^dbmp_inception_record/ajax_check_status/$', dbmp_inception_record.ajax_check_status, name='dbmp_inception_record_ajax_check_status'),
+    url(r'^dbmp_inception_record/run_inception/$', dbmp_inception_record.run_inception, name='dbmp_inception_record_run_inception'),
+    url(r'^dbmp_inception_record/run_inception_in_view/$', dbmp_inception_record.run_inception_in_view, name='dbmp_inception_record_run_inception_in_view'),
 
     # dbmp_inception_database
     url(r'^dbmp_inception_database/ajax_find_by_inception_record_id/$', dbmp_inception_database.ajax_find_by_inception_record_id, name='dbmp_inception_database_ajax_find_by_inception_record_id'),
