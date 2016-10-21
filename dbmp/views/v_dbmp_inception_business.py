@@ -126,3 +126,26 @@ def ajax_change_execute_status(request):
 
     respons_data = json.dumps(params)
     return HttpResponse(respons_data, content_type='application/json')
+
+def ajax_get_execute_status(request):
+    """Ajax修改业务组执行状态"""
+    params = {}
+    params['err_msg'] = ''
+
+    if request.method == 'POST':
+        try:
+            inception_business_id = int(request.POST.get('inception_business_id', '0'))
+            
+            # 更新 dbmp_inception_business 状态
+            dbmp_inception_business = DbmpInceptionBusiness.objects.values(
+                                   'execute_status').get(
+                                   inception_business_id = inception_business_id)
+            params['execute_status'] = dbmp_inception_business.get('execute_status', 0);
+        except:
+            logger.error(traceback.format_exc())
+            params['err_msg'] += '获取业务组状态失败({id})'.format(
+                                 inception_business_id = inception_business_id)
+            params['err_msg'] += traceback.format_exc()
+
+    respons_data = json.dumps(params)
+    return HttpResponse(respons_data, content_type='application/json')

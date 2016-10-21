@@ -104,6 +104,7 @@ urlpatterns = [
     url(r'^dbmp_inception_business/ajax_find_by_inception_record_id/$', dbmp_inception_business.ajax_find_by_inception_record_id, name='dbmp_inception_business_ajax_find_by_inception_record_id'),
     url(r'^dbmp_inception_business/run_inception/$', dbmp_inception_business.run_inception, name='dbmp_inception_business_run_inception'),
     url(r'^dbmp_inception_business/ajax_change_execute_status/$', dbmp_inception_business.ajax_change_execute_status, name='dbmp_inception_business_ajax_change_execute_status'),
+    url(r'^dbmp_inception_business/ajax_get_execute_status/$', dbmp_inception_business.ajax_get_execute_status, name='dbmp_inception_business_ajax_get_execute_status'),
 
     # dbmp_inception_business_detail
     url(r'^dbmp_inception_business_detail/index/$', dbmp_inception_business_detail.index, name='dbmp_inception_business_detail_index'),

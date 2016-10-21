@@ -513,10 +513,35 @@ def ajax_check_status(request):
                     params['error_msg'] = '查找审核数据库(DbmpInceptionDatabase)发生错误'
             if dbmp_inception_record.get('inception_target') in [2, 3]: # 业务组和混合类型
                 try:
-                    dbmp_inception_businesses = DbmpInceptionBusiness.objects.values(
-                                                     'execute_status').filter(
-                                        inception_record_id = inception_record_id)
-                    business_execute_status = [business.get('execute_status') for business in dbmp_inception_businesses]
+                    s_dbmp_inception_business_detail = SQLDbmpInceptionBusinessDetail()
+                    dbmp_inception_businesses = s_dbmp_inception_business_detail.find_execute_status_str_by_inception_record_id(
+                                                inception_record_id = inception_record_id)
+                    for business in dbmp_inception_businesses:
+                        
+                        business_detail_execute_statuses = set([int(status) for status in business.get('execute_status_str').split(',') if status])
+                        print business_detail_execute_statuses
+                        if len(business_detail_execute_statuses) > 1: # 如果数组中有两种值说明, 未全部执行
+                            business_detail_execute_status = 4
+                        elif len(business_detail_execute_statuses) == 1:# 只有一种值再判断全成还是全失败 
+                            if 1 in business_detail_execute_statuses: # 没执行过
+                                business_detail_execute_status = 1
+                            elif 2 in business_detail_execute_statuses: # 执行成功
+                                business_detail_execute_status = 2
+                            elif 3 in business_detail_execute_statuses: # 执行失败
+                                business_detail_execute_status = 3
+                            elif 4 in business_detail_execute_statuses: # 部分失败
+                                business_detail_execute_status = 4
+                        # 更新执行状态(业务组)
+                        try:
+                            DbmpInceptionBusiness.objects.filter(
+                                inception_business_id = business.get('inception_business_id', 0)).update(
+                                        execute_status = business_detail_execute_status)
+                        except Exception, e:
+                            logger.info(traceback.format_exc())
+                            logger.info('更新业务组执行状态失败')
+                        business_execute_status.append(business_detail_execute_status) # 添加状态
+                    business_execute_status = list(set(business_execute_status)) # 去重
+                    print business_execute_status
                 except:
                     logger.error(traceback.format_exc())
                     params['error_msg'] = '查找审核数据库(DbmpInceptionBusiness)发生错误'
@@ -528,11 +553,11 @@ def ajax_check_status(request):
             elif len(combination_execute_status) == 1:# 只有一种值再判断全成还是全失败 
                 if 1 in combination_execute_status: # 没执行过
                     execute_status = 1
-                elif 2 in combination_execute_status:
-                    execute_status = 2
-                elif 3 in combination_execute_status:
-                    execute_status = 3
-                elif 4 in combination_execute_status:
+                elif 2 in combination_execute_status: # 执行成功
+                    execute_status = 2                          
+                elif 3 in combination_execute_status: # 执行失败
+                    execute_status = 3                          
+                elif 4 in combination_execute_status: # 部分失败
                     execute_status = 4
             else:
                 error_msg = '没有找到相关SQL审核状态, 可能该审核记录不存在'

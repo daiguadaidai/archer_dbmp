@@ -294,13 +294,12 @@
                 }).done(function(data) { 
                     if(data.is_ok == 1){
                         toastr.error('没有记录');
-                    } else if(data.is_ok = 2) {
+                    } else if(data.is_ok == 2) {
                         $("#execute_status_" + inception_record_id, window.parent.document).val(data.execute_status);
                         if(data.execute_status == execute_status) { // 执行状态不变什么都不操作
                             window.jqconsole.Write("\n  == 执行完成(状态没改变) == " + "\n", "jqconsole-output-warning");
                             toastr.warning("执行完成(状态没改变)");
                         } else if(data.execute_status == 1) { // 没有执行
-                        if(data.execute_status == 1) { // 没有执行
                             change_tr_color(inception_record_tr_id, "");
                             change_button(inception_record_button_td_id, execute_button_id,
                                           inception_record_id, '')
@@ -325,7 +324,7 @@
                             window.jqconsole.Write("\n  == 执行完成(部分失败) == " + "\n", "jqconsole-output-warning");
                             toastr.warning("执行完成(部分失败)");
                         }
-                    } else if(data.is_ok = 3) {
+                    } else if(data.is_ok == 3) {
                         toastr.error("程序错误");
                     }
                 }).error(function(data) { 
@@ -335,7 +334,7 @@
 
             // 修改表格行颜色
             function change_tr_color(id, class_color) {
-                attr = $("#" + id).attr("class");
+                attr = $("#" + id, window.parent.document).attr("class");
                 $("#" + id, window.parent.document).removeClass(attr);
                 $("#" + id, window.parent.document).addClass(class_color);
             }

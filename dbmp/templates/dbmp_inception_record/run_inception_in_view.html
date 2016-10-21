@@ -87,6 +87,7 @@
             // 初始化全局 (数据库/业务组明细)数组
             inception_databases = new Array();
             inception_business_details = new Array();
+            inception_business_ids = new Array();
 
             // 初始化数据库
             {% for dbmp_inception_database in dbmp_inception_databases %}
@@ -106,6 +107,7 @@
             {% for dbmp_inception_business_detail in dbmp_inception_business_details %}
                 inception_business_detail = new Object();
                 inception_business_detail.inception_business_detail_id = {{ dbmp_inception_business_detail.inception_business_detail_id }};
+                inception_business_detail.inception_business_id = {{ dbmp_inception_business_detail.inception_business_id }};
                 inception_business_detail.mysql_business_id = {{ dbmp_inception_business_detail.mysql_business_id }};
                 inception_business_detail.execute_status = {{ dbmp_inception_business_detail.execute_status }};
                 inception_business_detail.db_name = "{{ dbmp_inception_business_detail.db_name }}";
@@ -113,6 +115,10 @@
                 inception_business_detail.port = {{ dbmp_inception_business_detail.port }};
                 inception_business_detail.business_name = "{{ dbmp_inception_business_detail.business_name }}";
                 inception_business_details.push(inception_business_detail);
+                // 组成ids数组
+                if($.inArray(inception_business_detail.inception_business_id, inception_business_ids) == -1) {
+                    inception_business_ids.push(inception_business_detail.inception_business_id);
+                }
             {% endfor %}
 
             $(function() {
@@ -204,6 +210,13 @@
                                     window.jqconsole.Write(inception_body, "jqconsole-output-error");
                                 }
                             }
+                            // 修改按钮样式
+                            if(data.execute_status == 2) { // 执行成功
+                                change_parent_database_tr(inception_database.inception_database_id, 'success');
+                                change_parent_database_button_ok(inception_database.inception_database_id);
+                            } else if(data.execute_status == 3) { // 执行失败
+                                change_parent_database_tr(inception_database.inception_database_id, 'danger');
+                            }
                         } else {
                             window.jqconsole.Write("  执行SQL失败" + "\n", "jqconsole-output-error");
                         }
@@ -291,31 +304,144 @@
                 }).done(function(data) { 
                     if(data.is_ok == 1){
                         toastr.error('没有记录');
-                    } else if(data.is_ok = 2) {
-                        $("#execute_status_" + inception_record_id, window.parent.document).val(data.execute_status);
+                    } else if(data.is_ok == 2) {
                         if(data.execute_status == execute_status) { // 执行状态不变什么都不操作
                             window.jqconsole.Write("\n  == 执行完成(状态没改变) == " + "\n", "jqconsole-output-warning");
                             toastr.warning("执行完成(状态没改变)");
                         } else if(data.execute_status == 1) { // 没有执行
-                        if(data.execute_status == 1) { // 没有执行
                             window.jqconsole.Write("\n  == 执行完成(未执行) == " + "\n", "jqconsole-output-warning");
                             toastr.warning("执行完成(未执行)");
+                            change_parent_status_label("", "未执行");
+                            create_parent_execute_button_label(inception_record_id);
                         } else if(data.execute_status == 2) { // 全部执行成功
                             window.jqconsole.Write("\n  == 执行完成(全部执行成功) == " + "\n", "jqconsole-output-success");
                             toastr.success("执行完成(全部执行成功)");
+                            change_parent_status_label("success", "执行成功");
+                            remove_parent_execute_button_label(inception_record_id);
                         } else if(data.execute_status == 3) { // 全部执行失败
                             window.jqconsole.Write("\n  == 执行完成(全部执行失败) == " + "\n", "jqconsole-output-error");
                             toastr.error("执行完成(全部执行失败)");
+                            change_parent_status_label("danger", "执行失败");
+                            create_parent_execute_button_label(inception_record_id);
                         } else if(data.execute_status == 4) { // 只执行了部分
                             window.jqconsole.Write("\n  == 执行完成(部分失败) == " + "\n", "jqconsole-output-warning");
                             toastr.warning("执行完成(部分失败)");
+                            change_parent_status_label("warning", "部分失败");
+                            create_parent_execute_button_label(inception_record_id);
                         }
-                    } else if(data.is_ok = 3) {
+                        //改变业务组行样式
+                        change_parent_business_row();
+                    } else if(data.is_ok == 3) {
                         toastr.error("程序错误");
                     }
                 }).error(function(data) { 
                     toastr.error("请求获取审核数据库失败");
                 });
+            }
+
+            // 改变父窗口的状态标签
+            function change_parent_status_label(label_color, value) {
+                class_str = "label label-" + label_color;
+                attr = $("#execute_status_label", window.parent.document).attr("class");
+                $("#execute_status_label", window.parent.document).removeClass(attr);
+                $("#execute_status_label", window.parent.document).addClass(class_str);
+                $("#execute_status_label", window.parent.document).html(value);
+            }
+
+            // 添加父窗口的执行按钮
+            function create_parent_execute_button_label(inception_record_id) {
+                button_html_str = '';
+                button_html_str += '<button id="run_inception_button_all" type="button" class="btn btn-primary btn-outline"';
+                button_html_str += '        onclick="run_inception(' + inception_record_id + ')">';
+                button_html_str += '    <i class="fa fa-chevron-circle-right"></i>';
+                button_html_str += '    执行';
+                button_html_str += '</button>';
+                $("#run_inception_row_all", window.parent.document).html(button_html_str);
+            }
+
+            // 删除父窗口的执行按钮
+            function remove_parent_execute_button_label() {
+                $("#run_inception_row_all", window.parent.document).remove();
+            }
+
+            // 修改父窗口数据库 tr 为成功样式
+            function change_parent_database_tr(inception_database_id, class_color) {
+                attr = $("#inception_database_" + inception_database_id, window.parent.document).attr("class");
+                $("#inception_database_" + inception_database_id, window.parent.document).removeClass(attr);
+                $("#inception_database_" + inception_database_id, window.parent.document).addClass(class_color);
+            }
+
+            // 修改父窗口数据库 按钮 为成功样式
+            function change_parent_database_button_ok(inception_database_id) {
+                // 构造成功显示标签
+                html_str = "";
+                html_str += '<a>';
+                html_str += '    <i class="fa fa-check text-navy"></i>';
+                html_str += '    成功';
+                html_str += '</a>';
+                $("#inception_database_button_td_" + inception_database_id, window.parent.document).html(html_str);
+            }
+
+            //改变业务组行样式
+            function change_parent_business_row() {
+                console.log("zaaa");
+                for(var i=0; i<inception_business_ids.length; i++) {
+                    get_business_execute_status_and_change(inception_business_ids[i]);
+                }
+            }
+            
+            // 获得和修改业务组行样式
+            function get_business_execute_status_and_change(inception_business_id) {
+                $.ajax({
+                    url: "{% url 'dbmp_inception_business_ajax_get_execute_status' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        inception_business_id: inception_business_id
+                    }
+                }).done(function(data) { 
+                    console.log(data);
+                    if(data.execute_status == 1) {
+                        change_parent_business_tr(inception_business_id, "");
+                    } else if(data.execute_status == 2) {
+                        change_parent_business_tr(inception_business_id, "success");
+                        remove_parent_business_button(inception_business_id);
+                        change_parent_business_button_ok(inception_business_id);
+                    } else if(data.execute_status == 3) {
+                        change_parent_business_tr(inception_business_id, "danger");
+                    } else if(data.execute_status == 4) {
+                        change_parent_business_tr(inception_business_id, "warning");
+                    } else {
+                        window.jqconsole.Write(data.err_msg + "\n", "jqconsole-output-error");
+                        toastr.error(data.err_msg);
+                    }
+                }).error(function(data) { 
+                    window.jqconsole.Write("  请求业务组执行状态失败" + "\n", "jqconsole-output-error");
+                    toastr.error("请求错误的业务组执行状态");
+                }); 
+            }
+
+            // 修改父窗口数据库 tr 为成功样式
+            function change_parent_business_tr(inception_business_id, class_color) {
+                attr = $("#inception_business_" + inception_business_id, window.parent.document).attr("class");
+                $("#inception_business_" + inception_business_id, window.parent.document).removeClass(attr);
+                $("#inception_business_" + inception_business_id, window.parent.document).addClass(class_color);
+            }
+
+            // 移除父窗口业务组按钮
+            function remove_parent_business_button(inception_business_id) {
+                $("#business_button_" + inception_business_id, window.parent.document).remove();
+            }
+
+            // 修改父窗口数据库 按钮 为成功样式
+            function change_parent_business_button_ok(inception_business_id) {
+                // 构造成功显示标签
+                html_str = "";
+                html_str += '<a id="business_button_' + inception_business_id + '">';
+                html_str += '    <i class="fa fa-check text-navy"></i>';
+                html_str += '    成功';
+                html_str += '</a>';
+                $("#inception_business_button_td_" + inception_business_id, window.parent.document).append(html_str);
             }
 
         </script>

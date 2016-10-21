@@ -155,18 +155,13 @@
 
             // 检查审核记录的状态并改变
             $(".check_status").each(function(){
-                check_status(this);
+                inception_record_id = $(this).val();
+                check_status(inception_record_id);
             });
         });
 
         // 检查审核记录状态并改变
-        function check_status(obj) {
-            inception_record_id = $(obj).val();
-            inception_record_tr_id = "inception_record_tr_" + inception_record_id; // 行id
-            inception_record_button_td_id = "inception_record_button_td_" + inception_record_id; // 操作按钮td 的id
-            execute_button_id = "execute_button_" + inception_record_id; // 执行按钮ID
-            // 获得执行状态
-            execute_status = $("#execute_status_" + inception_record_id).val();
+        function check_status(inception_record_id) {
             $.ajax({
                 url: "{% url 'dbmp_inception_record_ajax_check_status' %}",
                 type: "POST",
@@ -175,6 +170,11 @@
                     inception_record_id: inception_record_id
                 }
             }).done(function(data) { 
+                inception_record_tr_id = "inception_record_tr_" + inception_record_id; // 行id
+                inception_record_button_td_id = "inception_record_button_td_" + inception_record_id; // 操作按钮td 的id
+                execute_button_id = "execute_button_" + inception_record_id; // 执行按钮ID
+                // 获得执行状态
+                execute_status = $("#execute_status_" + inception_record_id).val();
                 if(data.is_ok == 1){
                     toastr.error('没有记录');
                 } else if(data.is_ok = 2) {

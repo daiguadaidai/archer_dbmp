@@ -150,6 +150,8 @@
                         status = 2;
                         window.jqconsole.Write("SQL全部执行成功 \n", "jqconsole-output-success");
                         change_parent_business_tr(inception_business_id, "success");
+                        remove_parent_business_button(inception_business_id);
+                        change_parent_business_button_ok(inception_business_id);
                     } else if($.inArray(2, inception_business_detail_status) != -1 && $.inArray(3, inception_business_detail_status) != -1) { // 部分SQL执行失败
                         status = 4;
                         window.jqconsole.Write("SQL部分执行失败(有执行失败的请查看执行记录确认) \n", "jqconsole-output-warning");
@@ -230,15 +232,20 @@
                 $("#inception_business_" + inception_business_id, window.parent.document).addClass(class_color);
             }
 
+            // 移除父窗口业务组按钮
+            function remove_parent_business_button(inception_business_id) {
+                $("#business_button_" + inception_business_id, window.parent.document).remove();
+            }
+
             // 修改父窗口数据库 按钮 为成功样式
             function change_parent_business_button_ok(inception_business_id) {
                 // 构造成功显示标签
                 html_str = "";
-                html_str += '<a>';
+                html_str += '<a id="business_button_' + inception_business_id + '">';
                 html_str += '    <i class="fa fa-check text-navy"></i>';
                 html_str += '    成功';
                 html_str += '</a>';
-                $("#inception_business_button_td_" + inception_business_id, window.parent.document).html(html_str);
+                $("#inception_business_button_td_" + inception_business_id, window.parent.document).append(html_str);
             }
 
             // 修改业务组执行状态

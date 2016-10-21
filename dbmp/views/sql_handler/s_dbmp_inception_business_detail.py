@@ -139,6 +139,7 @@ class SQLDbmpInceptionBusinessDetail(object):
 
         sql = """
             SELECT dibd.inception_business_detail_id,
+                dibd.inception_business_id,
                 dibd.mysql_business_id,
                 dibd.execute_status,
                 dmd.name AS db_name,
@@ -154,6 +155,26 @@ class SQLDbmpInceptionBusinessDetail(object):
                 ON dibd.mysql_database_id = dmd.mysql_database_id
             INNER JOIN dbmp_mysql_instance AS dmi
                 ON dmd.mysql_instance_id = dmi.mysql_instance_id
+        """.format(inception_record_id = inception_record_id)
+
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = self._dict_fetchall(cursor)
+        return results
+
+    def find_execute_status_str_by_inception_record_id(self, inception_record_id):
+        """获得需要审核业务组明细信息"""
+        if not inception_record_id:
+            return None
+
+        sql = """
+            SELECT dibd.inception_business_id,
+                GROUP_CONCAT(dibd.execute_status) AS execute_status_str
+            FROM dbmp_inception_business_detail AS dibd
+            INNER JOIN dbmp_inception_record AS dir
+                ON dibd.inception_record_id = dir.inception_record_id
+                AND dir.inception_record_id = {inception_record_id}
+            GROUP BY dibd.inception_business_id
         """.format(inception_record_id = inception_record_id)
 
         cursor = connection.cursor()
