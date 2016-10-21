@@ -1,0 +1,281 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+{% load filters_dbmp_inception_record %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+{% endblock %}
+
+
+<!-- 显示该页面标题 -->
+{% block app_title %}业务组列表{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<!-- 业务组按钮 -->
+<div class="row fontawesome-icon-list">
+    <div class="fa-hover col-md-2 col-sm-3">
+        <a href="{% url 'dbmp_inception_record_check' %}">
+            <i class="fa fa-plus-square"></i>
+            添加审核SQL
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<table class="footable table table-stripped toggle-arrow-tiny table-hover">
+    <thead>
+        <tr>
+            <th class="text-center">#</th>
+            <th class="text-center">标签</th>
+            <th class="text-center">备注</th>
+            <th class="text-center">审核对象</th>
+            <th class="text-center">创建时间</th>
+            <th class="col-xs-2" data-hide="all">审核SQL</th>
+            <th class="col-xs-2" data-hide="all">字符集</th>
+            <th class="col-xs-2" data-hide="all">更新时间</th>
+            <th class="text-center col-xs-3">操作</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for dbmp_inception_record in pagination.objs %}
+        <tr class="{{ dbmp_inception_record.execute_status | f_inc_rec_execute_status_color }}"
+            id="inception_record_tr_{{ dbmp_inception_record.inception_record_id }}">
+            <td class="text-center">
+                {{ forloop.counter }}
+                <input class="check_status" type="hidden" value="{{ dbmp_inception_record.inception_record_id }}">
+                <input id="execute_status_{{ dbmp_inception_record.inception_record_id }}" type="hidden"
+                       value="{{ dbmp_inception_record.execute_status }}" />
+            </td>
+            <td class="text-center" id="inception_record_tag_{{ dbmp_inception_record.inception_record_id }}">{{ dbmp_inception_record.tag }}</td>
+            <td class="text-center" id="inception_record_remark_{{ dbmp_inception_record.inception_record_id }}">{{ dbmp_inception_record.remark }}</td>
+            <td class="text-center" id="inception_record_target_{{ dbmp_inception_record.inception_record_id }}">{{ dbmp_inception_record.inception_target | f_inc_rec_inception_target }}</td>
+            <td class="text-center"><code>{{ dbmp_inception_record.create_time | date:"Y-m-d H:i:s" }}</code></td>
+            <td class="text-center"><pre>{{ dbmp_inception_record.sql_text }}</pre></td>
+            <td class="text-center"><code>{{ dbmp_inception_record.charset }}</code></td>
+            <td class="text-center"><code>{{ dbmp_inception_record.update_time | date:"Y-m-d H:i:s" }}</code></td>
+            <td class="text-center" id="inception_record_button_td_{{ dbmp_inception_record.inception_record_id }}">
+                <a type="button" class="btn btn-info btn-xs btn-outline"
+                   href="{% url 'dbmp_inception_record_view' %}?inception_record_id={{ dbmp_inception_record.inception_record_id }}">
+                    <i class="fa fa-eye"></i>
+                    查看
+                </a>
+                {% if dbmp_inception_record.execute_status == 2 %}
+                    <a id="execute_button_{{ dbmp_inception_record.inception_record_id }}">
+                        <i class="fa fa-check text-navy"></i>
+                        成功
+                    </a>
+                {% else %}
+                    <button type="button" class="btn btn-primary btn-xs btn-outline"
+                        onclick="run_inception({{ dbmp_inception_record.inception_record_id }})"
+                        id="execute_button_{{ dbmp_inception_record.inception_record_id }}">
+                        <i class="fa fa-chevron-circle-right"></i>
+                        执行
+                    </button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 这里是分页页码 -->
+<div class="btn-group">
+    <!-- 第一页, 上一页 -->
+    {% if pagination.cur_page != 1 and pagination %}
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page=1">
+            <i class="fa fa-angle-double-left"></i>
+        </a>
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.pre_page }}">
+            <i class="fa fa-angle-left"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 省略号 -->
+    {% if pagination.start_page_omit_symbol %}
+        <a type="button" class="btn btn-write btn-outline">
+            <i class="fa fa-ellipsis-h"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 能点击的页码 -->
+    {% for page_item in pagination.page_items %}
+        {% if page_item == pagination.cur_page %}
+            <a type="button" class="btn btn-primary">{{ page_item }}</a>
+        {% else %}
+            <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ page_item }}">{{ page_item }}</a>
+        {% endif %}
+    {% endfor%}
+    
+    <!-- 省略号 -->
+    {% if pagination.end_page_omit_symbol %}
+        <a type="button" class="btn btn-write btn-outline">
+            <i class="fa fa-ellipsis-h"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 下一页, 最后一页 -->
+    {% if pagination.cur_page != pagination.all_page and pagination %}
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.next_page }}">
+            <i class="fa fa-angle-right"></i>
+        </a>
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.all_page }}">
+            <i class="fa fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        // 初始化需要审核的 数据库 和 业务组明细对象
+        inception_databases = new Array();
+        inception_business_details = new Array();
+
+        $(document).ready(function(){
+            // 表格插件
+            $(".footable").footable();
+
+            // 检查审核记录的状态并改变
+            $(".check_status").each(function(){
+                inception_record_id = $(this).val();
+                check_status(inception_record_id);
+            });
+        });
+
+        // 检查审核记录状态并改变
+        function check_status(inception_record_id) {
+            $.ajax({
+                url: "{% url 'dbmp_inception_record_ajax_check_status' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    inception_record_id: inception_record_id
+                }
+            }).done(function(data) { 
+                inception_record_tr_id = "inception_record_tr_" + inception_record_id; // 行id
+                inception_record_button_td_id = "inception_record_button_td_" + inception_record_id; // 操作按钮td 的id
+                execute_button_id = "execute_button_" + inception_record_id; // 执行按钮ID
+                // 获得执行状态
+                execute_status = $("#execute_status_" + inception_record_id).val();
+                if(data.is_ok == 1){
+                    toastr.error('没有记录');
+                } else if(data.is_ok = 2) {
+                    $("#execute_status_" + inception_record_id).val(data.execute_status);
+                    if(data.execute_status == execute_status) { // 执行状态不变什么都不操作
+                    } else if(data.execute_status == 1) { // 没有执行
+                        change_tr_color(inception_record_tr_id, "");
+                        change_button(inception_record_button_td_id, execute_button_id,
+                                      inception_record_id, '')
+                    } else if(data.execute_status == 2) { // 全部执行成功
+                        change_tr_color(inception_record_tr_id, "success");
+                        change_button(inception_record_button_td_id, execute_button_id,
+                                      inception_record_id, 'success')
+                    } else if(data.execute_status == 3) { // 全部执行失败
+                        change_tr_color(inception_record_tr_id, "danger");
+                        change_button(inception_record_button_td_id, execute_button_id,
+                                      inception_record_id, '')
+                    } else if(data.execute_status == 4) { // 只执行了部分
+                        change_tr_color(inception_record_tr_id, "warning");
+                        change_button(inception_record_button_td_id, execute_button_id,
+                                      inception_record_id, '')
+                    }
+                } else if(data.is_ok = 3) {
+                    toastr.error("程序错误");
+                }
+            }).error(function(data) { 
+                toastr.error("请求获取审核数据库失败");
+            });
+        }
+
+        // 修改表格行颜色
+        function change_tr_color(id, class_color) {
+            attr = $("#" + id).attr("class");
+            $("#" + id).removeClass(attr);
+            $("#" + id).addClass(class_color);
+        }
+
+        function change_button(td_id, button_id, inception_record_id, type) {
+            button_html_str = "";
+            if (type == "success") {
+                button_html_str += '<a id="execute_button_' + inception_record_id + '">';
+                button_html_str += '    <i class="fa fa-check text-navy"></i>';
+                button_html_str += '    成功';
+                button_html_str += '</a>';
+            } else {
+                button_html_str += '<button type="button" class="btn btn-primary btn-xs btn-outline"';
+                button_html_str += '        onclick="run_inception(' + inception_record_id + ')"';
+                button_html_str += '        id="execute_button_' + inception_record_id + '">';
+                button_html_str += '    <i class="fa fa-chevron-circle-right"></i>';
+                button_html_str += '    执行';
+                button_html_str += '</button>';
+            }
+            // 删除原有按钮
+            $("#" + button_id).remove();
+            // 添加新按钮
+            $("#" + td_id).append(button_html_str);
+        }
+
+        // 执行审核
+        function run_inception(inception_record_id) {
+            alert_title = "你确定要执行SQL?";
+            alert_text = "";
+            alert_text += "标签: <code>" + $("#inception_record_tag_" + inception_record_id).text() + "</code> <br/>";
+            alert_text += "审核对象: <code>" + $("#inception_record_target_" + inception_record_id).text() + "</code> <br/>";
+            alert_text += "备注: " + $("#inception_record_remark_" + inception_record_id).text();
+            window_title = "(数据库/业务组)执行SQL";
+            url = "{% url 'dbmp_inception_record_run_inception' %}";
+            url += "?inception_record_id=" + inception_record_id;
+            swal({
+                title: alert_title,
+                text: alert_text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: window_title,
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "0px", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: url
+                });
+            });
+        }
+
+    </script>
+{% endblock %}

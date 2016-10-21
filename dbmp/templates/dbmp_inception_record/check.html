@@ -1,0 +1,345 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+
+<!-- 显示该页面标题 -->
+{% block app_title %}SQL审核(check){% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="row fontawesome-icon-list">
+            <!-- 添加返回需要上线列表 -->
+            <div class="fa-hover  col-md-5">
+                <a href="{% url 'dbmp_inception_record_index' %}">
+                    <i class="fa fa-list"></i>
+                    上线SQL列表
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+
+<section id="mysql_database">
+    <h2 class="page-header">数据库信息</h2>
+    <div id="database_row" class="row">
+        <input type="hidden" id="mysql_database_id" value="">
+        <input type="hidden" id="fact_inception_instance_id">
+        <input type="hidden" id="fact_inception_instance_name">
+        <input type="hidden" id="fact_sql_text">
+        <input type="hidden" id="fact_charset">
+
+        <div id="database_name_div" class="col-md-4">
+        </div>
+        <div id="database_ip_div" class="col-md-4">
+        </div>
+        <div id="database_port_div" class="col-md-4">
+        </div>
+    </div>
+
+    <h4>&nbsp;</h4>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <a id="database_list"><i class="fa fa-database"></i>
+                选择数据库
+            </a>
+        </div>
+    </div>
+</section>
+
+<section id="inception_instance">
+    <h2 class="page-header">审核信息</h2>
+    <form class="form-horizontal m-t">
+        <div id="inception_instnace_div" class="form-group"> <!-- 选择审核的实例 -->
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                Inception实例：
+            </label>
+            <div class="col-sm-8">
+                <select class="form-control m-b" id="inception_instance_id"> 
+                </select>
+            </div>
+        </div>
+
+        <div id="sql_test_div" class="form-group"> <!-- 需要审核的SQL -->
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                需要审核的SQL：
+            </label>
+            <div class="col-sm-8">
+                <textarea id="sql_text" type="text" class="form-control" rows="10"></textarea>
+            </div>
+        </div>
+
+        <div id="inception_instnace_div" class="form-group"> <!-- 选择审核的实例 -->
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                审核字符集：
+            </label>
+            <div class="col-sm-8">
+                <select class="form-control m-b" id="charset"> 
+                    <option values="utf8mb4">utf8mb4</option>
+                    <option values="utf8">utf8</option>
+                    <option values="gbk">gbk</option>
+                    <option values="latin1">latin1</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-4 col-sm-offset-3">
+                <button type="button" id="inception-btn" class="btn btn-primary"
+                        onclick="sql_inception()">
+                    <i class="fa fa-eye"></i>
+                    审核
+                </button>
+            </div>
+        </div>
+    </form>
+</section>
+<section id="inception_info">
+</section>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 设置Inception实例
+            set_inception_instance();
+
+            // 弹出实例窗口
+            $('#database_list').on('click', function(){
+                layer.open({
+                    type: 2,
+                    title: '选择需要审核的数据库',
+                    maxmin: true,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ['70%' , '80%'],
+                    content: '{% url 'list_instance_use_inception_record_check' %}'
+                });
+            });
+        });
+
+        // 获取Inception实例
+        function set_inception_instance() {
+            $.ajax({
+                url: "{% url 'dbmp_inception_instance_ajax_get_all' %}",
+                type: "POST",
+                dataType: "json"
+            }).done(function(data) { 
+                select_option_html = "";
+                // 构造 select option 的html
+                for(i=0; i<data.length; i++) {
+                    select_option_html += "<option value='" + data[i].inception_instance_id + "'>" + data[i].alias + "</option>";
+                }
+                // 添加 选中Inception 实例的 option
+                $("#inception_instance_id").append(select_option_html);
+            }).error(function(data) {
+            });
+        }
+
+        // 对SQL进行审核
+        function sql_inception() {
+            // 获取审核需要的信息
+            // 1.获取数据库ID
+            mysql_database_id = $("#mysql_database_id").val();
+            // 2.获取Inception实例ID
+            inception_instance_id = $("#inception_instance_id").val();
+            // 3.获取Inception实例名称
+            inception_instance_name = $("#inception_instance_id").find("option:selected").text()
+            // 4.获取需要审核的SQL
+            sql_text = $("#sql_text").val();
+            // 5.获取审核字符集
+            charset = $("#charset").val();
+
+            // 验证相关信息是否正确
+            // 1.判断获取数据库
+            if(mysql_database_id == null || mysql_database_id == "") {
+                toastr.error("没有获取到需要审核的数据库");
+                return false;
+            }
+            // 2.判断Inception实例ID
+            if(inception_instance_id == null || inception_instance_id == "") {
+                toastr.error("没有获取到Inception实例");
+                return false;
+            }
+            // 3.判断需要审核的SQL
+            if(sql_text == null || sql_text == "") {
+                toastr.error("没有获取到需要审核的SQL");
+                return false;
+            }
+            // 4.判断需要审核的字符集
+            if(charset == null || charset == "") {
+                toastr.error("没有获取到需要审核的字符集");
+                return false;
+            }
+
+            $.ajax({
+                url: "{% url 'dbmp_inception_record_ajax_check' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    mysql_database_id: mysql_database_id,
+                    inception_instance_id: inception_instance_id,
+                    sql_text: sql_text,
+                    charset: charset
+                }
+            }).done(function(data) { 
+                if(data.is_ok == false) {
+                    toastr.error(data.inception_info + ", 执行审核失败!");
+                } else if(data.is_ok == true) {
+                    // 显示审核信息
+                    show_inception_info(data.inception_info);
+                    // 将执行的信息固化到 input hidden 中
+                    $("#fact_inception_instance_id").val(inception_instance_id);
+                    $("#fact_inception_instance_name").val(inception_instance_name);
+                    $("#fact_sql_text").val(sql_text);
+                    $("#fact_charset").val(charset);
+                } else {
+                    toastr.error("未获得任何信息, 审核失败!");
+                }
+            }).error(function(data) {
+                toastr.error("请求审核失败");
+            });
+        }
+
+        // 显示审核信息
+        function show_inception_info(data) {
+            err_level = 0;
+
+            // 显示表格头
+            html_str = "";
+            html_str += '<h2 class="page-header">审核结果</h2>';
+            html_str += '<table class="footable table table-stripped toggle-arrow-tiny table-hover">';
+            html_str += '    <thead>';
+            html_str += '        <tr>';
+            html_str += '            <th class="text-center">ID</th>';
+            html_str += '            <th class="text-center">Stage</th>';
+            html_str += '            <th class="text-center">ErrLeve</th>';
+            html_str += '            <th class="text-center">StageStatus</th>';
+            html_str += '            <th data-hide="all">ErrorMessage</th>';
+            html_str += '            <th data-hide="all">SQL</th>';
+            html_str += '            <th class="text-center">AffectedRows</th>';
+            html_str += '            <th data-hide="all">Sequence</th>';
+            html_str += '            <th data-hide="all">BackupDBName</th>';
+            html_str += '            <th class="text-center">ExecuteTime</th>';
+            html_str += '            <th data-hide="all">SQLSha1</th>';
+            html_str += '        </tr>';
+            html_str += '    </thead>';
+            html_str += '    <tbody>';
+      
+            // 显示表内容
+            for(i=0; i<data.length; i++) {
+                // 设置显示的颜色:成功, 警告, 错误
+                show_color = "";
+                if(data[i].errlevel == 0) {
+                    show_color = "success";
+                } else if(data[i].errlevel == 1) {
+                    show_color = "warning";
+                    err_level = 1; // SQL语法没错, 但不符合审核要求, 请修改!
+                } else if(data[i].errlevel == 2) {
+                    show_color = "danger";
+                    err_level = 2; // SQL不能执行
+                }
+                
+                html_str += '<tr class="' + show_color + '">';
+                html_str += '    <td class="text-center">' + data[i].ID + '</td>';
+                html_str += '    <td class="text-center"><code>' + data[i].stage + '</code></td>';
+                html_str += '    <td class="text-center"><code>' + data[i].errlevel + '</code></td>';
+                html_str += '    <td class="text-center"><code>' + data[i].stagestatus + '</code></td>';
+                html_str += '    <td class="text-center">';
+                html_str += '        <pre style="color:red">' + data[i].errormessage + '</pre>';
+                html_str += '    </td>';
+                html_str += '    <td class="text-center">';
+                html_str += '        <pre>' + data[i].SQL + '</pre>';
+                html_str += '    </td>';
+                html_str += '    <td class="text-center"><code>' + data[i].Affected_rows + '</code></td>';
+                html_str += '    <td class="text-center"><code>' + data[i].sequence + '</code></td>';
+                html_str += '    <td class="text-center"><code>' + data[i].backup_dbname + '</code></td>';
+                html_str += '    <td class="text-center"><code>' + data[i].execute_time + '</code></td>';
+                html_str += '    <td class="text-center"><code>' + data[i].sqlsha1 + '</code></td>';
+                html_str += '</tr>';
+            }
+
+            html_str += '    </tbody>';
+            html_str += '</table>';
+
+            // 显示按钮
+            if(err_level == 0 && data.length > 0) {
+                html_str += '<div class="btn-group">';
+                html_str += '    <button type="button" id="inception-btn" class="btn btn-primary"';
+                html_str += '            onclick="add_to_execute()">';
+                html_str += '        <i class="fa fa-external-link-square"></i>';
+                html_str += '        添加上线';
+                html_str += '    </button>';
+                html_str += '</div>'; 
+                toastr.success("SQL审核成功!");
+            } else if(err_level == 1) {
+                toastr.warning("SQL语法没错, 但不符合审核要求, 请修改!");
+            } else if(err_level == 2) {
+                toastr.error("SQL不符合要求，请修改!");
+            }            
+            // 显示 inception 信息
+            $("#inception_info").html(html_str);
+
+            // 表格插件
+            $(".footable").footable();
+        }
+
+        // 将审核通过的SQL添加上线
+        function add_to_execute() {
+            check_iframe_name = window.name; // 获得当前 iframe name
+            url = "{% url 'dbmp_inception_record_add' %}";
+            url += "?check_iframe_name=" + check_iframe_name;
+            open_iframe_window("添加审核执行SQL", url);
+        }
+
+        // 打开一个 iframe 窗口
+        function open_iframe_window(tab_name, url) {
+            var timestamp = (new Date()).valueOf(); 
+            iframe_name = "name" + timestamp;
+        
+            // iframe 菜单 标签
+            iframe_tab = '';
+            iframe_tab += '<a href="javascript:;" class="active J_menuTab" ';
+            iframe_tab += 'data-id="'+ timestamp +'">' + tab_name;
+            iframe_tab += '<i class="fa fa-times-circle"></i>';
+            iframe_tab += '</a>';
+        
+            // iframe 内容
+            iframe_content = '';
+            iframe_content += '<iframe class="J_iframe" name="'+ iframe_name +'" width="100%" height="100%" ';
+            iframe_content += 'src="' + url + '" frameborder="0" ';
+            iframe_content += 'data-id="'+ timestamp +'" seamless style="display: inline;">';
+            iframe_content += '</iframe>';
+        
+            // 打开标签和 iframe
+            $(".page-tabs .page-tabs-content .J_menuTab", parent.document).removeClass('active');
+            $(".page-tabs .page-tabs-content", parent.document).append(iframe_tab);
+            $("#content-main .J_iframe", parent.document).css('display','none'); 
+            $("#content-main", parent.document).append(iframe_content);
+        }
+    </script>
+{% endblock %}

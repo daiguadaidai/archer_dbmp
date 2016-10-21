@@ -13,19 +13,19 @@ from __future__ import unicode_literals
 
 from django.db import models
 
-class DbmpMysqlBusinessGroup(models.Model):
-    mysql_business_group_id = models.AutoField(primary_key=True)
-    alias = models.CharField(max_length=40)
-    remark = models.CharField(max_length=50)
+class DbmpMysqlBusiness(models.Model):
+    mysql_business_id = models.AutoField(primary_key=True)
+    name = models.CharField(unique=True, max_length=50)
+    remark = models.CharField(max_length=200)
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         """Java toString 方法"""
-        print_str = 'DbmpMysqlBusinessGroup({alias})'.format(
-                     alias = self.alias)
+        print_str = 'DbmpMysqlBusiness({name})'.format(
+                     name = self.name)
         return print_str
 
     class Meta:
         managed = False
-        db_table = 'dbmp_mysql_business_group'
+        db_table = 'dbmp_mysql_business'

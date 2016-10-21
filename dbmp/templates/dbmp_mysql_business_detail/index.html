@@ -1,0 +1,143 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+{% endblock %}
+
+
+<!-- 显示该页面标题 -->
+{% block app_title %}业务组数据库列表{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<!-- 业务组按钮 -->
+<div class="row fontawesome-icon-list">
+    <div class="fa-hover col-md-2 col-sm-3">
+        <a href="{% url 'dbmp_mysql_business_index' %}">
+            <i class="fa fa-list"></i>
+            业务组列表
+        </a>
+    </div>
+    <div class="fa-hover col-md-2 col-sm-3 pull-right">
+        <a id="instance_list">
+            <i class="fa fa-plus-square"></i>
+            添加业务数据库
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<table class="footable table table-stripped toggle-arrow-tiny table-hover" data-page-size="100">
+    <thead>
+        <tr>
+            <th class="text-center">数据库名</th>
+            <th class="text-center">组名称</th>
+            <th class="text-center">实例IP</th>
+            <th class="text-center">实例PORT</th>
+            <th class="text-center">实例备注</th>
+            <th class="text-center">备注</th>
+            <th class="text-center col-xs-2">操作</th>
+        </tr>
+    </thead>
+
+    <tbody id="business_database_body">
+        {% for mysql_business_detail in business_detail_index %}
+        <tr id="business_database_{{ mysql_business_detail.mysql_business_detail_id }}" class="business_database">
+            <td id="database_name_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.database_name }}</td>
+            <td id="business_name_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.business_name }}</td>
+            <td id="instance_host_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.instance_host }}</td>
+            <td id="instance_port_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.instance_port }}</td>
+            <td id="instance_remark_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.instance_remark }}</td>
+            <td id="business_remark_{{ mysql_business_detail.mysql_business_detail_id }}" class="text-center">{{ mysql_business_detail.business_remark }}</td>
+            <td class="text-center">
+                <a onclick="dbmp_mysql_business_detail_delete({{ mysql_business_detail.mysql_business_detail_id }})"
+                   type="button" class="btn btn-danger btn-xs">
+                    <i class="fa fa-trash"></i>
+                    删除
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 表格插件
+            $(".footable").footable();
+          
+            // 弹出Instance信息 iframe
+            instance_list();
+        });
+
+        // 弹出Instance信息 iframe
+        function instance_list() {
+            $('#instance_list').on('click', function(){
+                layer.open({
+                    type: 2,
+                    title: '实例列表',
+                    maxmin: true,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ['80%' , '100%'],
+                    content: '{% url 'list_instance_use_business_detail' %}?mysql_business_id={{ mysql_business_id }}'
+                });
+            });
+        }
+
+        //删除 dbmp_mysql_business
+        function dbmp_mysql_business_detail_delete(mysql_business_detail_id) {
+            // 拼凑要删除的业务数据库信息
+            instance_host = $("#instance_host_" + mysql_business_detail_id).html();
+            instance_port = $("#instance_port_" + mysql_business_detail_id).html();
+            database_name = $("#database_name_" + mysql_business_detail_id).html();
+            text = instance_host + ":" + instance_port + "@" + database_name;
+            $(".confirm").unbind("click");
+            swal({
+                title: "您确定要从此业务组中移除么?",
+                text: text,
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "删除",
+                closeOnConfirm: false
+            }, function () {
+                $.ajax({
+                    url: "{% url 'dbmp_mysql_business_detail_ajax_delete' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        mysql_business_detail_id: mysql_business_detail_id
+                    }
+                }).done(function(data) { 
+                    if(data == true) {
+                        swal("移除成功!", "已成功移除数据库！", "success");
+                        // 删除行
+                        $("#business_database_" + mysql_business_detail_id).remove();
+                    } else {
+                        swal("对不起!", "移除数据库败了!", "error");
+                    }
+                }).error(function(data) { 
+                    swal("对不起!", "移除操作失败了(调用调用方法失败)!", "error");
+                });
+            });
+        }
+
+    </script>
+{% endblock %}

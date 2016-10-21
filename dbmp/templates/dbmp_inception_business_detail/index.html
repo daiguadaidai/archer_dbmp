@@ -1,0 +1,179 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+{% load filters_dbmp_inception_business_detail %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block app_title %}上线SQL业务组明细{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="row fontawesome-icon-list">
+            <!-- 添加返回需要上线列表 -->
+            <div class="fa-hover  col-md-5">
+                <a href="{% url 'dbmp_inception_record_index' %}">
+                    <i class="fa fa-list"></i>
+                    上线SQL列表
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<!-- 业务组信息 -->
+<section id="inception_info">
+    <h2 class="page-header">上线业务组信息</h2>
+    <div class="row">
+        <div class="col-md-4">
+            <strong>业务组：</strong>
+                <code>{{ dbmp_mysql_business.name }}</code>
+        </div>
+        <div class="col-md-8">
+            <strong>说明：</strong>
+                <code>{{ dbmp_mysql_business.remark }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;<h4>
+
+    <div class="row">
+        <div class="col-md-4">
+            <strong>Inception实例：</strong>
+                <code>{{ dbmp_inception_instance.alias }}</code>
+        </div>
+        <div class="col-md-4">
+            <strong>创建时间：</strong>
+                <code>{{ dbmp_inception_record.create_time | date:'Y-m-d H:i:s' }}</code>
+        </div>
+        <div class="col-md-4">
+            <strong>更新时间：</strong>
+                <code>{{ dbmp_inception_record.update_time | date:'Y-m-d H:i:s' }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;<h4>
+
+    <div class="row">
+        <div class="col-md-4">
+            <strong>标签：</strong>
+            <code>{{ dbmp_inception_record.tag }}</code>
+        </div>
+        <div class="col-md-8">
+            <strong>备注：</strong>
+            {{ dbmp_inception_record.remark }}
+        </div>
+    </div>
+
+    <h4>&nbsp;<h4>
+
+    <div class="row">
+        <pre>{{ dbmp_inception_record.sql_text }}</pre>
+    </div>
+<section>
+
+<section id="inception_business_detail_info">
+    <h2 class="page-header">业务组明细</h2>
+    <table class="table table-hover" data-page-size="100">
+        <thead>
+            <tr>
+                <th class="text-center">#</th>
+                <th class="text-center">数据库名</th>
+                <th class="text-center">IP地址</th>
+                <th class="text-center">端口</th>
+                <th class="text-center col-xs-2">操作</th>
+            </tr>
+        </thead>
+    
+        <tbody>
+            {% for dbmp_inception_business_detail in dbmp_inception_business_details %}
+            <tr class="{{ dbmp_inception_business_detail.execute_status | f_inc_bus_det_execute_status_color }}"
+                id="inception_business_detail_tr_{{ dbmp_inception_business_detail.inception_business_detail_id }}">
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td class="text-center"><code id="inception_database_name_{{ dbmp_inception_business_detail.inception_business_detail_id }}">{{ dbmp_inception_business_detail.db_name }}</code></td>
+                <td class="text-center"><code id="inception_database_host_{{ dbmp_inception_business_detail.inception_business_detail_id }}">{{ dbmp_inception_business_detail.host }}</code></td>
+                <td class="text-center"><code id="inception_database_port_{{ dbmp_inception_business_detail.inception_business_detail_id }}">{{ dbmp_inception_business_detail.port }}</code></td>
+                <td class="text-center" id="inception_business_detail_button_td_{{ dbmp_inception_business_detail.inception_business_detail_id }}">
+                    <button type="button" class="btn btn-xs btn-primary btn-outline"
+                            onclick="execute_business_detail_inception({{ dbmp_inception_business_detail.inception_business_detail_id }})">
+                        <i class="fa fa-chevron-circle-right"></i>
+                        执行
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+<section>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+        });
+
+        // 执行数据库审核
+        function execute_business_detail_inception(inception_business_detail_id) {
+            alert_title = "你确定要执行SQL?";
+            alert_text = "数据库名: <code>" + $("#inception_database_name_" + inception_business_detail_id).text() + "</code><br />";
+            alert_text += "业务组: <code>{{ dbmp_mysql_business.name }}</code><br />";
+            alert_text += "IP地址: <code>" + $("#inception_database_host_" + inception_business_detail_id).text() + "</code><br />";
+            alert_text += "端口: <code>" + $("#inception_database_port_" + inception_business_detail_id).text() + "</code><br />";
+            window_title = "数据库执行SQL";
+            url = "{% url 'dbmp_inception_business_detail_run_inception' %}";
+            url += "?inception_business_detail_id=" + inception_business_detail_id;
+            swal({
+                title: alert_title,
+                text: alert_text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: window_title,
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "0px", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: url
+                });
+            });
+        }
+        
+    </script>
+{% endblock %}

@@ -1,0 +1,341 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block app_title %}上线SQL(添加){% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="row fontawesome-icon-list">
+            <!-- 添加返回需要上线列表 -->
+            <div class="fa-hover  col-md-5">
+                <a href="{% url 'dbmp_inception_record_index' %}">
+                    <i class="fa fa-list"></i>
+                    上线SQL列表
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<!-- 业务组信息 -->
+<section id="inception_info">
+    <h2 class="page-header">上线SQL信息</h2>
+
+    <form method="post" action="{% url 'dbmp_inception_record_add' %}" class="form-horizontal m-t" id="default_form">
+        {% csrf_token %}
+        <input id="inception_instance_id" name="inception_instance_id" type="hidden">
+        <input id="sql_text" name="sql_text" type="hidden">
+        <input id="charset" name="charset" type="hidden">
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                Inception实例：
+            </label>
+            <div id="inception_instance_name_div" class="col-sm-8">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                执行的SQL：
+            </label>
+            <div class="col-sm-8">
+                <pre id="sql_text_pre"></pre>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                标签：
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="tag" class="form-control">
+                <span class="help-block m-b-none">
+                     <i class="fa fa-info-circle text-success"></i> 
+                     <标签>一般填写的是项目上线(版本信息)，如：v1.1.0
+                </span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                备注：
+            </label>
+            <div class="col-sm-8">
+                <textarea id="remark" class="form-control"></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">
+                <span class="text-danger">*</span>
+                字符集：
+            </label>
+            <div id="charset_div" class="col-sm-8">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-4 col-sm-offset-3">
+                <button id="add_to_inception" type="button" class="btn btn-primary"
+                        onclick="add_to_inception_record()">
+                    <i class="fa fa-save"></i>
+                    添加上线
+                </button>
+            </div>
+        </div>
+    </form>
+<section>
+
+{% endblock %}
+
+<!-- 扩展元素模块 -->
+{% block extend_element %}
+<div class="row">
+    <div class="col-sm-6 col-xs-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>添加需要上线的(数据库)</h5>
+                <div class="ibox-tools">
+                    <a class="collapse-link">
+                        <i class="fa fa-chevron-up"></i>
+                    </a>
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="table_basic.html#">选项1</a>
+                        </li>
+                        <li><a href="table_basic.html#">选项2</a>
+                        </li>
+                    </ul>
+                    <a class="close-link">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="ibox-content">
+
+                <div>
+                    <button id="add_database_btn" type="button" class="btn btn-xs btn-primary btn-outline">
+                        <i class="fa fa-plus-square"></i>
+                        添加数据库
+                    </button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>数据库名</th>
+                            <th>实例Host</th>
+                            <th>端口</th>
+                            <th class="col-sm-2 col-xs-2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="database_tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xs-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>添加需要上线的(业务组)</h5>
+                <div class="ibox-tools">
+                    <a class="collapse-link">
+                        <i class="fa fa-chevron-up"></i>
+                    </a>
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="table_basic.html#">选项1</a>
+                        </li>
+                        <li><a href="table_basic.html#">选项2</a>
+                        </li>
+                    </ul>
+                    <a class="close-link">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="ibox-content">
+                <div>
+                    <button id="add_business_btn" type="button" class="btn btn-xs btn-primary btn-outline">
+                        <i class="fa fa-plus-square"></i>
+                        添加业务组
+                    </button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>业务名称</th>
+                            <th>备注</th>
+                            <th class="col-sm-2 col-xs-2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="business_tbody">
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 从父页面获取 sql_text, inception_instance_id, charset
+            show_inception_info();
+
+            // 激活添加数据库按钮
+            $("#add_database_btn").click(function(){ 
+                layer.open({
+                    type: 2,
+                    title: '选择需要 审核/执行 的(数据库)',
+                    maxmin: true,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ['70%' , '80%'],
+                    content: '{% url 'list_instance_use_inception_record_add' %}'
+                });
+            });
+
+            // 激活添加业务组按钮
+            $("#add_business_btn").click(function(){ 
+                layer.open({
+                    type: 2,
+                    title: '选择需要 审核/执行 的(业务组)',
+                    maxmin: true,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ['70%' , '80%'],
+                    content: '{% url 'list_business_use_inception_record_add' %}'
+                });
+            });
+        });
+        
+        // 从父页面获取 sql_text, inception_instance_id, charset
+        function show_inception_info() {
+            check_iframe = $("iframe[name={{ check_iframe_name }}]", parent.document);
+            check_iframe_content = check_iframe.contents();
+
+            // 获取审核信息
+            inception_instance_id = $("#fact_inception_instance_id", check_iframe_content).val();
+            inception_instance_name = $("#fact_inception_instance_name", check_iframe_content).val();
+            sql_text = $("#fact_sql_text", check_iframe_content).val();
+            charset = $("#fact_charset", check_iframe_content).val();
+
+            // 显示审核信息
+            $("#inception_instance_name_div").html("<code>" + inception_instance_name + "</code>");
+            $("#sql_text_pre").html("<code>" + sql_text + "</code>");
+            $("#charset_div").html("<code>" + charset + "</code>");
+
+            // 设置审核信息值
+            $("#inception_instance_id").val(inception_instance_id);
+            $("#sql_text").val(sql_text);
+            $("#charset").val(charset);
+        }
+
+        // 删除一行元素
+        function row_delete(element_id) {
+            $("#" + element_id).remove();
+        }
+
+        function add_to_inception_record() {
+            inception_instance_id = $("#inception_instance_id").val();
+            sql_text = $("#sql_text").val();
+            charset = $("#charset").val();
+            tag = $("#tag").val();
+            remark = $("#remark").val();
+            // 获得数据库id字符串由 逗号(,) 隔开
+            database_ids = get_database_ids();
+            // 获得业务组id字符串由 逗号(,) 隔开
+            business_ids = get_business_ids();
+
+            // 如果没有填写 标签 和 备注不给添加
+            if((tag == null || tag == '' || tag.length == 0) &&
+               (remark == null || remark == '' || remark.length == 0)) {
+                toastr.warning("请务必填写标签, 备注。主要是为了到时候更好的确认查找");
+                return false;
+            }
+
+            // 如果没有选择 数据库/业务组 不给添加
+            if((database_ids == null || database_ids == '' || database_ids.length == 0) &&
+               (business_ids == null || business_ids == '' || business_ids.length == 0)) {
+                toastr.error("您还没有添加任何 数据库/业务组, 请添加");
+                return false;
+            }
+
+            $.ajax({
+                url: "{% url 'dbmp_inception_record_ajax_add' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    inception_instance_id: inception_instance_id,
+                    sql_text: sql_text,
+                    tag: tag,
+                    remark: remark,
+                    charset: charset,
+                    database_ids: database_ids,
+                    business_ids: business_ids
+                }
+            }).done(function(data) { 
+                if(data.is_ok == false){
+                    toastr.error("添加失败(" + data.err_msg + ")");
+                } else if(data.is_ok = true) {
+                    toastr.success("添加成功");
+                    url = "{% url 'dbmp_inception_record_view' %}";
+                    url += "?inception_record_id=" + data.inception_record_id;
+                    window.location.href = url;
+                } else {
+                    toastr.warning("返回确认数据错误,请确认是否添加成功");
+                }
+            }).error(function(data) { 
+                toastr.error("请求添加错误");
+            });
+        }
+
+        // 获得数据库id字符串由 逗号(,) 隔开
+        function get_database_ids() {
+            database_ids = "";
+            if($(".database_id").length > 0) {
+                // 遍历 数据库 id
+                $(".database_id").each(function(){
+                    database_ids += $(this).val() + ",";
+                });
+            }
+            return database_ids;
+        }
+
+        // 获得业务组id字符串由 逗号(,) 隔开
+        function get_business_ids() {
+            business_ids = "";
+            if($(".business_id").length > 0) {
+                // 遍历 数据库 id
+                $(".business_id").each(function(){
+                    business_ids += $(this).val() + ",";
+                });
+            }
+            return business_ids;
+        }
+    </script>
+{% endblock %}

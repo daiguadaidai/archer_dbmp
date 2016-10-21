@@ -1,0 +1,204 @@
+{% load staticfiles %}
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+    <head>
+        <meta charset="UTF-8"> 
+        <link rel="stylesheet" href="{% static 'js/plugins/jqconsole/css/ansi.css' %}" media="all" />
+        <script src="{% static 'js/plugins/jqconsole/js/jquery-1.5.1.js' %}"></script>
+        <script src="{% static 'js/plugins/jqconsole/js/jqconsole-2.7.min.js' %}"></script>
+
+        <style>
+            html, body {
+                background-color: #333;
+                color: white;
+                font-family: monospace;
+                margin: 0;
+                padding: 0;
+            }
+            #console {
+                width: 100%;
+                background-color: black;
+                border: 3px solid #CCC;
+            }
+            .jqconsole {
+                padding: 10px;
+                padding-bottom: 10px;
+            }
+            .jqconsole-cursor {
+                background-color: #999;
+            }
+            .jqconsole-blurred .jqconsole-cursor {
+                background-color: #666;
+            }
+            .jqconsole-prompt {
+                color: #0d0;
+            }
+            .jqconsole-old-prompt {
+                color: #0b0;
+                font-weight: normal;
+            }
+            .jqconsole-input {
+                color: #dd0;
+            }
+            .jqconsole-output-error {
+                color: #F00;
+            }
+            .jqconsole-output-warning {
+                color: #FF0;
+            }
+            .jqconsole-output-success {
+                color: #0D0;
+            }
+            .jqconsole-old-input {
+                color: #bb0;
+                font-weight: normal;
+            }
+            .brace {
+                color: #00FFFF;
+            }
+            .paran {
+                color: #FF00FF;
+            }
+            .bracket {
+                color: #FFFF00;
+            }
+            .jqconsole-composition {
+                background-color: red;
+            }
+
+            {% if error_msg %}
+                .jqconsole-header {
+                    color: #F00;
+                }
+            {% else %}
+                .jqconsole-header {
+                    color: #0D0;
+                }
+            {% endif %}
+        </style>
+        <script>
+            // 使用 Django csrf 功能
+            $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+            $(function() {
+                // Creating the console.
+                var header = "";
+                {% if error_msg %} // 如果过错误信息则显示错误信息
+                    {% for msg in error_msg %}
+                        header += "{{ msg }} \n";
+                    {% endfor %}
+                {% endif %}
+                    header += "执行SQL数据库信息: \n";
+                    header += "  数据库名: {{ dbmp_inception_business_detail.name }}" + "\n";
+                    header += "    IP地址: {{ dbmp_inception_business_detail.host }}" + "\n";
+                    header += "      端口: {{ dbmp_inception_business_detail.port }}" + "\n";
+                    header += " \n";
+                window.jqconsole = $("#console").jqconsole(header, "> ");
+                
+                // Handle a command.
+                var handler = function(command) {
+                    jqconsole.Prompt(true, handler, function(command) {
+                        // Continue line if can"t compile the command.
+                        try {
+                            Function(command);
+                        } catch (e) {
+                            if (/[\[\{\(]$/.test(command)) {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        }
+                        return false;
+                    });
+                };
+                
+                // Initiate the first prompt.
+                handler();
+
+                // 执行SQL
+                var execute_status = {{ dbmp_inception_business_detail.execute_status }};
+                if (execute_status == 1 || execute_status == 3) {
+                    run_inception({{ dbmp_inception_business_detail.inception_business_detail_id }});
+                }
+            });
+
+            // 后台调用启动MySQL
+            function run_inception(inception_business_detail_id) {
+                window.jqconsole.Write("====================== 正在执行... ========================= \n", "jqconsole-output-warning");
+                $.ajax({
+                    url: "{% url 'dbmp_inception_business_detail_ajax_run_inception' %}",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        inception_business_detail_id: inception_business_detail_id
+                    }
+                }).done(function(data) { 
+                    if(data.is_ok == true) {
+                        inception_header = "ID | stage | errLevel | stagestatus | Affected_rows | sequence | backup_dbname | execute_time | sqlsha1 \n";
+                        window.jqconsole.Write(inception_header);
+                        for(i=0; i<data.inception_info.length; i++) {
+                            // 显示执行审核返回的数据
+                            inception_body = "";
+                            inception_body += data.inception_info[i].ID + " | ";
+                            inception_body += data.inception_info[i].stage + " | ";
+                            inception_body += data.inception_info[i].errlevel + " | ";
+                            inception_body += data.inception_info[i].stagestatus + " | ";
+                            inception_body += data.inception_info[i].Affected_rows + " | ";
+                            inception_body += data.inception_info[i].sequence + " | ";
+                            inception_body += data.inception_info[i].backup_dbname + " | ";
+                            inception_body += data.inception_info[i].execute_time + " | ";
+                            inception_body += data.inception_info[i].sqlsha1 + " \n";
+                            inception_body += "errorMessage: " + data.inception_info[i].errormessage + "\n";
+                            inception_body += "SQL: " + data.inception_info[i].SQL + "\n";
+                            if(data.inception_info[i].errlevel == 0) {
+                                window.jqconsole.Write(inception_body, "jqconsole-output-success");
+                            } else if(data.inception_info[i].errlevel == 1) {
+                                window.jqconsole.Write(inception_body, "jqconsole-output-warning");
+                            } else if(data.inception_info[i].errlevel == 2) {
+                                window.jqconsole.Write(inception_body, "jqconsole-output-error");
+                            }
+                        }
+                        if(data.execute_status == 2) { // 执行成功
+                            change_parent_business_detail_tr({{ dbmp_inception_business_detail.inception_business_detail_id }}, 'success');
+                            change_parent_business_detail_button_ok({{ dbmp_inception_business_detail.inception_business_detail_id }});
+                        } else if(data.execute_status == 3) { // 执行失败
+                            change_parent_business_detail_tr({{ dbmp_inception_business_detail.inception_business_detail_id }}, 'danger');
+                        }
+                    } else {
+                        window.jqconsole.Write("  执行SQL失败" + "\n", "jqconsole-output-error");
+                    }
+                    window.jqconsole.Write(data.err_msg + "\n", "jqconsole-output-error");
+                    window.jqconsole.Write("-----------------------------------------");
+                    window.jqconsole.Write("-----------------------------------------\n");
+                }).error(function(data) { 
+                    window.jqconsole.Write("  请求执行SQL失败" + "\n", "jqconsole-output-error");
+                }); 
+
+            }
+
+            // 修改父窗口数据库 tr 为成功样式
+            function change_parent_business_detail_tr(inception_business_detail_id, class_color) {
+                attr = $("#inception_business_detail_tr_" + inception_business_detail_id, window.parent.document).attr("class");
+                $("#inception_business_detail_tr_" + inception_business_detail_id, window.parent.document).removeClass(attr);
+                $("#inception_business_detail_tr_" + inception_business_detail_id, window.parent.document).addClass(class_color);
+            }
+
+            // 修改父窗口数据库 按钮 为成功样式
+            function change_parent_business_detail_button_ok(inception_business_detail_id) {
+                // 构造成功显示标签
+                html_str = "";
+                html_str += '<a>';
+                html_str += '    <i class="fa fa-check text-navy"></i>';
+                html_str += '    成功';
+                html_str += '</a>';
+                $("#inception_business_detail_button_td_" + inception_business_detail_id, window.parent.document).html(html_str);
+            }
+
+        </script>
+    </head>
+    <body>
+        <div id="console"></div>
+    </body>
+</html>

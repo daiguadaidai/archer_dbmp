@@ -1,0 +1,534 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+{% load ip_filters %}
+{% load filters_dbmp_inception_record %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/plugins/sweetalert/sweetalert.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block app_title %}上线SQL(明细){% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="row fontawesome-icon-list">
+            <!-- 添加返回需要上线列表 -->
+            <div class="fa-hover  col-md-5">
+                <a href="{% url 'dbmp_inception_record_index' %}">
+                    <i class="fa fa-list"></i>
+                    上线SQL列表
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<!-- 业务组信息 -->
+<section id="inception_info">
+    <h2 class="page-header">上线SQL信息&nbsp;
+        <span class="label label-{{ dbmp_inception_record.execute_status | f_inc_rec_execute_status_color }}"
+              id="execute_status_label">
+            {{ dbmp_inception_record.execute_status | f_inc_rec_execute_status }}
+        </span>
+    </h2>
+
+    <div class="row">
+        <input type="hidden" id="inception_record_id"
+               value="{{ dbmp_inception_record.inception_record_id }}">
+        <input type="hidden" id="inception_instance_id"
+               value="{{ dbmp_inception_incestance.inception_instance_id }}">
+        <input type="hidden" id="inception_instance_host"
+               value="{{ dbmp_inception_incestance.host | f_num2ip }}">
+        <input type="hidden" id="inception_instance_port"
+               value="{{ dbmp_inception_incestance.port }}">
+
+        <div class="col-md-4">
+            <strong>Inception实例：</strong>
+                <code>{{ dbmp_inception_instance.alias }}</code>
+        </div>
+        <div class="col-md-4">
+            <strong>创建时间：</strong>
+                <code>{{ dbmp_inception_record.create_time | date:'Y-m-d H:i:s' }}</code>
+        </div>
+        <div class="col-md-4">
+            <strong>更新时间：</strong>
+                <code>{{ dbmp_inception_record.update_time | date:'Y-m-d H:i:s' }}</code>
+        </div>
+    </div>
+
+    <h4>&nbsp;<h4>
+
+    <div class="row">
+        <div class="col-md-4">
+            <strong>标签：</strong>
+            <code>{{ dbmp_inception_record.tag }}</code>
+        </div>
+        <div class="col-md-8">
+            <strong>备注：</strong>
+            {{ dbmp_inception_record.remark }}
+        </div>
+    </div>
+
+    <h4>&nbsp;<h4>
+
+    <div class="row">
+        <pre>{{ dbmp_inception_record.sql_text }}</pre>
+    </div>
+
+    
+    <div class="row" id="run_inception_row_all">
+    {% if dbmp_inception_record.execute_status != 2 %}
+        <button id="run_inception_button_all" type="button" class="btn btn-primary btn-outline"
+                onclick="run_inception({{ dbmp_inception_record.inception_record_id }})">
+            <i class="fa fa-chevron-circle-right"></i>
+            执行
+        </button>
+    {% endif %}
+    </div>
+<section>
+
+{% endblock %}
+
+<!-- 扩展元素模块 -->
+{% block extend_element %}
+<div class="row">
+    <div class="col-sm-6 col-xs-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>需要上线的(数据库)</h5>
+                <div class="ibox-tools">
+                    <a class="collapse-link">
+                        <i class="fa fa-chevron-up"></i>
+                    </a>
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="table_basic.html#">选项1</a>
+                        </li>
+                        <li><a href="table_basic.html#">选项2</a>
+                        </li>
+                    </ul>
+                    <a class="close-link">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="ibox-content">
+                <div class="row center-block">
+                    <span class="label">未执行</span>
+                    <span class="label label-primary">执行成功</span>
+                    <span class="label label-danger">执行失败</span>
+                    <span class="label label-warning">部分失败</span>
+                </div>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>数据库名</th>
+                            <th>实例Host</th>
+                            <th>端口</th>
+                            <th class="col-sm-2 col-xs-2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="database_tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xs-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>需要上线的(业务组)</h5>
+                <div class="ibox-tools">
+                    <a class="collapse-link">
+                        <i class="fa fa-chevron-up"></i>
+                    </a>
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="table_basic.html#">选项1</a>
+                        </li>
+                        <li><a href="table_basic.html#">选项2</a>
+                        </li>
+                    </ul>
+                    <a class="close-link">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="ibox-content">
+                <div class="row center-block">
+                    <span class="label">未执行</span>
+                    <span class="label label-primary">执行成功</span>
+                    <span class="label label-danger">执行失败</span>
+                    <span class="label label-warning">部分失败</span>
+                </div>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>业务名称</th>
+                            <th>备注</th>
+                            <th class="col-sm-3 col-xs-3">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="business_tbody">
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+    <script src="{% static 'js/plugins/sweetalert/sweetalert.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 获得 数据库/业务组
+            show_database_and_business();
+        });
+
+        // 显示数据库和业务组
+        function show_database_and_business() {
+            // 获得审核目标 1数据库 2业务组 3混合
+            inception_target = {{ dbmp_inception_record.inception_target }};
+            // 获得 inception_record_id
+            inception_record_id = $("#inception_record_id").val();
+            // 显示数据库
+            if (inception_target == 1 || inception_target == 3) {
+                show_database(inception_record_id);
+            }
+            // 显示业务组
+            if (inception_target == 2 || inception_target == 3) {
+                show_business(inception_record_id);
+            }
+        }
+
+        // 显示数据库
+        function show_database(inception_record_id) {
+            $.ajax({
+                url: "{% url 'dbmp_inception_database_ajax_find_by_inception_record_id' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    inception_record_id: inception_record_id
+                }
+            }).done(function(data) { 
+                if(data.is_ok == false){
+                    toastr.error(data.err_msg);
+                } else if(data.is_ok = true) {
+                    if(data.databases != null && data.databases.length > 0) {
+                        add_database_html(data.databases, inception_record_id);
+                    }
+                } else {
+                    toastr.warning("返回数据错误, 未能正确获取审核数据库信息");
+                }
+            }).error(function(data) { 
+                toastr.error("请求获取审核数据库失败");
+            });
+        }
+
+        // 显示业务组
+        function show_business(inception_record_id) {
+            $.ajax({
+                url: "{% url 'dbmp_inception_business_ajax_find_by_inception_record_id' %}",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    inception_record_id: inception_record_id
+                }
+            }).done(function(data) { 
+                if(data.is_ok == false){
+                    toastr.error(data.err_msg);
+                } else if(data.is_ok = true) {
+                    if(data.businesses != null && data.businesses.length > 0) {
+                        add_business_html(data.businesses);
+                    }
+                } else {
+                    toastr.warning("返回数据错误, 未能正确获取审核业务组信息");
+                }
+            }).error(function(data) { 
+                toastr.error("请求获取审核业务组失败");
+            });
+        }
+        
+        // 添加审核数据库信息HTML
+        function add_database_html(databases, inception_record_id) {
+            html_str = "";
+            tr_color_class = "";
+
+            for(i=0; i<databases.length; i++) {
+                button_html = "";
+                // 拼凑执行审核数据库方法
+                func_str = "execute_database_inception";
+                func_str += "(";
+                func_str += inception_record_id + ", " +  databases[i].inception_database_id;
+                func_str += ")";
+                // 通过不同状态获取不同的 按钮 和每行颜色
+                if(databases[i].execute_status == 1) { // 未运行
+                    button_html = get_button_html(func_str);
+                } else if(databases[i].execute_status == 2) { // 运行成功
+                    tr_color_class += "success";
+                    button_html += '<a>';
+                    button_html += '    <i class="fa fa-check text-navy"></i>';
+                    button_html += '    成功';
+                    button_html += '</a>';
+
+                } else if(databases[i].execute_status == 3) { // 运行失败
+                    tr_color_class += "danger";
+                    button_html = get_button_html(func_str);
+                }
+                html_str += '<tr id="inception_database_' + databases[i].inception_database_id + '"';
+                html_str += '    class="' + tr_color_class + '">';
+                html_str += '    <td><code id="inception_database_name_' + databases[i].inception_database_id + '">' + databases[i].name + '</code></td>';
+                html_str += '    <td><code id="inception_database_host_' + databases[i].inception_database_id + '">' + databases[i].host + '</code></td>';
+                html_str += '    <td><code id="inception_database_port_' + databases[i].inception_database_id + '">' + databases[i].port + '</code></td>';
+                html_str += '    <td id="inception_database_button_td_' + databases[i].inception_database_id + '">';
+                html_str +=          button_html;
+                html_str += '    </td>';
+                html_str += '</tr>';
+            }
+
+            $("#database_tbody").html(html_str);
+        }
+
+        // 添加审核数据库信息HTML
+        function add_business_html(businesses) {
+            html_str = "";
+            tr_color_class = "";
+
+            for(i=0; i<businesses.length; i++) {
+                button_html = "";
+                // 拼凑执行审核数据库方法
+                func_str = "execute_business_inception";
+                func_str += "(";
+                func_str += inception_record_id + ", " +  businesses[i].inception_business_id;
+                func_str += ")";
+                // 通过不同状态获取不同的 按钮 和每行颜色
+                if(businesses[i].execute_status == 1) { // 未运行
+                    button_html = get_button_html(func_str, businesses[i].inception_business_id);
+                } else if(businesses[i].execute_status == 2) { // 运行成功
+                    tr_color_class += "success";
+                    button_html += '<a id="business_button_' + businesses[i].inception_business_id + '">';
+                    button_html += '    <i class="fa fa-check text-navy"></i>';
+                    button_html += '    成功';
+                    button_html += '</a>';
+
+                } else if(businesses[i].execute_status == 3) { // 运行失败
+                    tr_color_class += "danger";
+                    button_html = get_button_html(func_str, businesses[i].inception_business_id);
+                } else if(businesses[i].execute_status == 4) { // 部分运行失败
+                    tr_color_class += "warning";
+                    button_html = get_button_html(func_str, businesses[i].inception_business_id);
+                }
+                html_str += '<tr id="inception_business_' + businesses[i].inception_business_id + '"';
+                html_str += '    class="' + tr_color_class + '">';
+                html_str += '    <td><code id="inception_business_name_' + businesses[i].inception_business_id + '">' + businesses[i].name + '</code></td>';
+                html_str += '    <td><code>' + businesses[i].remark + '</code></td>';
+                html_str += '    <td id="inception_business_button_td_' + businesses[i].inception_business_id + '">';
+                html_str += '        <button type="button" class="btn btn-xs btn-primary btn-outline"';
+                html_str += '                onclick="inception_business_detail_list(' + inception_record_id + ', ' + businesses[i].inception_business_id + ')">';
+                html_str += '            <i class="fa fa-list"></i>';
+                html_str += '            详情';
+                html_str += '        </button>';
+                html_str +=          button_html;
+                html_str += '    </td>';
+                html_str += '</tr>';
+            }
+
+            $("#business_tbody").html(html_str);
+        }
+
+        // 获得按钮html代码
+        function get_button_html(click_func, inception_business_id) {
+            button_html += '<button id="business_button_' + inception_business_id + '" type="button" class="btn btn-xs btn-primary btn-outline"';
+            button_html += '        onclick="' + click_func + '">';
+            button_html += '    <i class="fa fa-chevron-circle-right"></i>';
+            button_html += '    执行';
+            button_html += '</button>';
+            return button_html;
+        }
+
+        // 执行所有SQL(数据库/业务组)
+        function run_inception() {
+            alert_title = "你确定要执行SQL?";
+            alert_text = "";
+            alert_text += "标签: <code>{{ dbmp_inception_record.tag }}</code> <br/>";
+            alert_text += "备注: {{ dbmp_inception_record.remark }}";
+            window_title = "(数据库/业务组)执行SQL";
+            url = "{% url 'dbmp_inception_record_run_inception_in_view' %}";
+            url += "?inception_record_id=" + inception_record_id;
+            swal({
+                title: alert_title,
+                text: alert_text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: window_title,
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "0px", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: url
+                });
+            });
+        }
+
+        // 执行数据库审核
+        function execute_database_inception(inception_record_id, inception_database_id) {
+            alert_title = "你确定要执行SQL?";
+            alert_text = "数据库名: <code>" + $("#inception_database_name_" + inception_database_id).text() + "</code>";
+            alert_text += "IP地址: <code>" + $("#inception_database_host_" + inception_database_id).text() + "</code>";
+            alert_text += "端口: <code>" + $("#inception_database_port_" + inception_database_id).text() + "</code>";
+            window_title = "数据库执行SQL";
+            url = "{% url 'dbmp_inception_database_run_inception' %}";
+            url += "?inception_record_id=" + inception_record_id;
+            url += "&inception_database_id=" + inception_database_id;
+            swal({
+                title: alert_title,
+                text: alert_text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: window_title,
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "0px", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: url
+                });
+            });
+        }
+
+        // 执行业务组审核
+        function execute_business_inception(inception_record_id, inception_business_id) {
+            alert_title = "你确定要执行SQL?";
+            alert_text = "业务组: <code>" + $("#inception_business_name_" + inception_business_id).text() + "</code>";
+            window_title = "业务组执行SQL";
+            url = "{% url 'dbmp_inception_business_run_inception' %}";
+            url += "?inception_record_id=" + inception_record_id;
+            url += "&inception_business_id=" + inception_business_id;
+            swal({
+                title: alert_title,
+                text: alert_text,
+                type: "warning",
+                html: true,
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确定",
+                closeOnConfirm: false
+            }, function () {
+                swal({
+                    title: "",
+                    text: "",
+                    timer: 1,
+                    showConfirmButton: false 
+                });
+
+                // 点击启动按钮打开一个新的iframe命令窗口
+                index = layer.open({
+                    type: 2,
+                    title: window_title,
+                    shadeClose: true,
+                    shade: false, // 没有遮罩
+                    offset: "0px", // 左下角弹框
+                    maxmin: true,
+                    shift: 2,
+                    shadeClose: true, //点击遮罩关闭层
+                    area : ["100%" , "40%"], // 弹窗大小
+                    moveOut: false, // 不可以在窗口外拖拽
+                    content: url
+                });
+            });
+        }
+
+        // 查看审核业务组详情
+        function inception_business_detail_list(inception_record_id, inception_business_id) {
+            check_iframe_name = window.name; // 获得当前 iframe name
+            url = "{% url 'dbmp_inception_business_detail_index' %}";
+            url += "?inception_business_id=" + inception_business_id;
+            open_iframe_window("业务组明细", url);
+        }
+
+        // 打开一个 iframe 窗口
+        function open_iframe_window(tab_name, url) {
+            var timestamp = (new Date()).valueOf(); 
+            iframe_name = "name" + timestamp;
+        
+            // iframe 菜单 标签
+            iframe_tab = '';
+            iframe_tab += '<a href="javascript:;" class="active J_menuTab" ';
+            iframe_tab += 'data-id="'+ timestamp +'">' + tab_name;
+            iframe_tab += '<i class="fa fa-times-circle"></i>';
+            iframe_tab += '</a>';
+        
+            // iframe 内容
+            iframe_content = '';
+            iframe_content += '<iframe class="J_iframe" name="'+ iframe_name +'" width="100%" height="100%" ';
+            iframe_content += 'src="' + url + '" frameborder="0" ';
+            iframe_content += 'data-id="'+ timestamp +'" seamless style="display: inline;">';
+            iframe_content += '</iframe>';
+        
+            // 打开标签和 iframe
+            $(".page-tabs .page-tabs-content .J_menuTab", parent.document).removeClass('active');
+            $(".page-tabs .page-tabs-content", parent.document).append(iframe_tab);
+            $("#content-main .J_iframe", parent.document).css('display','none'); 
+            $("#content-main", parent.document).append(iframe_content);
+        }
+    </script>
+{% endblock %}

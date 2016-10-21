@@ -94,6 +94,82 @@ class CmdbOs(models.Model):
         db_table = 'cmdb_os'
 
 
+class DbmpInceptionBusiness(models.Model):
+    inception_business_id = models.AutoField(primary_key=True)
+    inception_record_id = models.IntegerField()
+    mysql_business_id = models.IntegerField()
+    execute_status = models.IntegerField()
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_business'
+        unique_together = (('inception_record_id', 'mysql_business_id'),)
+
+
+class DbmpInceptionBusinessDetail(models.Model):
+    inception_business_detail_id = models.AutoField(primary_key=True)
+    inception_business_id = models.IntegerField()
+    inception_record_id = models.IntegerField()
+    mysql_business_id = models.IntegerField()
+    mysql_database_id = models.IntegerField()
+    execute_status = models.IntegerField()
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_business_detail'
+        unique_together = (('inception_record_id', 'mysql_database_id'),)
+
+
+class DbmpInceptionDatabase(models.Model):
+    inception_database_id = models.AutoField(primary_key=True)
+    inception_record_id = models.IntegerField()
+    mysql_database_id = models.IntegerField()
+    execute_status = models.IntegerField()
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_database'
+        unique_together = (('inception_record_id', 'mysql_database_id'),)
+
+
+class DbmpInceptionInstance(models.Model):
+    inception_instance_id = models.AutoField(primary_key=True)
+    host = models.IntegerField()
+    port = models.IntegerField()
+    alias = models.CharField(max_length=50)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_instance'
+        unique_together = (('host', 'port'),)
+
+
+class DbmpInceptionRecord(models.Model):
+    inception_record_id = models.AutoField(primary_key=True)
+    inception_instance_id = models.IntegerField()
+    is_remote_backup = models.IntegerField()
+    inception_target = models.IntegerField()
+    tag = models.CharField(max_length=20)
+    remark = models.CharField(max_length=200)
+    sql_text = models.TextField(blank=True, null=True)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+    charset = models.CharField(max_length=20)
+    execute_status = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_inception_record'
+
+
 class DbmpMysqlBackupInfo(models.Model):
     mysql_backup_info_id = models.AutoField(primary_key=True)
     mysql_instance_id = models.IntegerField()
@@ -158,16 +234,42 @@ class DbmpMysqlBackupRemote(models.Model):
         db_table = 'dbmp_mysql_backup_remote'
 
 
-class DbmpMysqlBusinessGroup(models.Model):
-    mysql_business_group_id = models.AutoField(primary_key=True)
-    alias = models.CharField(max_length=40)
-    remark = models.CharField(max_length=50)
+class DbmpMysqlBusiness(models.Model):
+    mysql_business_id = models.AutoField(primary_key=True)
+    name = models.CharField(unique=True, max_length=50)
+    remark = models.CharField(max_length=200)
     create_time = models.DateTimeField()
     update_time = models.DateTimeField()
 
     class Meta:
         managed = False
-        db_table = 'dbmp_mysql_business_group'
+        db_table = 'dbmp_mysql_business'
+
+
+class DbmpMysqlBusinessDetail(models.Model):
+    mysql_business_detail_id = models.AutoField(primary_key=True)
+    mysql_business_id = models.IntegerField()
+    mysql_database_id = models.IntegerField()
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_mysql_business_detail'
+        unique_together = (('mysql_business_id', 'mysql_database_id'),)
+
+
+class DbmpMysqlDatabase(models.Model):
+    mysql_database_id = models.AutoField(primary_key=True)
+    mysql_instance_id = models.IntegerField()
+    name = models.CharField(max_length=50)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'dbmp_mysql_database'
+        unique_together = (('mysql_instance_id', 'name'),)
 
 
 class DbmpMysqlHaGroup(models.Model):

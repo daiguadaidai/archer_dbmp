@@ -1,0 +1,119 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+{% load ip_filters %}
+{% load filters_dbmp_mysql_instance %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+{% endblock %}
+
+
+<!-- 显示该页面标题 -->
+{% block app_title %}需要SQL审核(实例)列表{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<table class="footable table table-stripped toggle-arrow-tiny table-hover">
+    <thead>
+        <tr>
+            <th class="text-center col-xs-1">#</th>
+            <th class="text-center">Host</th>
+            <th class="text-center">Port</th>
+            <th class="text-center">备注</th>
+            <th class="text-center col-xs-2">操作</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for dbmp_mysql_instance in pagination.objs %}
+        <tr>
+            <td class="text-center">{{ forloop.counter }}</td>
+            <td class="text-center">
+                <a href="{% url 'list_database_use_inception_record_add' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}">
+                    {{ dbmp_mysql_instance.host | f_num2ip }}
+                </a>
+            </td>
+            <td class="text-center">{{ dbmp_mysql_instance.port }}</td>
+            <td class="text-center">{{ dbmp_mysql_instance.remark }}</td>
+            <td class="text-center">
+                <a href="{% url 'list_database_use_inception_record_add' %}?mysql_instance_id={{ dbmp_mysql_instance.mysql_instance_id }}" 
+                   type="button" class="btn btn-info btn-xs">
+                    <i class="fa fa-database"></i>
+                    数据库列表
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 这里是分页页码 -->
+<div class="btn-group">
+    <!-- 第一页, 上一页 -->
+    {% if pagination.cur_page != 1 and pagination %}
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page=1">
+            <i class="fa fa-angle-double-left"></i>
+        </a>
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.pre_page }}">
+            <i class="fa fa-angle-left"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 省略号 -->
+    {% if pagination.start_page_omit_symbol %}
+        <a type="button" class="btn btn-write btn-outline">
+            <i class="fa fa-ellipsis-h"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 能点击的页码 -->
+    {% for page_item in pagination.page_items %}
+        {% if page_item == pagination.cur_page %}
+            <a type="button" class="btn btn-primary">{{ page_item }}</a>
+        {% else %}
+            <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ page_item }}">{{ page_item }}</a>
+        {% endif %}
+    {% endfor%}
+    
+    <!-- 省略号 -->
+    {% if pagination.end_page_omit_symbol %}
+        <a type="button" class="btn btn-write btn-outline">
+            <i class="fa fa-ellipsis-h"></i>
+        </a>
+    {% endif %}
+    
+    <!-- 下一页, 最后一页 -->
+    {% if pagination.cur_page != pagination.all_page and pagination %}
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.next_page }}">
+            <i class="fa fa-angle-right"></i>
+        </a>
+        <a type="button" class="btn btn-primary btn-outline" href="?cur_page={{ pagination.all_page }}">
+            <i class="fa fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/layer/layer.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+            // 表格插件
+            $(".footable").footable();
+        });
+
+    </script>
+{% endblock %}

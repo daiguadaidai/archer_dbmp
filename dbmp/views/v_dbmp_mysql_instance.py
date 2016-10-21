@@ -15,6 +15,7 @@ from dbmp.models.dbmp_mysql_instance_info import DbmpMysqlInstanceInfo
 from dbmp.models.dbmp_mysql_backup_info import DbmpMysqlBackupInfo
 from dbmp.models.dbmp_mysql_backup_instance import DbmpMysqlBackupInstance
 from dbmp.models.dbmp_mysql_backup_remote import DbmpMysqlBackupRemote
+from dbmp.models.dbmp_mysql_database import DbmpMysqlDatabase
 from dbmp.views.forms.form_dbmp_mysql_instance import AddForm
 from dbmp.views.forms.form_dbmp_mysql_instance import EditForm
 
@@ -340,6 +341,9 @@ def ajax_delete(request):
                     DbmpMysqlBackupRemote.objects.filter(
                                 mysql_instance_id = mysql_instance_id).delete()
                     logger.info('delete DbmpMysqlBackupInfo')
+                    DbmpMysqlDatabase.objects.filter(
+                                mysql_instance_id = mysql_instance_id).delete()
+                    logger.info('delete DbmpMysqlDatabase')
 
                 is_delete = True
             except Exception, e:
@@ -502,5 +506,74 @@ def terminal_sql_console(request):
         return render(request, 'dbmp_mysql_handler/terminal_sql_console.html', params)
 
 @DecoratorTool.get_request_alert_message
-def test(request):
-    return render(request, 'test.html')
+def list_instance_use_business_detail(request):
+    params = {}
+
+    try:  
+        cur_page = int(request.GET.get('cur_page', '1'))  
+        mysql_business_id = int(request.GET.get('mysql_business_id', '0'))
+    except ValueError:  
+        cur_page = 1  
+        mysql_business_id = 0
+
+    params['mysql_business_id'] = mysql_business_id
+  
+    # 创建分页数据
+    pagination = Pagination.create_pagination(
+                             from_name='dbmp.models.dbmp_mysql_instance', 
+                             model_name='DbmpMysqlInstance',
+                             cur_page=cur_page,
+                             start_page_omit_symbol = '...',
+                             end_page_omit_symbol = '...',
+                             one_page_data_size=10,
+                             show_page_item_len=9)
+    # 获得MySQL实例列表
+    params['pagination'] = pagination
+    
+    return render(request, 'dbmp_mysql_instance/list_instance_use_business_detail.html', params)
+
+@DecoratorTool.get_request_alert_message
+def list_instance_use_inception_record_check(request):
+    params = {}
+
+    try:  
+        cur_page = int(request.GET.get('cur_page', '1'))  
+    except ValueError:  
+        cur_page = 1  
+
+    # 创建分页数据
+    pagination = Pagination.create_pagination(
+                             from_name='dbmp.models.dbmp_mysql_instance', 
+                             model_name='DbmpMysqlInstance',
+                             cur_page=cur_page,
+                             start_page_omit_symbol = '...',
+                             end_page_omit_symbol = '...',
+                             one_page_data_size=10,
+                             show_page_item_len=9)
+    # 获得MySQL实例列表
+    params['pagination'] = pagination
+    
+    return render(request, 'dbmp_mysql_instance/list_instance_use_inception_record_check.html', params)
+
+@DecoratorTool.get_request_alert_message
+def list_instance_use_inception_record_add(request):
+    params = {}
+
+    try:  
+        cur_page = int(request.GET.get('cur_page', '1'))  
+    except ValueError:  
+        cur_page = 1  
+
+    # 创建分页数据
+    pagination = Pagination.create_pagination(
+                             from_name='dbmp.models.dbmp_mysql_instance', 
+                             model_name='DbmpMysqlInstance',
+                             cur_page=cur_page,
+                             start_page_omit_symbol = '...',
+                             end_page_omit_symbol = '...',
+                             one_page_data_size=10,
+                             show_page_item_len=9)
+    # 获得MySQL实例列表
+    params['pagination'] = pagination
+    
+    return render(request, 'dbmp_mysql_instance/list_instance_use_inception_record_add.html', params)

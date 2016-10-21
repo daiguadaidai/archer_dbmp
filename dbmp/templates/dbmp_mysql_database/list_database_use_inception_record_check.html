@@ -1,0 +1,120 @@
+{%extends 'dbmp_base.html' %}
+
+{% load staticfiles %}
+{% load ip_filters %}
+
+<!-- 添加该页面自己需要的 css 模板 -->
+{% block css %}
+    <link href="{% static 'css/plugins/footable/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'css/plugins/toastr/toastr.min.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block app_title %}MySQL实例详细信息{% endblock %}
+
+<!-- 其他元素模块 -->
+{% block top_element %}
+<div class="row fontawesome-icon-list">
+    <!-- 添加返回MySQL实例列表按钮 -->
+    <div class="fa-hover col-md-2 col-sm-3">
+        <a href="{% url 'list_instance_use_inception_record_check' %}">
+            <i class="fa fa-home"></i>
+            实例列表
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 显示该页面主要展示的内容 -->
+{% block content %}
+<!-- 实例信息 -->
+<section id="mysql_instance_section">
+    <h2 class="page-header">实例信息</h2>
+    <div id="instance_row" class="row">
+        <div class="col-md-4 col-xs-4">
+            <strong>实例Host：</strong> 
+            <code>{{ dbmp_mysql_instance.host | f_num2ip }}</code>
+        </div>
+        <div class="col-md-4 col-xs-4">
+            <strong>端口：</strong> 
+            <code>{{ dbmp_mysql_instance.port }}</code>
+        </div>
+        <div class="col-md-4 col-xs-4">
+            <strong>用户名：</strong> 
+            <code>{{ dbmp_mysql_instance.username }}</code>
+        </div>
+    </div>
+</section>
+
+<!-- 数据库列表 -->
+<section id="databases_section">
+    <h2 class="page-header">数据库列表</h2>
+     
+    <div id="database_list">
+        <table class="footable table table-stripped toggle-arrow-tiny table-hover" data-page-size="100">
+            <thead>
+                <tr>
+                    <th class="text-center col-xs-1">#</th>
+                    <th class="text-center">数据库名</th>
+                    <th class="text-center">同步时间</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for dbmp_mysql_database in dbmp_mysql_databases %}
+                <tr id="database_row_{{ dbmp_mysql_database.mysql_database_id }}">
+                    <td class="text-center col-xs-1">{{ forloop.counter }}</td>
+                    <td class="text-center" id="database_name_{{ dbmp_mysql_database.mysql_database_id }}">
+                        <a onclick="db_info_to_parent({{ dbmp_mysql_database.mysql_database_id }}, '{{ dbmp_mysql_database.name }}')">
+                            {{ dbmp_mysql_database.name }}
+                        </a>
+                    </td>
+                    <td class="text-center">{{ dbmp_mysql_database.update_time | date:"Y-m-d H:i:s" }}</td>
+                    <td>
+                        <button type="button" class="btn btn-info btn-xs" 
+                                onclick="db_info_to_parent({{ dbmp_mysql_database.mysql_database_id }}, '{{ dbmp_mysql_database.name }}')">
+                            <i class="fa fa-check-square-o"></i>
+                            选择
+                        </button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+<!-- 添加该页面自己需要的 js 模板 -->
+{% block js %}
+    <script src="{% static 'js/content.min.js' %}"></script>
+    <script src="{% static 'js/plugins/footable/footable.all.min.js' %}"></script>
+    <script src="{% static 'js/plugins/toastr/toastr.min.js' %}"></script>
+
+    <script>
+        // 使用 Django csrf 功能
+        $.ajaxSetup({headers: {"X-CSRFToken": '{{ csrf_token }}'}});
+
+        $(document).ready(function(){
+        });
+
+        // 传值给父窗口属性
+        var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+        function db_info_to_parent(mysql_database_id, db_name) {
+            // 获取实例信息
+            mysql_instance_id = {{ dbmp_mysql_instance.mysql_instance_id }};
+            ip = '{{ dbmp_mysql_instance.host | f_num2ip }}';
+            port = {{ dbmp_mysql_instance.port }};
+
+            // 设置父窗口数据库信息
+            parent.$('#database_name_div').html('<strong>数据库名：</strong> ' + db_name);
+            parent.$('#database_ip_div').html('<strong>IP地址：</strong> ' + ip);
+            parent.$('#database_port_div').html('<strong>端口：</strong> ' + port);
+
+            // 设置父窗口需要审核的数据库ID
+            parent.$('#mysql_database_id').val(mysql_database_id);
+
+            parent.layer.msg('选择成功', {time: 3000, icon: 1});
+            parent.layer.close(index);
+        }
+
+    </script>
+{% endblock %}
